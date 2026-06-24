@@ -17,7 +17,8 @@
     ->middleware(['auth'])
     ->name('ai-analysis.show');
 
-    Route::delete('/ai-analysis/{id}', [AiAnalysisController::class, 'destroy'])->name('ai-analysis.destroy');
+Route::delete('/ai-analysis/{id}', [AiAnalysisController::class, 'destroy'])
+    ->name('ai-analysis.delete');
 
     Route::post('/chat', [App\Http\Controllers\ChatController::class, 'chat'])->middleware('auth');
 
