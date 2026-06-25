@@ -359,36 +359,68 @@
         </div>
     </div>
 </section>
-<section class="py-24 bg-white">
-    <div class="max-w-6xl mx-auto px-6">
-        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[3rem] p-12 text-white overflow-hidden relative">
-            <div class="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+<section class="py-16 lg:py-24 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl lg:rounded-[3rem] p-6 sm:p-8 lg:p-12 text-white overflow-hidden relative">
+
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+
                 <div>
-                    <h2 class="text-3xl font-black mb-6">Masa Depan Pangan yang Transparan</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black mb-6">
+                        Masa Depan Pangan yang Transparan
+                    </h2>
+
                     <div class="space-y-6">
+
                         <div>
                             <h4 class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                                    </path>
+                                </svg>
                                 Traceability Penuh
                             </h4>
-                            <p class="text-slate-400 text-sm leading-relaxed">Setiap komoditas memiliki rekam jejak digital. Konsumen tahu persis dari mana bahan pangan mereka berasal, meningkatkan kepercayaan pasar.</p>
+
+                            <p class="text-slate-400 text-sm leading-relaxed">
+                                Setiap komoditas memiliki rekam jejak digital. Konsumen tahu persis dari mana bahan pangan mereka berasal, meningkatkan kepercayaan pasar.
+                            </p>
                         </div>
+
                         <div>
                             <h4 class="text-indigo-400 font-bold mb-2 flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.883M8 12h8M8 8h8"></path></svg>
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.883M8 12h8M8 8h8">
+                                    </path>
+                                </svg>
                                 Mitigasi Food Waste
                             </h4>
-                            <p class="text-slate-400 text-sm leading-relaxed">Dengan AI, kami memprediksi masa simpan produk dan mengoptimalkan rantai pasok untuk mencegah pembuangan hasil panen yang tidak perlu.</p>
+
+                            <p class="text-slate-400 text-sm leading-relaxed">
+                                Dengan AI, kami memprediksi masa simpan produk dan mengoptimalkan rantai pasok untuk mencegah pembuangan hasil panen yang tidak perlu.
+                            </p>
                         </div>
+
                     </div>
                 </div>
-                
-                <div class="bg-white/5 p-8 rounded-2xl border border-white/10 backdrop-blur-sm">
-                    <p class="text-emerald-400 font-black text-xl italic mb-4">"Teknologi bukan sekadar tentang angka, tapi tentang memastikan setiap butir hasil bumi Indonesia memberikan nilai ekonomi dan manfaat bagi banyak orang."</p>
-                    <p class="text-sm font-bold tracking-widest text-slate-400 uppercase">— AgriFlow Vision Team</p>
+
+                <div class="bg-white/5 p-5 sm:p-6 lg:p-8 rounded-2xl border border-white/10 backdrop-blur-sm">
+
+                    <p class="text-base sm:text-lg lg:text-xl text-emerald-400 font-black italic mb-4">
+                        "Teknologi bukan sekadar tentang angka, tapi tentang memastikan setiap butir hasil bumi Indonesia memberikan nilai ekonomi dan manfaat bagi banyak orang."
+                    </p>
+
+                    <p class="text-xs sm:text-sm font-bold tracking-widest text-slate-400 uppercase">
+                        — AgriFlow Vision Team
+                    </p>
+
                 </div>
+
             </div>
-            <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl"></div>
+
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 lg:w-64 lg:h-64 bg-emerald-500/20 rounded-full blur-3xl"></div>
+
         </div>
     </div>
 </section>
