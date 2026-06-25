@@ -78,9 +78,9 @@
                         <a href="{{ url('/dashboard') }}" class="font-semibold text-slate-600 hover:text-emerald-600 transition-colors">Dashboard</a>
                     @else
                         <a href="{{ route('login') }}" class="hidden sm:block font-bold text-slate-600 hover:text-emerald-600 transition-colors">Log in</a>
-
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-white transition-all duration-300 bg-slate-900 rounded-full hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-900/30 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900">
+                    <!-- awal register -->
+                        @if (Route::has('login'))
+                            <a href="{{ route('login') }}" class="relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-white transition-all duration-300 bg-slate-900 rounded-full hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-900/30 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900">
                                 Get Started
                             </a>
                         @endif
@@ -112,7 +112,8 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start animate-fade-in-up delay-300">
-                    <a href="{{ route('register') }}" class="w-full sm:w-auto relative group inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white transition-all duration-300 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1 overflow-hidden">
+                    <!-- awal register -->
+                    <a href="{{ route('login') }}" class="w-full sm:w-auto relative group inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white transition-all duration-300 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1 overflow-hidden">
                         <div class="absolute inset-0 w-full h-full -x-10 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out"></div>
                         Create Account
                         <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
@@ -429,7 +430,8 @@
     <div class="max-w-4xl mx-auto px-6 text-center">
         <h2 class="text-4xl font-black text-slate-900 mb-6">Siap Memulai Transformasi Pertanian Anda?</h2>
         <p class="text-lg text-slate-600 mb-10">Bergabunglah dengan ratusan petani modern yang telah mengoptimalkan hasil panen mereka bersama AgriFlow AI.</p>
-        <a href="{{ route('register') }}" class="inline-flex items-center px-10 py-5 text-lg font-bold text-white bg-slate-900 rounded-2xl hover:bg-emerald-600 transition-all duration-300 shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1">
+        <!-- awal  register -->
+        <a href="{{ route('login') }}" class="inline-flex items-center px-10 py-5 text-lg font-bold text-white bg-slate-900 rounded-2xl hover:bg-emerald-600 transition-all duration-300 shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1">
             Daftar Sekarang Secara Gratis
         </a>
     </div>

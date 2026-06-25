@@ -72,7 +72,8 @@
 
             <p class="mt-8 text-center text-sm font-medium text-slate-500 animate-fade-in delay-200">
                 Don't have an account? 
-                <a href="{{ route('register') }}" class="font-bold text-emerald-600 hover:text-emerald-500 transition-colors">Sign up</a>
+                <!-- awal register -->
+                <a href="{{ route('login') }}" class="font-bold text-emerald-600 hover:text-emerald-500 transition-colors">Sign up</a>
             </p>
         </div>
     </div>
