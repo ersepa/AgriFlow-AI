@@ -154,26 +154,50 @@
 </div>
 
 <!-- Jendela Chat (Versi Elegant & Solid) -->
-<div id="chatWindow" class="fixed bottom-20 right-4 sm:right-6 md:right-8 w-[90%] sm:w-96 h-[60vh] md:h-[500px] bg-slate-50 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.25)] border-2 border-slate-800 overflow-hidden hidden z-50 transition-all duration-300 ease-in-out">
-    
-    <!-- Header: Ganti warna gelap biar gak silau -->
+<div id="chatWindow"
+    class="fixed bottom-4 right-4 sm:bottom-20 sm:right-6 md:right-8
+    w-[calc(100vw-2rem)] sm:w-96
+    h-[70vh] sm:h-[500px]
+    max-h-[700px]
+    bg-slate-50 rounded-2xl
+    shadow-[0_15px_50px_rgba(0,0,0,0.25)]
+    border-2 border-slate-800
+    overflow-hidden hidden z-50
+    transition-all duration-300 ease-in-out
+    flex flex-col">
+
+    <!-- Header -->
     <div class="bg-slate-800 p-4 text-white font-semibold flex justify-between items-center border-b-2 border-slate-900">
         <span class="flex items-center gap-2">
             <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
             Asisten Logistik
         </span>
-        <button onclick="toggleChat()" class="hover:text-slate-300 transition-colors">✕</button>
+
+        <button onclick="toggleChat()" class="hover:text-slate-300 transition-colors">
+            ✕
+        </button>
     </div>
 
-    <!-- Body Chat: Background lebih netral -->
-    <div id="chatBody" class="h-[360px] overflow-y-auto p-5 space-y-4 bg-white text-slate-700 text-sm leading-relaxed border-b border-slate-200" style="white-space: pre-line;">
-        <p class="text-slate-500 italic">Halo! Ada yang bisa dibantu soal data pengiriman hari ini?</p>
+    <!-- Body -->
+<div id="chatBody"
+    class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-white text-slate-700 text-sm leading-relaxed border-b border-slate-200"
+    style="white-space: pre-line;">
+        <p class="text-slate-500 italic">
+            Halo! Ada yang bisa dibantu soal data pengiriman hari ini?
+        </p>
     </div>
 
-    <!-- Input Box: Border lebih tegas -->
-    <div class="p-4 bg-slate-50 flex gap-2">
-        <input id="chatInput" type="text" placeholder="Tanya sesuatu..." class="flex-1 p-3 border-2 border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all">
-        <button onclick="sendMessage()" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-slate-900 transition-all">Kirim</button>
+    <!-- Input -->
+    <div class="p-3 sm:p-4 bg-slate-50 flex gap-2">
+        <input id="chatInput"
+            type="text"
+            placeholder="Tanya sesuatu..."
+            class="flex-1 p-3 border-2 border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all">
+
+        <button onclick="sendMessage()"
+            class="bg-slate-800 text-white px-4 sm:px-5 py-2 rounded-xl text-sm font-bold hover:bg-slate-900 transition-all">
+            Kirim
+        </button>
     </div>
 </div>
 
