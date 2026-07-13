@@ -1,0 +1,46 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+public function up(): void
+{
+    Schema::create('decision_results', function (Blueprint $table) {
+
+        $table->id();
+
+        $table->foreignId('shipment_id')
+              ->constrained()
+              ->cascadeOnDelete();
+
+        $table->integer('risk_score');
+
+        $table->integer('priority_score');
+
+        $table->decimal('carbon_score',8,2);
+
+        $table->integer('sustainability_score');
+
+        $table->string('recommended_action');
+
+        $table->text('ai_explanation')->nullable();
+
+        $table->timestamps();
+
+    });
+}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('decision_results');
+    }
+};

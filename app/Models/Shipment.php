@@ -30,4 +30,8 @@ protected $fillable = [
 {
     return $this->hasMany(AiAnalysis::class);
 }
+public function decisionResult()
+{
+    return $this->hasOne(DecisionResult::class);
+}
 }

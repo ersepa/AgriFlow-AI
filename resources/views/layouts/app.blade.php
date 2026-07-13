@@ -93,6 +93,28 @@
     <span class="group-hover:translate-x-1 transition-transform duration-300">AI Analysis</span>
 </a>
 
+<a href="/ai-optimizer" class="group relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 overflow-hidden 
+    {{ request()->routeIs('ai-optimizer*') ? 'bg-purple-50 text-purple-600 font-bold' : 'text-slate-500 hover:bg-purple-50 hover:text-purple-600' }}">
+    
+    <div class="absolute left-0 w-1.5 h-8 bg-purple-500 rounded-r-full transition-transform duration-300 
+        {{ request()->routeIs('ai-optimizer*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}"></div>
+
+    <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" 
+         fill="none" 
+         stroke="currentColor" 
+         viewBox="0 0 24 24">
+        <path stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="2" 
+              d="M9.75 3a3 3 0 013 3v1.5h1.5a3 3 0 013 3v6a3 3 0 01-3 3h-6a3 3 0 01-3-3v-6a3 3 0 013-3h1.5V6a3 3 0 013-3zM9 14h6M12 11v6">
+        </path>
+    </svg>
+
+    <span class="group-hover:translate-x-1 transition-transform duration-300">
+        AI Optimizer
+    </span>
+</a>
+
                 <hr class="border-slate-100 my-4">
 
 <a href="/profile" class="group relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 overflow-hidden 

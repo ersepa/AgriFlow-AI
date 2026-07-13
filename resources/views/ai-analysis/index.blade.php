@@ -222,10 +222,14 @@ $sustainScore = session('sustainability_score');
                     </td>
 
                     <td class="px-8 py-6 text-right rounded-r-2xl">
-                        <form action="{{ route('ai.analysis.run', $shipment->id) }}" method="POST">
+                        <form
+action="{{ route('ai.analysis.run',$shipment->id) }}"
+method="POST"
+onsubmit="showLoading(this)">
                             @csrf
-                            <button type="submit" 
-                                    class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-200 hover:scale-[1.02]">
+<button
+type="submit"
+class="analyzeBtn inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-200 hover:scale-[1.02]">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 Analyze Now
                             </button>
@@ -346,6 +350,91 @@ new Chart(
 );
 
 </script>
+<script>
+
+function showLoading(form){
+
+    document
+        .getElementById('loadingOverlay')
+        .classList.remove('hidden');
+
+    document
+        .getElementById('loadingOverlay')
+        .classList.add('flex');
+
+    const btn=form.querySelector("button");
+
+    btn.disabled=true;
+
+    btn.innerHTML=`
+        <svg class="w-4 h-4 animate-spin"
+            fill="none"
+            viewBox="0 0 24 24">
+
+            <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="white"
+                stroke-width="3"
+                opacity=".2"/>
+
+            <path
+                d="M22 12a10 10 0 00-10-10"
+                stroke="white"
+                stroke-width="3"/>
+
+        </svg>
+
+        Analyzing...
+    `;
+
+    return true;
+}
+
+</script>
 
 @endif
+<!-- AI Loading Overlay -->
+<div id="loadingOverlay"
+     class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-[9999]">
+
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl p-10 w-[420px] text-center shadow-2xl">
+
+        <div class="flex justify-center mb-6">
+
+            <div class="relative w-16 h-16">
+
+                <div class="absolute inset-0 rounded-full border-4 border-indigo-900"></div>
+
+                <div class="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+
+            </div>
+
+        </div>
+
+        <h2 class="text-2xl font-black text-white">
+            AI is analyzing...
+        </h2>
+
+        <p class="text-slate-400 mt-3 leading-relaxed">
+            AgriFlow AI is evaluating logistics risk,
+            sustainability score,
+            spoilage prediction,
+            and shipment recommendations.
+        </p>
+
+        <div class="mt-8">
+
+            <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+
+                <div class="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 animate-pulse"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 </x-app-layout>

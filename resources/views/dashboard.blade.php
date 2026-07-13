@@ -153,25 +153,93 @@ switch ($item[0]) {
 
     case 'Shipments':
 
-        $recentShipments = \App\Models\Shipment::with('harvest')->latest()->take(5)->get();
+    $recentShipments = \App\Models\Shipment::with('harvest')
+        ->latest()
+        ->take(20)
+        ->get();
 
-        if ($recentShipments->isEmpty()) {
+    if ($recentShipments->isEmpty()) {
 
-            $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+        $content = $wrapperStart . $emptyMsg . $wrapperEnd;
 
-        } else {
+    } else {
 
-            $inner = "<p style='margin-bottom:8px'>Pengiriman terbaru:</p><ul style='list-style: disc; margin-left: 20px;'>";
+        $inner = "
+        <p style='margin-bottom:12px;font-weight:bold'>
+            Recent Shipments
+        </p>
 
-            foreach ($recentShipments as $s) { $inner .= "<li><strong>" . ($s->harvest->commodity ?? 'N/A') . "</strong> - " . $s->status . "</li>"; }
+        <div class='custom-scrollbar'
+            style='
+                max-height:320px;
+                overflow-y:auto;
+                border:1px solid #e5e7eb;
+                border-radius:12px;
+                padding:12px;
+            '>
 
-            $inner .= "</ul>";
+        <ul style='list-style:none;padding:0;margin:0'>
+        ";
 
-            $content = $wrapperStart . $inner . $wrapperEnd;
+        foreach ($recentShipments as $s) {
 
+            $statusColor = match($s->status){
+                'Harvested' => '#f59e0b',
+                'Packed' => '#3b82f6',
+                'In Transit' => '#8b5cf6',
+                'Delivered' => '#22c55e',
+                default => '#94a3b8',
+            };
+
+            $inner .= "
+
+            <li style='
+                padding:12px;
+                margin-bottom:10px;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+            '>
+
+                <strong>{$s->harvest->commodity}</strong><br>
+
+                <span style='font-size:12px;color:#64748b'>
+                    {$s->origin} ➜ {$s->destination}
+                </span>
+
+                <br><br>
+
+                <span
+                    style='
+                        display:inline-block;
+                        background:{$statusColor};
+                        color:white;
+                        padding:3px 10px;
+                        border-radius:999px;
+                        font-size:11px;
+                        font-weight:bold;
+                    '>
+                    {$s->status}
+                </span>
+
+            </li>
+
+            ";
         }
 
-        break;
+        $inner .= "
+        </ul>
+
+        <div style='margin-top:15px;text-align:center'>
+            Showing latest 20 shipments
+        </div>
+
+        </div>
+        ";
+
+        $content = $wrapperStart . $inner . $wrapperEnd;
+    }
+
+    break;
 
 
 
@@ -354,7 +422,217 @@ $inner .= "
 
         </div>
 
+<!-- AI Executive Summary -->
 
+<div
+class="mb-10
+rounded-[2rem]
+bg-gradient-to-r
+from-indigo-700
+via-indigo-600
+to-cyan-600
+shadow-2xl
+overflow-hidden">
+
+<div class="p-8">
+
+<div class="flex flex-col lg:flex-row justify-between gap-8">
+
+<div class="flex-1">
+
+<p class="uppercase tracking-[0.35em] text-xs font-black text-indigo-200">
+AI EXECUTIVE SUMMARY
+</p>
+
+<h2 class="text-4xl font-black text-white mt-3">
+🧠 Today's Logistics Recommendation
+</h2>
+
+<p class="text-indigo-100 mt-5 leading-8 text-[15px]">
+
+AI analyzed
+
+<strong>{{ $totalAnalyses }}</strong>
+
+shipment analyses.
+
+<br>
+
+@if($criticalShipments)
+
+🚨
+<strong>{{ $criticalShipments }}</strong>
+
+critical shipment(s) require immediate attention.
+
+<br>
+
+@endif
+
+@if($shipImmediately)
+
+🚚
+<strong>{{ $shipImmediately }}</strong>
+
+shipment(s) should be dispatched immediately.
+
+<br>
+
+@endif
+
+@if($optimizeRoute)
+
+🛣️
+<strong>{{ $optimizeRoute }}</strong>
+
+shipment(s) require route optimization.
+
+<br>
+
+@endif
+
+🌱
+Estimated food waste reduction
+
+<strong>{{ $estimatedWasteReduction }}%</strong>
+
+if AI recommendations are followed.
+
+</p>
+
+<div class="mt-8 grid grid-cols-2 gap-4">
+
+    <div class="p-5 rounded-xl bg-white/15 backdrop-blur border border-white/20">
+        <p class="text-xs uppercase text-indigo-200">AI Analyses</p>
+        <p class="text-3xl font-black text-white mt-1">
+            {{ $totalAnalyses }}
+        </p>
+    </div>
+
+    <div class="p-5 rounded-xl bg-white/15 backdrop-blur border border-white/20">
+        <p class="text-xs uppercase text-indigo-200">Sustainability</p>
+        <p class="text-3xl font-black text-white mt-1">
+            {{ round($avgScore) }}%
+        </p>
+    </div>
+
+</div>
+
+</div>
+
+<div
+class="w-full
+lg:w-[360px]
+rounded-3xl
+bg-white/10
+border border-white/20
+backdrop-blur-xl
+p-6">
+
+<p class="text-xs uppercase tracking-[0.3em] text-indigo-200 font-black">
+AI PERFORMANCE
+</p>
+
+<div class="grid grid-cols-2 gap-4 mt-6">
+
+
+    <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
+        <p class="text-indigo-200 text-xs uppercase">
+            Critical
+        </p>
+
+        <p class="text-3xl font-black text-rose-300 mt-2">
+            {{ $criticalShipments }}
+        </p>
+    </div>
+
+    <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
+        <p class="text-indigo-200 text-xs uppercase">
+            Waste Saved
+        </p>
+
+        <p class="text-3xl font-black text-cyan-300 mt-2">
+            {{ number_format($totalWaste,0) }}kg
+        </p>
+    </div>
+
+</div>
+
+<div class="mt-6 border-t border-white/10 pt-5">
+
+<div class="flex justify-between items-center">
+
+<span class="text-indigo-200 text-sm">
+
+AI Engine
+
+</span>
+
+<span class="text-emerald-300 font-bold">
+
+🟢 Online
+
+</span>
+
+</div>
+
+<div class="flex justify-between items-center mt-3">
+
+<span class="text-indigo-200 text-sm">
+
+Decision Engine
+
+</span>
+
+<span class="text-emerald-300 font-bold">
+
+🟢 Active
+
+</span>
+
+</div>
+
+<div class="flex justify-between items-center mt-3">
+
+<span class="text-indigo-200 text-sm">
+
+Route Optimizer
+
+</span>
+
+<span class="text-emerald-300 font-bold">
+
+🟢 Ready
+
+</span>
+
+</div>
+
+<div class="flex justify-between items-center mt-3">
+
+<span class="text-indigo-200 text-sm">
+
+Prediction Model
+
+</span>
+
+<span class="text-emerald-300 font-bold">
+
+🟢 Running
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
 
         <!-- Main Content -->
 
@@ -427,7 +705,7 @@ $inner .= "
 
 
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols- gap-6">
 
                     <div class="bg-gradient-to-r from-emerald-500 to-emerald-700 p-6 rounded-3xl text-white">
 
@@ -453,24 +731,6 @@ $inner .= "
 
                 </div>
 
-
-
-                <div class="grid md:grid-cols-2 gap-6">
-
-                    <div class="glass-card p-6 rounded-3xl">
-
-                        <h2 class="font-bold text-white mb-4">System Summary</h2>
-
-                        <div class="space-y-3 text-sm text-slate-400">
-
-                            <p class="flex justify-between"><span>Most Risky:</span> <span class="font-bold text-white">{{ $mostRiskyShipment->harvest->commodity ?? 'None' }}</span></p>
-
-                            <p class="flex justify-between"><span>High Risk:</span> <span class="font-bold text-rose-500">{{ $highRisk }}</span></p>
-
-                        </div>
-
-                    </div>
-
                     <div class="glass-card p-6 rounded-3xl">
 
                         <h2 class="font-bold text-white mb-4">System Insight</h2>
@@ -479,7 +739,144 @@ $inner .= "
 
                     </div>
 
+                    <div class="glass-card p-6 rounded-3xl relative overflow-hidden">
+
+    <div class="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
+
+    <div class="flex items-center justify-between mb-5">
+        <div>
+            <p class="text-[10px] uppercase tracking-[3px] text-cyan-400 font-black">
+                AI Executive Summary
+            </p>
+
+            <h2 class="text-xl font-black text-white mt-1">
+                Logistics Overview
+            </h2>
+        </div>
+
+        <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center text-xl">
+            🤖
+        </div>
+    </div>
+
+    <div class="space-y-4">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <p class="text-xs text-slate-400">
+                    Critical Shipments
+                </p>
+
+                <p class="text-2xl font-black text-rose-400">
+                    {{ $criticalShipments }}
+                </p>
+            </div>
+
+            <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                🚨
+            </div>
+
+        </div>
+
+        <div class="h-px bg-white/10"></div>
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <p class="text-xs text-slate-400">
+                    Route Optimization
+                </p>
+
+                <p class="text-lg font-bold text-cyan-300">
+                    {{ $optimizeRoute }} Routes
+                </p>
+
+            </div>
+
+            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                🛣️
+            </div>
+
+        </div>
+
+        <div class="h-px bg-white/10"></div>
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <p class="text-xs text-slate-400">
+                    Immediate Dispatch
+                </p>
+
+                <p class="text-lg font-bold text-amber-300">
+                    {{ $shipImmediately }} Shipments
+                </p>
+
+            </div>
+
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                🚚
+            </div>
+
+        </div>
+
+        <div class="mt-6">
+
+            <div class="flex justify-between mb-2">
+
+                <span class="text-xs text-slate-400">
+                    Estimated Waste Reduction
+                </span>
+
+                <span class="text-sm font-bold text-emerald-400">
+                    {{ $estimatedWasteReduction }}%
+                </span>
+
+            </div>
+
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+
+                <div
+                    class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-500 transition-all duration-700"
+                    style="width: {{ $estimatedWasteReduction }}%">
                 </div>
+
+            </div>
+
+        </div>
+
+        <div class="mt-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 p-4">
+
+            <p class="text-xs text-cyan-300 uppercase tracking-widest font-bold mb-2">
+                AI Verdict
+            </p>
+
+            <p class="text-sm text-slate-300 leading-relaxed">
+
+                @if($criticalShipments >= 5)
+
+                    Several shipments require immediate operational attention. Prioritize dispatch scheduling to minimize spoilage and improve logistics efficiency.
+
+                @elseif($criticalShipments >=2)
+
+                    The logistics network remains stable, but several shipments should be monitored to maintain sustainability performance.
+
+                @else
+
+                    Current logistics performance is healthy. Continue monitoring shipment quality and optimize routes where possible.
+
+                @endif
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
 
             </div>
 
@@ -495,7 +892,44 @@ $inner .= "
 
                 </div>
 
-@if($latestHighRisk)
+                <div class="glass-card p-6 rounded-3xl mt-8">
+
+    <div class="flex items-center justify-between mb-5">
+
+        <h2 class="font-bold text-white">
+            Shipment Status
+        </h2>
+
+        <span class="text-xs text-slate-400 uppercase">
+            Live
+        </span>
+
+    </div>
+
+    <div class="h-64">
+
+        <canvas id="shipmentStatusChart"></canvas>
+
+    </div>
+
+    <div class="glass-card p-6 rounded-3xl">
+    <div class="flex items-center justify-between mb-5">
+        <h2 class="font-bold text-white">
+            AI Prediction Trend
+        </h2>
+
+        <span class="text-xs text-cyan-300">
+            Next 7 Days
+        </span>
+    </div>
+
+    <div class="h-72">
+        <canvas id="predictionChart"></canvas>
+    </div>
+</div>
+
+</div>
+                @if($latestHighRisk)
 
     @php
 
@@ -657,7 +1091,12 @@ options: {
 
     plugins: {
 
-        legend: { position: 'bottom' },
+            legend: {
+        position: 'bottom',
+        labels: {
+            color: '#fff'
+        }
+    },
 
         // 1. Datalabels: Untuk angka permanen di chart
 
@@ -706,6 +1145,200 @@ options: {
 }
 
     });
+
+</script>
+
+<script>
+
+const shipmentCtx = document.getElementById('shipmentStatusChart');
+
+new Chart(shipmentCtx, {
+
+    type: 'bar',
+
+    data: {
+
+        labels: [
+            'Harvested',
+            'Packed',
+            'In Transit',
+            'Delivered'
+        ],
+
+        datasets: [{
+
+            data: [
+                {{ $statusHarvested }},
+                {{ $statusPacked }},
+                {{ $statusTransit }},
+                {{ $statusDelivered }}
+            ],
+
+            borderRadius: 12,
+
+            backgroundColor: [
+                '#6366f1',
+                '#f59e0b',
+                '#06b6d4',
+                '#10b981'
+            ]
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+            legend: {
+                display: false
+            },
+
+            datalabels: {
+
+                color: '#fff',
+
+anchor: 'center',
+align: 'center',
+
+                font: {
+                    size: 14,
+                    weight: 'bold'
+                },
+
+                formatter: function(value){
+                    return value;
+                }
+
+            }
+
+        },
+
+        scales: {
+
+            x: {
+
+                ticks: {
+                    color: '#fff'
+                },
+
+                grid: {
+                    display: false
+                }
+
+            },
+
+            y: {
+
+                beginAtZero: true,
+
+                ticks: {
+                    color: '#fff'
+                },
+
+                grid: {
+                    color: 'rgba(255,255,255,.08)'
+                }
+
+            }
+
+        }
+
+    },
+
+    plugins: [ChartDataLabels]
+
+});
+
+const predictionCtx =
+document.getElementById('predictionChart');
+
+new Chart(predictionCtx,{
+
+type:'line',
+
+data:{
+
+labels:[
+'Day 1',
+'Day 2',
+'Day 3',
+'Day 4',
+'Day 5',
+'Day 6',
+'Day 7'
+],
+
+datasets:[{
+
+label:'Predicted Risk',
+
+data:@json($predictionTrend),
+
+borderColor:'#06b6d4',
+
+backgroundColor:'rgba(6,182,212,.15)',
+
+fill:true,
+
+tension:.4,
+
+pointRadius:5,
+
+pointHoverRadius:7
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false,
+
+plugins:{
+
+legend:{
+labels:{
+color:'#fff'
+}
+}
+
+},
+
+scales:{
+
+x:{
+ticks:{
+color:'#fff'
+},
+grid:{
+color:'rgba(255,255,255,.08)'
+}
+},
+
+y:{
+beginAtZero:true,
+max:100,
+ticks:{
+color:'#fff'
+},
+grid:{
+color:'rgba(255,255,255,.08)'
+}
+}
+
+}
+
+}
+
+});
 
 </script>
 

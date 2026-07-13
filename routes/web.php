@@ -8,10 +8,20 @@
     use App\Models\Shipment;
     use App\Services\GeminiService;
     use App\Models\AiAnalysis;
+    use App\Http\Controllers\AIOptimizerController;
+    use App\Services\AI\DecisionEngine;
 
     Route::get('/', function () {
         return view('welcome');
     });
+
+Route::get('/ai-optimizer/explain/{shipment}', 
+    [AIOptimizerController::class, 'explain']
+)->name('ai.explain');
+
+    Route::get('/ai-optimizer', [AIOptimizerController::class, 'index'])
+    ->middleware('auth')
+    ->name('ai.optimizer');
 
     Route::get('/ai-analysis/history/{id}', [AiAnalysisController::class, 'show'])
     ->middleware(['auth'])
@@ -100,6 +110,121 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
         ->latest()
         ->with('shipment.harvest')
         ->first();
+        // ==============================
+// AI Executive Summary
+// ==============================
+
+$criticalShipments = \App\Models\AiAnalysis::where('risk_level', 'High')->count();
+
+$optimizeRoute = \App\Models\AiAnalysis::where(
+    'recommendations',
+    'like',
+    '%Optimize route%'
+)->count();
+
+$shipImmediately = \App\Models\AiAnalysis::where(
+    'recommendations',
+    'like',
+    '%Ship immediately%'
+)->count();
+
+$estimatedWasteReduction = min(
+    100,
+    round($greenImpactScore * 0.35)
+);
+
+$engine = new DecisionEngine();
+
+$highestPriorityShipment = \App\Models\Shipment::with('harvest')
+    ->whereIn('status', ['Harvested','Packed','In Transit'])
+    ->get()
+    ->sortByDesc(function($shipment) use ($engine){
+        return $engine->analyze($shipment)['priority_score'];
+    })
+    ->first();
+
+$operationalRecommendation = null;
+
+if($highestPriorityShipment){
+    $operationalRecommendation =
+        $engine->generateOperationalRecommendation($highestPriorityShipment);
+}
+
+$dashboardShipments = \App\Models\Shipment::with('harvest')
+    ->whereIn('status', [
+        'Harvested',
+        'Packed',
+        'In Transit'
+    ])
+    ->get()
+    ->map(function ($shipment) use ($engine) {
+
+        $analysis = $engine->analyze($shipment);
+
+        return [
+
+            'commodity' => $shipment->harvest->commodity,
+
+            'origin' => $shipment->origin,
+            'destination' => $shipment->destination,
+
+            'origin_lat' => $shipment->origin_lat,
+            'origin_lng' => $shipment->origin_lng,
+
+            'destination_lat' => $shipment->destination_lat,
+            'destination_lng' => $shipment->destination_lng,
+
+            'status' => $shipment->status,
+
+            'distance' => round($shipment->distance_km ?? 0),
+
+            'priority' => $analysis['priority_score'],
+
+            'risk' => $analysis['risk_score'],
+
+            'priority_level' => $analysis['priority_level'],
+
+        ];
+    });
+    $statusHarvested = \App\Models\Shipment::where('status','Harvested')->count();
+
+$statusPacked = \App\Models\Shipment::where('status','Packed')->count();
+
+$statusTransit = \App\Models\Shipment::where('status','In Transit')->count();
+
+$statusDelivered = \App\Models\Shipment::where('status','Delivered')->count();
+
+$predictionTrend = [];
+
+$engine = new DecisionEngine();
+
+foreach(range(1,7) as $day){
+
+    $riskAverage = 0;
+
+    $count = 0;
+
+    foreach(
+        \App\Models\Shipment::with('harvest')
+        ->whereIn('status',['Harvested','Packed','In Transit'])
+        ->get()
+        as $shipment
+    ){
+
+        $analysis = $engine->analyze($shipment);
+
+        $riskAverage += $analysis['risk_score'];
+
+        $count++;
+
+    }
+
+    $predictionTrend[] = max(
+        5,
+        round(($riskAverage / max($count,1)) - ($day*3))
+    );
+
+}
         
 
     return view('dashboard', compact(
@@ -119,6 +244,17 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
         'latestHighRisk',
         'greenImpactScore', 
         'totalWaste',
+        'criticalShipments',
+'optimizeRoute',
+'shipImmediately',
+'estimatedWasteReduction',
+'operationalRecommendation',
+'dashboardShipments',
+'statusHarvested',
+'statusPacked',
+'statusTransit',
+'statusDelivered',
+'predictionTrend',
     ));
 
     })->middleware(['auth'])->name('dashboard');
