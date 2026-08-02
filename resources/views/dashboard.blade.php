@@ -671,7 +671,7 @@ shadow-[0_0_80px_rgba(6,182,212,.15)]">
 
         <h2 class="mt-2 text-white font-black text-xl">
 
-            {{ $environment['location'] }}
+            {{ data_get($environment, 'location', 'Unknown') }}
 
         </h2>
 
