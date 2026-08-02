@@ -314,11 +314,15 @@ $efficiencyGain = $projectedEfficiency - $currentEfficiency;
 
 $forecast = $environment['forecast'] ?? [];
 $currentHour = now()->hour;
-
 $weatherTrend = [];
 
-if ($environment && isset($environment['weather'])) {
+if (
+    $environment &&
+    isset($environment['weather']) &&
+    isset($forecast['time'])
+) {
 
+    // Current weather
     $weatherTrend[] = [
         'time' => now()->format('H:i'),
         'temp' => $environment['weather']['temperature_2m'] ?? null,
@@ -328,7 +332,12 @@ if ($environment && isset($environment['weather'])) {
         'cloud' => $environment['weather']['cloud_cover'] ?? null,
     ];
 
-    for ($i = $currentHour + 1; $i < min($currentHour + 6, count($forecast['time'] ?? [])); $i++) {
+    // Forecast 5 jam
+    for (
+        $i = $currentHour + 1;
+        $i < min($currentHour + 6, count($forecast['time']));
+        $i++
+    ) {
         $weatherTrend[] = [
             'time' => \Carbon\Carbon::parse($forecast['time'][$i])->format('H:i'),
             'temp' => $forecast['temperature_2m'][$i] ?? null,
@@ -338,42 +347,6 @@ if ($environment && isset($environment['weather'])) {
             'cloud' => $forecast['cloud_cover'][$i] ?? null,
         ];
     }
-}
-
-/*
-|--------------------------------------------------------------------------
-| Next 5 Hours Forecast
-|--------------------------------------------------------------------------
-*/
-
-for (
-
-    $i = $currentHour + 1;
-
-    $i < min($currentHour + 6, count($forecast['time']));
-
-    $i++
-
-) {
-
-    $weatherTrend[] = [
-
-        'time' => \Carbon\Carbon::parse(
-            $forecast['time'][$i]
-        )->format('H:i'),
-
-        'temp' => $forecast['temperature_2m'][$i],
-
-        'humidity' => $forecast['relative_humidity_2m'][$i],
-
-        'wind' => $forecast['wind_speed_10m'][$i],
-
-        'rain' => $forecast['precipitation_probability'][$i],
-
-        'cloud' => $forecast['cloud_cover'][$i],
-
-    ];
-
 }
 
     return view('dashboard', compact(
