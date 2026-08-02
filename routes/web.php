@@ -365,7 +365,7 @@ if (!$environment) {
     ];
 }
 
-dd($environment);
+
 
     return view('dashboard', compact(
         'totalHarvests',

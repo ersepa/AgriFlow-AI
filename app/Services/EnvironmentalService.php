@@ -21,11 +21,11 @@ if (!$weather) {
     return [
         'location' => env('DASHBOARD_LOCATION', 'Jakarta'),
         'weather' => [
-            'temperature_2m' => null,
-            'relative_humidity_2m' => null,
-            'rain' => null,
-            'cloud_cover' => null,
-            'wind_speed_10m' => null,
+'temperature_2m' => 0,
+'relative_humidity_2m' => 0,
+'rain' => 0,
+'cloud_cover' => 0,
+'wind_speed_10m' => 0,
         ],
         'forecast' => [
             'time' => [],
@@ -302,41 +302,66 @@ return [
 
 private function getWeather($lat, $lng)
 {
-    $response = Http::get(env('OPEN_METEO_URL'), [
+    try {
 
-        'latitude' => $lat,
+        $url = env('OPEN_METEO_URL');
 
-        'longitude' => $lng,
+        if (!$url) {
+            return null;
+        }
 
-        'current' =>
-            'temperature_2m,relative_humidity_2m,rain,cloud_cover,wind_speed_10m',
+        $response = Http::timeout(15)
+            ->retry(2, 500)
+            ->get($url, [
 
-        'hourly' =>
-'temperature_2m,relative_humidity_2m,precipitation_probability,cloud_cover,wind_speed_10m',
+                'latitude' => $lat,
 
-        'forecast_days' => 1
+                'longitude' => $lng,
 
-    ]);
+                'current' =>
+                    'temperature_2m,relative_humidity_2m,rain,cloud_cover,wind_speed_10m',
 
-    if (!$response->successful()) {
+                'hourly' =>
+                    'temperature_2m,relative_humidity_2m,precipitation_probability,cloud_cover,wind_speed_10m',
+
+                'forecast_days' => 1
+
+            ]);
+
+
+        if (!$response->successful()) {
+
+            return null;
+
+        }
+
+
+        $data = $response->json();
+
+
+        if (
+            !isset($data['current']) ||
+            !isset($data['hourly'])
+        ) {
+
+            return null;
+
+        }
+
+
+        return [
+
+            'current' => $data['current'],
+
+            'hourly' => $data['hourly'],
+
+        ];
+
+
+    } catch (\Exception $e) {
+
         return null;
+
     }
-
-    $data = $response->json();
-
-    if (
-    !isset($data['current']) ||
-    !isset($data['hourly'])
-) {
-    return null;
-}
-
-return [
-
-    'current' => $data['current'] ?? [],
-
-    'hourly' => $data['hourly'] ?? [],
-
-];
 }
 }
