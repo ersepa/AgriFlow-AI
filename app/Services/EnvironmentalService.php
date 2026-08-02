@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class EnvironmentalService
 {
@@ -302,41 +303,49 @@ return [
 
 private function getWeather($lat, $lng)
 {
-    $response = Http::get(env('OPEN_METEO_URL'), [
+    try {
 
-        'latitude' => $lat,
+        $response = Http::timeout(15)->get(env('OPEN_METEO_URL'), [
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'current' => 'temperature_2m,relative_humidity_2m,rain,cloud_cover,wind_speed_10m',
+            'hourly' => 'temperature_2m,relative_humidity_2m,precipitation_probability,cloud_cover,wind_speed_10m',
+            'forecast_days' => 1,
+        ]);
 
-        'longitude' => $lng,
+        if (!$response->successful()) {
+            Log::error('OpenMeteo HTTP Error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
 
-        'current' =>
-            'temperature_2m,relative_humidity_2m,rain,cloud_cover,wind_speed_10m',
+            return null;
+        }
 
-        'hourly' =>
-'temperature_2m,relative_humidity_2m,precipitation_probability,cloud_cover,wind_speed_10m',
+        $data = $response->json();
 
-        'forecast_days' => 1
+        Log::info('OpenMeteo Response', $data);
 
-    ]);
+        if (!isset($data['current']) || !isset($data['hourly'])) {
 
-    if (!$response->successful()) {
+            Log::error('OpenMeteo Invalid Response', $data);
+
+            return null;
+        }
+
+        return [
+            'current' => $data['current'],
+            'hourly' => $data['hourly'],
+        ];
+
+    } catch (\Throwable $e) {
+
+        Log::error('OpenMeteo Exception', [
+            'message' => $e->getMessage(),
+        ]);
+
         return null;
     }
-
-    $data = $response->json();
-
-    if (
-    !isset($data['current']) ||
-    !isset($data['hourly'])
-) {
-    return null;
 }
 
-return [
-
-    'current' => $data['current'] ?? [],
-
-    'hourly' => $data['hourly'] ?? [],
-
-];
-}
 }
