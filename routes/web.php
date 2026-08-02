@@ -349,6 +349,19 @@ if (
     }
 }
 
+// sebelum return view()
+if (!$environment) {
+    $environment = [
+        'location' => 'Unknown',
+        'updated_at' => now(),
+        'temperature' => 0,
+        'humidity' => 0,
+        'rain' => 0,
+        'cloud_cover' => 0,
+        'wind_speed' => 0,
+    ];
+}
+
     return view('dashboard', compact(
         'totalHarvests',
         'totalWeight',
