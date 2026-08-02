@@ -231,20 +231,9 @@ $predictionTrend = [];
 |--------------------------------------------------------------------------
 */
 
-$environment = null;
+$$environmentService = new \App\Services\EnvironmentalService();
 
-$latestShipment = \App\Models\Shipment::whereNotNull('origin_lat')
-    ->whereNotNull('origin_lng')
-    ->latest()
-    ->first();
-
-if ($latestShipment) {
-
-    $environmentService = new EnvironmentalService();
-
-    $environment = $environmentService->getEnvironment($latestShipment);
-
-}
+$environment = $environmentService->getEnvironment(null);
 
 $engine = new DecisionEngine();
 
@@ -348,24 +337,6 @@ if (
         ];
     }
 }
-
-// sebelum return view()
-if (!$environment) {
-    $environment = [
-        'location' => 'Unknown',
-        'updated_at' => now(),
-
-        'weather' => [
-            'temperature_2m' => 0,
-            'relative_humidity_2m' => 0,
-            'rain' => 0,
-            'cloud_cover' => 0,
-            'wind_speed_10m' => 0,
-        ]
-    ];
-}
-
-
 
     return view('dashboard', compact(
         'totalHarvests',
