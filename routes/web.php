@@ -231,7 +231,7 @@ $predictionTrend = [];
 |--------------------------------------------------------------------------
 */
 
-$$environmentService = new \App\Services\EnvironmentalService();
+$environmentService = new \App\Services\EnvironmentalService();
 
 $environment = $environmentService->getEnvironment(null);
 
