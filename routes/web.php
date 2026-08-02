@@ -354,13 +354,18 @@ if (!$environment) {
     $environment = [
         'location' => 'Unknown',
         'updated_at' => now(),
-        'temperature' => 0,
-        'humidity' => 0,
-        'rain' => 0,
-        'cloud_cover' => 0,
-        'wind_speed' => 0,
+
+        'weather' => [
+            'temperature_2m' => 0,
+            'relative_humidity_2m' => 0,
+            'rain' => 0,
+            'cloud_cover' => 0,
+            'wind_speed_10m' => 0,
+        ]
     ];
 }
+
+dd($environment);
 
     return view('dashboard', compact(
         'totalHarvests',
