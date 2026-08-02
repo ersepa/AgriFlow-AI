@@ -43,6 +43,100 @@
     background: rgba(99,102,241,.8);
 }
 
+<style>
+
+.earth{
+
+animation:
+
+floating 6s ease-in-out infinite;
+
+box-shadow:
+
+0 0 80px rgba(6,182,212,.35);
+
+}
+
+@keyframes floating{
+
+0%{
+
+transform:translateY(0px);
+
+}
+
+50%{
+
+transform:translateY(-14px);
+
+}
+
+100%{
+
+transform:translateY(0px);
+
+}
+
+}
+
+.earth{
+    animation: earthRotate 35s linear infinite;
+}
+
+@keyframes earthRotate{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+.weather-tab{
+
+padding:12px 20px;
+
+border-radius:9999px;
+
+background:#0f172a;
+
+border:1px solid rgba(255,255,255,.08);
+
+color:#94a3b8;
+
+transition:.35s;
+
+font-weight:700;
+
+}
+
+.weather-tab:hover{
+
+transform:translateY(-2px);
+
+border-color:#22d3ee;
+
+color:white;
+
+}
+
+.weather-tab.active{
+
+background:linear-gradient(90deg,#06b6d4,#22c55e);
+
+color:white;
+
+border-color:transparent;
+
+box-shadow:0 0 25px rgba(34,211,238,.25);
+
+}
+
+</style>
+
     </style>
 
 
@@ -71,21 +165,7 @@
 
             @php
 
-                $items = [
-
-                    ['Total Harvest', $totalHarvests, 'text-white'],
-
-                    ['Total Weight', number_format($totalWeight, 0, ',', '.') . ' KG', 'text-white'],
-
-                    ['Shipments', $totalShipments, 'text-white'],
-
-                    ['Delivered', $deliveredShipments, 'text-emerald-400'],
-
-                    ['AI Analyses', $totalAnalyses, 'text-indigo-400'],
-
-                    ['High Risk', $highRisk, 'text-rose-400']
-
-                ];
+$items = [ ['Total Harvest', $totalHarvests, 'text-white'], ['Total Weight', number_format($totalWeight, 0, ',', '.') . ' KG', 'text-white'], ['Shipments', $totalShipments, 'text-white'], ['Delivered', $deliveredShipments, 'text-emerald-400'], ['AI Analyses', $totalAnalyses, 'text-indigo-400'], ['High Risk', $highRisk, 'text-rose-400'] ];
 
             @endphp
 
@@ -422,6 +502,635 @@ $inner .= "
 
         </div>
 
+{{-- ========================================================= --}}
+{{-- LIVE ENVIRONMENTAL INTELLIGENCE --}}
+{{-- ========================================================= --}}
+
+<div class="mt-12">
+
+<div class="relative overflow-hidden rounded-[42px]
+bg-gradient-to-br from-[#07111d] via-[#081725] to-[#050b14]
+border border-cyan-500/20
+shadow-[0_0_80px_rgba(6,182,212,.15)]">
+
+    {{-- Glow --}}
+    <div class="absolute -top-40 -right-20 w-[420px] h-[420px] bg-cyan-500/15 blur-[160px]"></div>
+    <div class="absolute -bottom-32 -left-20 w-[350px] h-[350px] bg-indigo-500/15 blur-[140px]"></div>
+
+    <div class="relative p-10 lg:p-14">
+
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+
+            <div>
+
+                <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-400/20">
+
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+
+                    <span class="uppercase tracking-[0.45em] text-cyan-300 text-xs font-black">
+                        LIVE ENVIRONMENT
+                    </span>
+
+                </div>
+
+                <h1 class="mt-6 text-5xl lg:text-6xl font-black text-white leading-tight">
+
+                    Environmental Intelligence
+
+                </h1>
+
+                <p class="mt-5 max-w-3xl text-slate-400 text-lg leading-8">
+
+                    AI continuously monitors weather conditions, route quality,
+                    environmental impact, and shipment safety in real time.
+
+                </p>
+
+            </div>
+
+            <div class="mt-8 lg:mt-0">
+
+                <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 px-6 py-5">
+
+                    <p class="text-emerald-300 uppercase tracking-[0.3em] text-xs font-black">
+
+                        STATUS
+
+                    </p>
+
+                    <h2 class="mt-3 text-3xl font-black text-white">
+
+                        ONLINE
+
+                    </h2>
+
+                    <p class="mt-2 text-slate-400">
+
+                        Last Sync :
+                        <span id="environmentTime">{{ now()->format('H:i:s') }}</span>
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {{-- divider --}}
+
+        <div class="my-12 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+
+        {{-- SECTION 2 AKAN MASUK DI SINI --}}
+        <div class="grid xl:grid-cols-[340px_1fr] gap-8">
+
+    {{-- ========================================= --}}
+    {{-- EARTH --}}
+    {{-- ========================================= --}}
+
+    <div
+    class="relative overflow-hidden rounded-[36px]
+    border border-cyan-500/20
+    bg-gradient-to-br
+    from-slate-900
+    via-[#071827]
+    to-slate-950
+    p-8">
+
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,.15),transparent_70%)]"></div>
+
+        <div class="relative">
+
+            <div class="sticky top-5 z-20 mb-8 flex items-center justify-between rounded-2xl border border-cyan-500/10 bg-slate-950/60 backdrop-blur-xl px-8 py-5">
+
+                <div>
+
+                    <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
+
+                        SATELLITE
+
+                    </p>
+
+                    <h2 class="mt-3 text-white text-2xl font-black">
+
+                        Earth Monitor
+
+                    </h2>
+
+                </div>
+
+                <div class="rounded-full bg-cyan-500/10 px-4 py-2 border border-cyan-500/20">
+
+                    <span class="text-cyan-300 text-xs font-bold">
+
+                        CONNECTED
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="flex justify-center mt-8">
+
+                <div class="relative w-56 h-56 mx-auto">
+
+                    <div
+                    class="absolute inset-0 rounded-full
+                    bg-cyan-400/30 blur-[80px] animate-pulse">
+                    </div>
+
+<div
+    id="weatherOrb"
+    class="w-60 h-60 mx-auto"
+
+    data-rain="{{ $environment['weather']['rain'] ?? 0 }}"
+    data-cloud="{{ $environment['weather']['cloud_cover'] ?? 0 }}"
+    data-wind="{{ $environment['weather']['wind_speed_10m'] ?? 0 }}"
+    data-temp="{{ $environment['weather']['temperature_2m'] ?? 25 }}">
+
+</div>
+
+                </div>
+
+            </div>
+
+<div class="grid grid-cols-2 gap-5 mt-8">
+
+    <div
+    class="rounded-2xl
+    border border-white/5
+    bg-white/5
+    p-4">
+
+        <p class="text-slate-400 text-sm">
+
+            Location
+
+        </p>
+
+        <h2 class="mt-2 text-white font-black text-xl">
+
+            {{ $environment['location'] }}
+
+        </h2>
+
+    </div>
+
+    <div
+    class="rounded-2xl
+    border border-white/5
+    bg-white/5
+    p-4">
+
+        <p class="text-slate-400 text-sm">
+
+            Last Update
+
+        </p>
+
+        <h2 class="mt-2 text-cyan-300 font-black text-xl">
+
+            {{ $environment['updated_at'] }}
+
+        </h2>
+
+    </div>
+
+    <div
+    class="rounded-2xl
+    border border-white/5
+    bg-white/5
+    p-4">
+
+        <p class="text-slate-400 text-sm">
+
+            Data Source
+
+        </p>
+
+        <h2 class="mt-2 text-emerald-400 font-black">
+
+            Open-Meteo API
+
+        </h2>
+
+    </div>
+
+    <div
+    class="rounded-2xl
+    border border-white/5
+    bg-white/5
+    p-4">
+
+        <p class="text-slate-400 text-sm">
+
+            AI Status
+
+        </p>
+
+        <h2 class="mt-2 text-cyan-400 font-black">
+
+            ONLINE
+
+        </h2>
+
+    </div>
+
+</div>
+
+        </div>
+
+    </div>
+
+
+
+{{-- ========================================= --}}
+{{-- WEATHER COMMAND CENTER --}}
+{{-- ========================================= --}}
+
+<div
+class="rounded-[36px]
+border border-cyan-500/20
+bg-gradient-to-br
+from-slate-900
+via-slate-950
+to-black
+p-8
+relative
+overflow-hidden">
+
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,.12),transparent_45%)]"></div>
+
+<div class="relative">
+
+<div class="flex items-start justify-between">
+
+<div>
+
+<p class="uppercase tracking-[0.4em] text-cyan-400 text-xs font-black">
+
+LIVE WEATHER COMMAND CENTER
+
+</p>
+
+<h1
+class="mt-4
+text-5xl
+font-black
+text-white">
+
+{{ round($environment['weather']['temperature_2m']) }}°C
+
+</h1>
+
+<p class="mt-2 text-slate-400">
+
+Real-Time Environmental Intelligence
+
+</p>
+
+</div>
+
+<div
+class="rounded-2xl
+border border-emerald-500/20
+bg-emerald-500/10
+px-5
+py-3
+text-right">
+
+<div class="flex items-center gap-2 justify-end">
+
+<div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+
+<span class="text-emerald-300 font-bold">
+
+LIVE
+
+</span>
+
+</div>
+
+<p class="mt-2 text-xs text-slate-400">
+
+Updated {{ $environment['updated_at'] }}
+
+</p>
+
+</div>
+
+</div>
+
+{{-- KPI GRID --}}
+
+<div class="grid grid-cols-2 xl:grid-cols-3 gap-5 mt-10">
+
+<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+
+<p class="text-slate-500 text-sm">
+
+🌡 Temperature
+
+</p>
+
+<h2 class="mt-3 text-3xl font-black text-white">
+
+{{ round($environment['weather']['temperature_2m']) }}°C
+
+</h2>
+
+</div>
+
+<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+
+<p class="text-slate-500 text-sm">
+
+💧 Humidity
+
+</p>
+
+<h2 class="mt-3 text-3xl font-black text-cyan-300">
+
+{{ $environment['weather']['relative_humidity_2m'] }}%
+
+</h2>
+
+</div>
+
+<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+
+<p class="text-slate-500 text-sm">
+
+🌧 Rain
+
+</p>
+
+<h2 class="mt-3 text-3xl font-black text-blue-300">
+
+{{ $environment['weather']['rain'] }} mm
+
+</h2>
+
+</div>
+
+<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+
+<p class="text-slate-500 text-sm">
+
+🌬 Wind
+
+</p>
+
+<h2 class="mt-3 text-3xl font-black text-white">
+
+{{ round($environment['weather']['wind_speed_10m']) }}
+
+<span class="text-lg">
+
+km/h
+
+</span>
+
+</h2>
+
+</div>
+
+<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+
+<p class="text-slate-500 text-sm">
+
+☁ Cloud Cover
+
+</p>
+
+<h2 class="mt-3 text-3xl font-black text-white">
+
+{{ $environment['weather']['cloud_cover'] }}%
+
+</h2>
+
+</div>
+
+<div class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
+
+<p class="text-cyan-300 text-sm">
+
+🌍 Weather Score
+
+</p>
+
+<h2 class="mt-3 text-3xl font-black text-cyan-300">
+
+{{ $environment['weather_score'] }}
+
+</h2>
+
+</div>
+
+</div>
+
+
+
+<hr class="border-slate-800 my-10">
+
+
+<div class="grid lg:grid-cols-2 gap-8">
+
+<div>
+
+<p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
+
+AI WEATHER SUMMARY
+
+</p>
+
+<p class="mt-5 text-slate-300 leading-8">
+
+{{ $environment['recommendation'] }}
+
+</p>
+
+</div>
+
+<div class="space-y-6">
+
+<div>
+
+<div class="flex justify-between text-sm mb-2">
+
+<span class="text-slate-400">
+
+Route Health
+
+</span>
+
+<span class="font-bold text-white">
+
+{{ $environment['route_score'] }}%
+
+</span>
+
+</div>
+
+<div class="h-3 rounded-full bg-slate-800 overflow-hidden">
+
+<div
+class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-700"
+
+style="width:{{ $environment['route_score'] }}%">
+
+</div>
+
+</div>
+
+</div>
+
+<div>
+
+<div class="flex justify-between text-sm mb-2">
+
+<span class="text-slate-400">
+
+AI Confidence
+
+</span>
+
+<span class="font-bold text-white">
+
+{{ $environment['confidence'] }}%
+
+</span>
+
+</div>
+
+<div class="h-3 rounded-full bg-slate-800 overflow-hidden">
+
+<div
+class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400 transition-all duration-700"
+
+style="width:{{ $environment['confidence'] }}%">
+
+</div>
+
+</div>
+
+</div>
+
+<div>
+
+<div class="flex justify-between text-sm mb-2">
+
+<span class="text-slate-400">
+
+Environmental Risk
+
+</span>
+
+<span class="font-bold text-white">
+
+{{ $environment['environmental_risk'] }}%
+
+</span>
+
+</div>
+
+<div class="h-3 rounded-full bg-slate-800 overflow-hidden">
+
+<div
+class="h-full rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-700"
+
+style="width:{{ $environment['environmental_risk'] }}%">
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{{-- ========================================= --}}
+{{-- WEATHER ANALYTICS --}}
+{{-- ========================================= --}}
+
+<section class="mt-14">
+
+<div class="flex justify-between items-end">
+
+    <div>
+
+        <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
+
+            LIVE ENVIRONMENT ANALYTICS
+
+        </p>
+
+        <h2 class="mt-2 text-4xl font-black text-white">
+
+            Weather Forecast
+
+        </h2>
+
+    </div>
+
+    <p class="text-slate-500">
+
+        AI Prediction • Next 6 Hours
+
+    </p>
+    
+
+</div>
+
+<div class="flex flex-wrap gap-3 mt-8 text-white">
+
+    <button class="weather-tab active" data-type="temp">
+        🌡 Temperature
+    </button>
+
+    <button class="weather-tab" data-type="humidity">
+        💧 Humidity
+    </button>
+
+    <button class="weather-tab" data-type="wind">
+        🌬 Wind
+    </button>
+
+    <button class="weather-tab" data-type="rain">
+        🌧 Rain Probability
+    </button>
+
+    <button class="weather-tab" data-type="cloud">
+        ☁ Cloud
+    </button>
+
+</div>
+
+    <div
+class="mt-8 h-[430px] rounded-3xl bg-gradient-to-b from-cyan-500/5 to-transparent p-5 w-full">
+
+        <canvas id="temperatureChart"></canvas>
+
+    </div>
+
+</section>
+    </div>
+
+</div>
+
+</div>
+<br>
+
 <!-- AI Executive Summary -->
 
 <div
@@ -633,7 +1342,322 @@ Prediction Model
 </div>
 
 </div>
+<section class="mt-10">
 
+    <div class="mb-10">
+
+        <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
+            AI IMPACT SIMULATION
+        </p>
+
+        <h2 class="mt-3 text-5xl font-black text-white">
+            Before vs After AI Optimization
+        </h2>
+
+        <p class="mt-4 text-slate-400 text-lg max-w-3xl leading-8">
+            Estimated improvements generated by AgriFlow AI if all recommendations are implemented.
+        </p>
+
+    </div>
+
+    <div class="grid lg:grid-cols-2 xl:grid-cols-4 gap-7">
+
+
+
+
+{{-- ====================================================== --}}
+{{-- Operational Risk --}}
+{{-- ====================================================== --}}
+
+<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-cyan-500 duration-300">
+
+<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
+Operational Risk
+</p>
+
+<div class="mt-8 text-center">
+
+<p class="text-slate-500 text-sm">
+Current
+</p>
+
+<h1 class="text-6xl font-black text-white">
+{{ $currentRisk }}%
+</h1>
+
+<div class="my-6">
+
+<div class="w-14 h-14 rounded-full bg-emerald-500/20 mx-auto flex items-center justify-center">
+
+<svg class="w-7 h-7 text-emerald-400"
+fill="none"
+stroke="currentColor"
+viewBox="0 0 24 24">
+
+<path stroke-linecap="round"
+stroke-linejoin="round"
+stroke-width="2.5"
+d="M19 14l-7 7-7-7m7 7V3"/>
+
+</svg>
+
+</div>
+
+</div>
+
+<p class="text-cyan-300 text-sm">
+Optimized
+</p>
+
+<h1 class="text-5xl font-black text-emerald-400">
+{{ $projectedRisk }}%
+</h1>
+
+</div>
+
+<div class="mt-8">
+
+<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
+
+<div
+class="h-full bg-gradient-to-r from-red-500 via-orange-400 to-emerald-400 rounded-full"
+style="width:75%">
+</div>
+
+</div>
+
+<p class="mt-5 text-center font-bold text-emerald-300">
+↓ {{ $riskReduction }}% Lower Risk
+</p>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+{{-- ====================================================== --}}
+{{-- FOOD WASTE --}}
+{{-- ====================================================== --}}
+
+<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-cyan-500 duration-300">
+
+<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
+Food Waste
+</p>
+
+<div class="mt-8 text-center">
+
+<p class="text-slate-500 text-sm">
+Current
+</p>
+
+<h1 class="text-5xl font-black text-white">
+{{ number_format($currentWaste,0) }}
+</h1>
+
+<p class="text-slate-300 font-bold">
+kg
+</p>
+
+<div class="my-6">
+
+<div class="w-14 h-14 rounded-full bg-cyan-500/20 mx-auto flex items-center justify-center">
+
+<svg class="w-7 h-7 text-cyan-400"
+fill="none"
+stroke="currentColor"
+viewBox="0 0 24 24">
+
+<path stroke-linecap="round"
+stroke-linejoin="round"
+stroke-width="2.5"
+d="M19 14l-7 7-7-7m7 7V3"/>
+
+</svg>
+
+</div>
+
+</div>
+
+<p class="text-cyan-300 text-sm">
+Optimized
+</p>
+
+<h1 class="text-5xl font-black text-cyan-400">
+{{ number_format($projectedWaste,0) }}
+</h1>
+
+<p class="text-cyan-300 font-bold">
+kg
+</p>
+
+</div>
+
+<div class="mt-8">
+
+<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
+
+<div
+class="h-full bg-gradient-to-r from-amber-400 via-cyan-400 to-sky-500 rounded-full"
+style="width:70%">
+</div>
+
+</div>
+
+<p class="mt-5 text-center font-bold text-cyan-300">
+↓ {{ number_format($wasteSaved,0) }} kg Prevented
+</p>
+
+</div>
+
+</div>
+
+
+
+
+
+
+{{-- ====================================================== --}}
+{{-- CARBON --}}
+{{-- ====================================================== --}}
+
+<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-lime-500 duration-300">
+
+<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
+Carbon Emission
+</p>
+
+<div class="mt-8 text-center">
+
+<p class="text-slate-500 text-sm">
+Current
+</p>
+
+<h1 class="text-5xl font-black text-white">
+{{ number_format($currentCarbon,0) }}
+</h1>
+
+<p class="text-slate-300 font-bold">
+kg
+</p>
+
+<div class="my-6">
+
+<div class="w-14 h-14 rounded-full bg-lime-500/20 mx-auto flex items-center justify-center">
+
+🌱
+
+</div>
+
+</div>
+
+<p class="text-lime-300 text-sm">
+Optimized
+</p>
+
+<h1 class="text-5xl font-black text-lime-400">
+{{ number_format($projectedCarbon,0) }}
+</h1>
+
+<p class="text-lime-300 font-bold">
+kg
+</p>
+
+</div>
+
+<div class="mt-8">
+
+<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
+
+<div
+class="h-full bg-gradient-to-r from-emerald-400 to-lime-500 rounded-full"
+style="width:82%">
+</div>
+
+</div>
+
+<p class="mt-5 text-center font-bold text-lime-300">
+↓ {{ number_format($carbonSaved,0) }} kg CO₂ Saved
+</p>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+{{-- ====================================================== --}}
+{{-- DELIVERY --}}
+{{-- ====================================================== --}}
+
+<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-indigo-500 duration-300">
+
+<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
+Delivery Efficiency
+</p>
+
+<div class="mt-8 text-center">
+
+<p class="text-slate-500 text-sm">
+Current
+</p>
+
+<h1 class="text-6xl font-black text-white">
+{{ $currentEfficiency }}%
+</h1>
+
+<div class="my-6">
+
+<div class="w-14 h-14 rounded-full bg-indigo-500/20 mx-auto flex items-center justify-center">
+
+⚡
+
+</div>
+
+</div>
+
+<p class="text-indigo-300 text-sm">
+Optimized
+</p>
+
+<h1 class="text-5xl font-black text-indigo-300">
+{{ $projectedEfficiency }}%
+</h1>
+
+</div>
+
+<div class="mt-8">
+
+<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
+
+<div
+class="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-cyan-400 rounded-full"
+style="width:85%">
+</div>
+
+</div>
+
+<p class="mt-5 text-center font-bold text-indigo-300">
+↑ {{ $efficiencyGain }}% Faster
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+<br>
         <!-- Main Content -->
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1337,6 +2361,281 @@ color:'rgba(255,255,255,.08)'
 }
 
 }
+
+});
+
+</script>
+<script>
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+const ctx=document.getElementById("temperatureChart");
+
+if(!ctx)return;
+
+const weatherSeries={
+
+temp:@json(collect($weatherTrend)->pluck('temp')),
+
+humidity:@json(collect($weatherTrend)->pluck('humidity')),
+
+wind:@json(collect($weatherTrend)->pluck('wind')),
+
+rain:@json(collect($weatherTrend)->pluck('rain')),
+
+cloud:@json(collect($weatherTrend)->pluck('cloud'))
+
+};
+
+const weatherColor={
+
+temp:"#22d3ee",
+
+humidity:"#38bdf8",
+
+wind:"#22c55e",
+
+rain:"#6366f1",
+
+cloud:"#94a3b8"
+
+};
+
+const gradientColor={
+
+temp:"rgba(34,211,238,.45)",
+
+humidity:"rgba(56,189,248,.45)",
+
+wind:"rgba(34,197,94,.45)",
+
+rain:"rgba(99,102,241,.45)",
+
+cloud:"rgba(148,163,184,.45)"
+
+};
+
+const weatherChart=new Chart(ctx,{
+
+type:"line",
+
+data:{
+
+labels:@json(collect($weatherTrend)->pluck('time')),
+
+datasets:[{
+
+label:"Temperature",
+
+data:weatherSeries.temp,
+
+borderColor:"#22d3ee",
+
+borderWidth:5,
+
+fill:true,
+
+tension:.45,
+
+pointRadius:0,
+
+pointHoverRadius:8,
+
+backgroundColor:(ctx)=>{
+
+const chart=ctx.chart;
+
+const {ctx:canvas,chartArea}=chart;
+
+if(!chartArea)return null;
+
+const gradient=canvas.createLinearGradient(
+0,
+chartArea.top,
+0,
+chartArea.bottom
+);
+
+const activeType="temp";
+
+gradient.addColorStop(
+    0,
+    gradientColor[activeType]
+);
+
+gradient.addColorStop(
+    1,
+    gradientColor[activeType].replace(".45","0")
+);
+
+return gradient;
+
+}
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false,
+
+interaction:{
+mode:"index",
+intersect:false
+},
+
+plugins: {
+
+    legend:{
+        display:false
+    },
+
+    tooltip:{
+
+        callbacks:{
+
+            label:function(context){
+
+                const label = context.dataset.label;
+
+                const value = context.parsed.y;
+
+                if(label === "Rain Probability"){
+
+                    return label + ": " + value + "%";
+
+                }
+
+                if(label === "Humidity"){
+
+                    return label + ": " + value + "%";
+
+                }
+
+                if(label === "Cloud Cover"){
+
+                    return label + ": " + value + "%";
+
+                }
+
+                if(label === "Temperature"){
+
+                    return label + ": " + value + "°C";
+
+                }
+
+                if(label === "Wind Speed"){
+
+                    return label + ": " + value + " km/h";
+
+                }
+
+                return label + ": " + value;
+
+            }
+
+        }
+
+    }
+
+},
+
+animations:{
+
+tension:{
+
+duration:1800,
+
+easing:"easeInOutQuart"
+
+}
+
+},
+
+scales:{
+
+x:{
+
+grid:{
+display:false
+},
+
+ticks:{
+color:"#94a3b8"
+}
+
+},
+
+y:{
+
+grid:{
+
+color:"rgba(255,255,255,.05)",
+
+drawBorder:false
+
+},
+
+ticks:{
+
+color:"#94a3b8"
+
+}
+
+}
+
+}
+
+}
+
+    });
+
+    // ============================
+    // Weather Tabs
+    // ============================
+
+    document.querySelectorAll(".weather-tab").forEach(tab=>{
+
+        tab.addEventListener("click",()=>{
+
+            document.querySelectorAll(".weather-tab").forEach(btn=>{
+
+                btn.classList.remove("active");
+
+            });
+
+            tab.classList.add("active");
+
+            const type=tab.dataset.type;
+
+const labels = {
+
+    temp: "Temperature",
+
+    humidity: "Humidity",
+
+    wind: "Wind Speed",
+
+    rain: "Rain Probability",
+
+    cloud: "Cloud Cover"
+
+};
+
+            weatherChart.data.datasets[0].label=labels[type];
+
+            weatherChart.data.datasets[0].data=weatherSeries[type];
+
+            weatherChart.data.datasets[0].borderColor=weatherColor[type];
+
+            weatherChart.update('active');
+
+        });
+
+    });
 
 });
 

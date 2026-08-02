@@ -119,11 +119,81 @@ for ($day = 1; $day <= 7; $day++) {
         'risk' => min(100, $predictedRisk)
     ];
 }
+$explainability = [];
 
+if ($remainingDays <= 0) {
+    $explainability[] = [
+        'title' => 'Shelf Life',
+        'icon' => '📦',
+        'impact' => 40,
+        'reason' => 'The product has exceeded its shelf life, significantly increasing spoilage risk.'
+    ];
+} elseif ($remainingDays <= 3) {
+    $explainability[] = [
+        'title' => 'Shelf Life',
+        'icon' => '📦',
+        'impact' => 30,
+        'reason' => 'Remaining shelf life is critically low.'
+    ];
+} elseif ($remainingDays <= 7) {
+    $explainability[] = [
+        'title' => 'Shelf Life',
+        'icon' => '📦',
+        'impact' => 15,
+        'reason' => 'Shelf life is approaching its expiration.'
+    ];
+}
+
+if ($shipment->distance_km > 500) {
+    $explainability[] = [
+        'title' => 'Transportation Distance',
+        'icon' => '🚚',
+        'impact' => 25,
+        'reason' => 'Long transportation routes increase the probability of spoilage.'
+    ];
+} elseif ($shipment->distance_km > 100) {
+    $explainability[] = [
+        'title' => 'Transportation Distance',
+        'icon' => '🚚',
+        'impact' => 15,
+        'reason' => 'Moderate transportation distance contributes to delivery risk.'
+    ];
+}
+
+if ($shipment->carbon_emission > 80) {
+    $explainability[] = [
+        'title' => 'Carbon Emission',
+        'icon' => '🌱',
+        'impact' => 15,
+        'reason' => 'High estimated carbon emissions indicate inefficient logistics.'
+    ];
+}
+
+if ($shipment->status != 'Delivered') {
+    $explainability[] = [
+        'title' => 'Shipment Status',
+        'icon' => '📍',
+        'impact' => 20,
+        'reason' => 'Shipment is still being processed or transported.'
+    ];
+}
+
+usort($explainability, function ($a, $b) {
+    return $b['impact'] <=> $a['impact'];
+});
     if (!$result) {
         return back()->with('error', 'AI gagal merespons');
     }
+$totalImpact = collect($explainability)->sum('impact');
 
+$priorityScore = min(
+    100,
+    round(
+        ($wasteProbability * 0.6)
+        +
+        ($totalImpact * 0.4)
+    )
+);
 
     $recommendation = strstr($result, 'Recommendations:');
     
@@ -174,7 +244,10 @@ return redirect()
     ->with('risk_level', $riskLevel)
     ->with('waste_probability', $wasteProbability . '%')
     ->with('sustainability_score', $sustainabilityScore)
-    ->with('prediction_data', $predictionData);
+    ->with('prediction_data', $predictionData)
+->with('explainability', $explainability)
+->with('priority_score', $priorityScore)
+->with('total_impact', $totalImpact);
 }
 
 public function history()

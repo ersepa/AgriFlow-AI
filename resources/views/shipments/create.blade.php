@@ -16,19 +16,35 @@
 
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Harvest Commodity</label>
-                        <select name="harvest_id" class="w-full bg-transparent border-0 focus:ring-0 text-slate-800 font-bold p-0">
-                            @foreach($harvests as $harvest)
-                                <option value="{{ $harvest->id }}">{{ $harvest->commodity }}</option>
-                            @endforeach
-                        </select>
+<select
+    id="harvestSelect"
+    name="harvest_id"
+    class="w-full bg-transparent border-0 focus:ring-0 text-slate-800 font-bold p-0">
+
+    @foreach($harvests as $harvest)
+        <option
+            value="{{ $harvest->id }}"
+            data-origin="{{ $harvest->location }}">
+            {{ $harvest->commodity }}
+        </option>
+    @endforeach
+
+</select>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Origin</label>
-                            <input type="text" name="origin" placeholder="e.g. Jakarta" 
-                                   class="w-full bg-transparent border-0 focus:ring-0 p-0 font-bold text-slate-800 placeholder-slate-300">
-                        </div>
+    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+        Origin
+    </label>
+
+    <input
+        type="text"
+        id="originInput"
+        name="origin"
+        readonly
+        class="w-full bg-transparent border-0 focus:ring-0 p-0 font-bold text-slate-800">
+</div>
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Destination</label>
                             <input type="text" name="destination" placeholder="e.g. Surabaya" 
@@ -53,4 +69,21 @@
             </div>
         </div>
     </div>
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const harvestSelect = document.getElementById('harvestSelect');
+    const originInput = document.getElementById('originInput');
+
+    function updateOrigin() {
+        const selectedOption = harvestSelect.options[harvestSelect.selectedIndex];
+        originInput.value = selectedOption.dataset.origin;
+    }
+
+    // Isi saat pertama kali halaman dibuka
+    updateOrigin();
+
+    // Update ketika commodity berubah
+    harvestSelect.addEventListener('change', updateOrigin);
+});
+</script>
 </x-app-layout>

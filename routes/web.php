@@ -10,10 +10,39 @@
     use App\Models\AiAnalysis;
     use App\Http\Controllers\AIOptimizerController;
     use App\Services\AI\DecisionEngine;
+    use App\Http\Controllers\SimulationController;
+    use App\Services\EnvironmentalService;
+
+
+Route::get('/test-environment', function () {
+
+    $shipment = \App\Models\Shipment::whereNotNull('origin_lat')
+        ->whereNotNull('origin_lng')
+        ->latest()
+        ->first();
+
+    $service = new \App\Services\EnvironmentalService();
+
+    return $service->getEnvironment($shipment);
+
+});
 
     Route::get('/', function () {
         return view('welcome');
     });
+
+    Route::middleware('auth')->group(function(){
+
+    Route::get('/simulation',
+        [SimulationController::class,'index']
+    )->name('simulation.index');
+
+});
+
+Route::post(
+    '/simulation/run',
+    [SimulationController::class,'run']
+)->name('simulation.run');  
 
 Route::get('/ai-optimizer/explain/{shipment}', 
     [AIOptimizerController::class, 'explain']
@@ -21,7 +50,7 @@ Route::get('/ai-optimizer/explain/{shipment}',
 
     Route::get('/ai-optimizer', [AIOptimizerController::class, 'index'])
     ->middleware('auth')
-    ->name('ai.optimizer');
+    ->name('ai-optimizer');
 
     Route::get('/ai-analysis/history/{id}', [AiAnalysisController::class, 'show'])
     ->middleware(['auth'])
@@ -196,6 +225,27 @@ $statusDelivered = \App\Models\Shipment::where('status','Delivered')->count();
 
 $predictionTrend = [];
 
+/*
+|--------------------------------------------------------------------------
+| Live Environmental Intelligence
+|--------------------------------------------------------------------------
+*/
+
+$environment = null;
+
+$latestShipment = \App\Models\Shipment::whereNotNull('origin_lat')
+    ->whereNotNull('origin_lng')
+    ->latest()
+    ->first();
+
+if ($latestShipment) {
+
+    $environmentService = new EnvironmentalService();
+
+    $environment = $environmentService->getEnvironment($latestShipment);
+
+}
+
 $engine = new DecisionEngine();
 
 foreach(range(1,7) as $day){
@@ -225,7 +275,105 @@ foreach(range(1,7) as $day){
     );
 
 }
-        
+      $currentRisk = $totalAnalyses > 0
+    ? round(($highRisk / $totalAnalyses) * 100)
+    : 0;
+
+// Proyeksi setelah semua rekomendasi AI diterapkan
+$projectedRisk = max(0, round($currentRisk * 0.65));
+
+$currentWaste = round($totalWaste, 1);
+$projectedWaste = round($currentWaste * 0.68, 1);
+
+$currentCarbon = round(
+    \App\Models\Shipment::sum('carbon_emission'),
+    1
+);
+
+$projectedCarbon = round($currentCarbon * 0.82, 1);
+
+$currentEfficiency = $totalShipments > 0
+    ? round(($deliveredShipments / $totalShipments) * 100)
+    : 0;
+
+$projectedEfficiency = min(
+    100,
+    $currentEfficiency + 22
+);
+
+// Confidence dihitung dari kualitas data
+$projectionConfidence = min(
+    98,
+    80 + floor($totalAnalyses * 0.8)
+);
+
+$riskReduction = $currentRisk - $projectedRisk;
+$wasteSaved = $currentWaste - $projectedWaste;
+$carbonSaved = $currentCarbon - $projectedCarbon;
+$efficiencyGain = $projectedEfficiency - $currentEfficiency;  
+
+$forecast = $environment['forecast'];
+$currentHour = now()->hour;
+
+$weatherTrend = [];
+
+/*
+|--------------------------------------------------------------------------
+| Current Weather (Now)
+|--------------------------------------------------------------------------
+*/
+
+$weatherTrend[] = [
+
+    'time' => now()->format('H:i'),
+
+    'temp' => $environment['weather']['temperature_2m'],
+
+    'humidity' => $environment['weather']['relative_humidity_2m'],
+
+    'wind' => $environment['weather']['wind_speed_10m'],
+
+    'rain' => $forecast['precipitation_probability'][$currentHour] ?? 0,
+
+    'cloud' => $environment['weather']['cloud_cover'],
+
+];
+
+/*
+|--------------------------------------------------------------------------
+| Next 5 Hours Forecast
+|--------------------------------------------------------------------------
+*/
+
+for (
+
+    $i = $currentHour + 1;
+
+    $i < min($currentHour + 6, count($forecast['time']));
+
+    $i++
+
+) {
+
+    $weatherTrend[] = [
+
+        'time' => \Carbon\Carbon::parse(
+            $forecast['time'][$i]
+        )->format('H:i'),
+
+        'temp' => $forecast['temperature_2m'][$i],
+
+        'humidity' => $forecast['relative_humidity_2m'][$i],
+
+        'wind' => $forecast['wind_speed_10m'][$i],
+
+        'rain' => $forecast['precipitation_probability'][$i],
+
+        'cloud' => $forecast['cloud_cover'][$i],
+
+    ];
+
+}
 
     return view('dashboard', compact(
         'totalHarvests',
@@ -255,6 +403,26 @@ foreach(range(1,7) as $day){
 'statusTransit',
 'statusDelivered',
 'predictionTrend',
+'currentRisk',
+'projectedRisk',
+
+'currentWaste',
+'projectedWaste',
+
+'currentCarbon',
+'projectedCarbon',
+
+'currentEfficiency',
+'projectedEfficiency',
+
+'projectionConfidence',
+
+'riskReduction',
+'wasteSaved',
+'carbonSaved',
+'efficiencyGain',
+'environment',
+'weatherTrend',
     ));
 
     })->middleware(['auth'])->name('dashboard');

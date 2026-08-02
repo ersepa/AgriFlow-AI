@@ -115,6 +115,33 @@
     </span>
 </a>
 
+<a href="{{ route('simulation.index') }}"
+   class="group relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 overflow-hidden
+   {{ request()->routeIs('simulation*') ? 'bg-cyan-50 text-cyan-600 font-bold' : 'text-slate-500 hover:bg-cyan-50 hover:text-cyan-600' }}">
+
+    <div class="absolute left-0 w-1.5 h-8 bg-cyan-500 rounded-r-full transition-transform duration-300
+        {{ request()->routeIs('simulation*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}">
+    </div>
+
+    <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300"
+         fill="none"
+         stroke="currentColor"
+         viewBox="0 0 24 24">
+
+        <!-- Chip / Digital Twin Icon -->
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 3v2m6-2v2M3 9h2m14 0h2M9 19v2m6-2v2M3 15h2m14 0h2M7 7h10v10H7V7z"/>
+
+    </svg>
+
+    <span class="group-hover:translate-x-1 transition-transform duration-300">
+        AI Digital Twin
+    </span>
+
+</a>
+
                 <hr class="border-slate-100 my-4">
 
 <a href="/profile" class="group relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 overflow-hidden 

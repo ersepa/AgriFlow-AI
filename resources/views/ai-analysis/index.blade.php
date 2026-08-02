@@ -167,7 +167,285 @@ $sustainScore = session('sustainability_score');
     </div>
 
 </div>
+@if(session('explainability'))
 
+@php
+$drivers = session('explainability');
+$totalImpact = collect($drivers)->sum('impact');
+@endphp
+
+<div class="mb-8 bg-slate-800/50 border border-slate-700 rounded-3xl p-7">
+
+    <div class="flex items-center justify-between mb-7">
+
+        <div>
+
+            <p class="text-xs uppercase tracking-[0.25em] text-indigo-400 font-black">
+                AI Explainability
+            </p>
+
+            <h2 class="text-2xl font-black text-white mt-1">
+                Why did AI produce this prediction?
+            </h2>
+
+        </div>
+
+        <div class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-300 text-xs font-black">
+            Decision Engine
+        </div>
+
+    </div>
+
+    <div class="space-y-6">
+
+        @foreach($drivers as $driver)
+
+@php
+    if($driver['impact'] >= 30){
+        $barColor = 'bg-rose-500';
+        $textColor = 'text-rose-400';
+        $label = 'Critical';
+    }elseif($driver['impact'] >= 20){
+        $barColor = 'bg-amber-400';
+        $textColor = 'text-amber-400';
+        $label = 'High';
+    }else{
+        $barColor = 'bg-emerald-500';
+        $textColor = 'text-emerald-400';
+        $label = 'Medium';
+    }
+@endphp
+
+        <div>
+
+            <div class="flex justify-between items-center mb-2">
+
+                <div class="flex items-center gap-3">
+
+                    <span class="text-2xl">
+                        {{ $driver['icon'] }}
+                    </span>
+
+                    <div>
+
+                        <p class="text-white font-bold">
+                            {{ $driver['title'] }}
+                        </p>
+
+                        <p class="text-slate-400 text-xs">
+                            {{ $driver['reason'] }}
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="text-right">
+
+                    <p class="text-white font-black">
+                        {{ $driver['impact'] }}%
+                    </p>
+
+<p class="{{ $textColor }} text-xs uppercase font-bold">
+    {{ $label }}
+</p>
+
+                </div>
+
+            </div>
+
+            <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
+
+<div
+    class="h-full rounded-full transition-all duration-1000 {{ $barColor }}"
+    style="width: {{ $driver['impact'] }}%;">
+</div>
+
+            </div>
+
+        </div>
+
+        @endforeach
+
+    </div>
+
+    <div class="mt-8 border-t border-slate-700 pt-6">
+
+        <div class="flex justify-between mb-2">
+
+            <span class="text-slate-400 font-bold">
+                AI Confidence
+            </span>
+
+            <span class="text-white font-black">
+                {{ min(100,$totalImpact) }}%
+            </span>
+
+        </div>
+
+        <div class="h-3 rounded-full bg-slate-700 overflow-hidden">
+
+            <div
+                class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-cyan-500 to-emerald-500 transition-all duration-1000"
+                style="width:{{ min(100,$totalImpact) }}%">
+            </div>
+
+        </div>
+
+        <p class="mt-5 text-slate-300 leading-7">
+
+            <span class="font-bold text-white">
+                Primary Cause:
+            </span>
+
+            {{ $drivers[0]['reason'] }}
+
+            This factor contributed the most to the overall AI prediction.
+
+        </p>
+
+    </div>
+
+</div>
+<div class="mt-8 bg-slate-900 rounded-3xl p-8 border border-slate-700">
+
+    <h2 class="text-xl font-black text-white mb-8">
+        AI Decision Score
+    </h2>
+
+    <div class="flex flex-col items-center">
+
+        <div class="relative w-56 h-56">
+
+            <svg class="w-full h-full -rotate-90">
+
+                <circle
+                    cx="112"
+                    cy="112"
+                    r="90"
+                    stroke="#334155"
+                    stroke-width="16"
+                    fill="none"/>
+
+                @php
+
+                    $circumference = 2 * pi() * 90;
+
+                    $offset = $circumference -
+                    ($circumference * session('priority_score',0)/100);
+
+                @endphp
+
+                <circle
+                    cx="112"
+                    cy="112"
+                    r="90"
+                    stroke="#6366f1"
+                    stroke-width="16"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-dasharray="{{ $circumference }}"
+                    stroke-dashoffset="{{ $offset }}"
+                    class="transition-all duration-1000"/>
+
+            </svg>
+
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+
+                <p class="text-6xl font-black text-white">
+
+                    {{ session('priority_score') }}
+
+                </p>
+
+                <p class="text-indigo-400 uppercase font-bold tracking-widest">
+
+                    HIGH PRIORITY
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="mt-8">
+
+    <h3 class="text-sm uppercase tracking-widest text-slate-400 font-black mb-5">
+
+        Decision Breakdown
+
+    </h3>
+
+    @foreach($drivers as $driver)
+
+    <div class="flex justify-between items-center py-3 border-b border-slate-800">
+
+        <div class="flex items-center gap-3">
+
+            <span class="text-xl">
+
+                {{ $driver['icon'] }}
+
+            </span>
+
+            <span class="text-white font-bold">
+
+                {{ $driver['title'] }}
+
+            </span>
+
+        </div>
+
+        <span class="text-indigo-400 font-black">
+
+            +{{ $driver['impact'] }}
+
+        </span>
+
+    </div>
+
+    @endforeach
+
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4">
+
+<div class="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-5">
+
+<p class="text-xs uppercase text-slate-400">
+
+Overall Impact
+
+</p>
+
+<p class="text-3xl font-black text-white">
+
+{{ session('total_impact') }}
+
+</p>
+
+</div>
+
+<div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5">
+
+<p class="text-xs uppercase text-slate-400">
+
+Decision
+
+</p>
+
+<p class="text-xl font-black text-emerald-400">
+
+Dispatch Now
+
+</p>
+
+</div>
+
+</div>
+@endif
         <div class="pt-6 border-t border-slate-700">
             <p class="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">Recommendations</p>
             <div class="text-sm text-indigo-100/80 font-medium leading-relaxed italic">
