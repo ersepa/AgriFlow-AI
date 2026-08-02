@@ -17,7 +17,37 @@ $weather = $this->getWeather(
 );
 
 if (!$weather) {
-    return null;
+
+    return [
+        'location' => env('DASHBOARD_LOCATION', 'Jakarta'),
+        'weather' => [
+            'temperature_2m' => null,
+            'relative_humidity_2m' => null,
+            'rain' => null,
+            'cloud_cover' => null,
+            'wind_speed_10m' => null,
+        ],
+        'forecast' => [
+            'time' => [],
+            'temperature_2m' => [],
+            'relative_humidity_2m' => [],
+            'precipitation_probability' => [],
+            'cloud_cover' => [],
+            'wind_speed_10m' => [],
+        ],
+        'weather_score' => 0,
+        'route_score' => 0,
+        'route_condition' => 'Unavailable',
+        'carbon_condition' => 'Unavailable',
+        'carbon_index' => 0,
+        'confidence' => 0,
+        'eta' => null,
+        'environmental_risk' => 0,
+        'risk_level' => 'Unknown',
+        'recommendation' => 'Weather service is temporarily unavailable.',
+        'updated_at' => now()->format('H:i'),
+    ];
+
 }
 
 $current = $weather['current'];
@@ -294,12 +324,19 @@ private function getWeather($lat, $lng)
 
     $data = $response->json();
 
-    return [
+    if (
+    !isset($data['current']) ||
+    !isset($data['hourly'])
+) {
+    return null;
+}
 
-        'current' => $data['current'],
+return [
 
-        'hourly' => $data['hourly']
+    'current' => $data['current'] ?? [],
 
-    ];
+    'hourly' => $data['hourly'] ?? [],
+
+];
 }
 }
