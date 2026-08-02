@@ -312,32 +312,33 @@ $wasteSaved = $currentWaste - $projectedWaste;
 $carbonSaved = $currentCarbon - $projectedCarbon;
 $efficiencyGain = $projectedEfficiency - $currentEfficiency;  
 
-$forecast = $environment['forecast'];
+$forecast = $environment['forecast'] ?? [];
 $currentHour = now()->hour;
 
 $weatherTrend = [];
 
-/*
-|--------------------------------------------------------------------------
-| Current Weather (Now)
-|--------------------------------------------------------------------------
-*/
+if ($environment && isset($environment['weather'])) {
 
-$weatherTrend[] = [
+    $weatherTrend[] = [
+        'time' => now()->format('H:i'),
+        'temp' => $environment['weather']['temperature_2m'] ?? null,
+        'humidity' => $environment['weather']['relative_humidity_2m'] ?? null,
+        'wind' => $environment['weather']['wind_speed_10m'] ?? null,
+        'rain' => $forecast['precipitation_probability'][$currentHour] ?? 0,
+        'cloud' => $environment['weather']['cloud_cover'] ?? null,
+    ];
 
-    'time' => now()->format('H:i'),
-
-    'temp' => $environment['weather']['temperature_2m'],
-
-    'humidity' => $environment['weather']['relative_humidity_2m'],
-
-    'wind' => $environment['weather']['wind_speed_10m'],
-
-    'rain' => $forecast['precipitation_probability'][$currentHour] ?? 0,
-
-    'cloud' => $environment['weather']['cloud_cover'],
-
-];
+    for ($i = $currentHour + 1; $i < min($currentHour + 6, count($forecast['time'] ?? [])); $i++) {
+        $weatherTrend[] = [
+            'time' => \Carbon\Carbon::parse($forecast['time'][$i])->format('H:i'),
+            'temp' => $forecast['temperature_2m'][$i] ?? null,
+            'humidity' => $forecast['relative_humidity_2m'][$i] ?? null,
+            'wind' => $forecast['wind_speed_10m'][$i] ?? null,
+            'rain' => $forecast['precipitation_probability'][$i] ?? 0,
+            'cloud' => $forecast['cloud_cover'][$i] ?? null,
+        ];
+    }
+}
 
 /*
 |--------------------------------------------------------------------------
