@@ -1282,6 +1282,109 @@ transition-all duration-500">
 
 </div>
 
+<button
+    id="runSimulation"
+    data-url="{{ route('simulation.run') }}"
+    class="group relative mt-8 w-full overflow-hidden
+    rounded-2xl md:rounded-[28px]
+    border border-cyan-400/30
+    bg-gradient-to-r
+    from-cyan-500
+    via-sky-500
+    to-indigo-600
+    px-5 py-4 md:px-7 md:py-5
+    transition-all duration-500
+    hover:-translate-y-1
+    hover:shadow-[0_0_60px_rgba(34,211,238,.40)]
+    active:scale-[.98]">
+
+    <!-- Shine -->
+    <div
+        class="absolute inset-0
+        bg-gradient-to-r
+        from-white/20
+        via-transparent
+        to-transparent
+        translate-x-[-100%]
+        group-hover:translate-x-[100%]
+        transition-transform duration-1000">
+    </div>
+
+    <div class="relative flex items-center justify-between gap-4">
+
+        <!-- Left -->
+        <div class="flex items-center gap-3 md:gap-5">
+
+            <div
+                class="flex h-11 w-11 md:h-14 md:w-14
+                items-center justify-center
+                rounded-xl md:rounded-2xl
+                bg-white/20
+                backdrop-blur-md
+                text-2xl md:text-3xl">
+
+                ⚡
+
+            </div>
+
+            <div class="text-left">
+
+                <p
+                    class="uppercase
+                    tracking-[0.2em] md:tracking-[0.35em]
+                    text-[10px] md:text-xs
+                    font-bold
+                    text-cyan-100">
+
+                    AI Simulation
+
+                </p>
+
+                <h2
+                    class="mt-1
+                    text-lg md:text-2xl
+                    font-black
+                    text-white">
+
+                    Launch Digital Twin
+
+                </h2>
+
+            </div>
+
+        </div>
+
+        <!-- Arrow -->
+        <div
+            class="flex h-10 w-10 md:h-12 md:w-12
+            items-center justify-center
+            rounded-full
+            bg-white/15
+            backdrop-blur-md
+            transition-transform duration-500
+            group-hover:translate-x-1 md:group-hover:translate-x-2">
+
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 md:h-6 md:w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7" />
+
+            </svg>
+
+        </div>
+
+    </div>
+
+</button>
+
 <div id="result"></div>
 </div>
 </div>
