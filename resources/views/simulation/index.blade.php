@@ -1225,39 +1225,46 @@ transition-all duration-500">
 
 </div>
 
-{{-- AI Route --}}
-<div class="mt-6 rounded-3xl border border-cyan-500/20 bg-gradient-to-br
-from-cyan-500/10
-via-slate-900
-to-slate-950
-border border-cyan-500/20
-shadow-[0_0_35px_rgba(34,211,238,.12)] p-6">
+<div
+    class="relative overflow-hidden
+    mt-6
+    rounded-2xl md:rounded-3xl
+    border border-cyan-500/20
+    bg-gradient-to-br
+    from-slate-950
+    via-slate-900
+    to-cyan-950
+    shadow-[0_0_35px_rgba(34,211,238,.12)]
+    p-5 md:p-6">
 
-    <div class="flex items-center justify-between">
+    <!-- Glow -->
+    <div class="absolute inset-0 opacity-20">
+
+        <div class="absolute -top-20 -left-16 w-56 h-56 rounded-full bg-cyan-500 blur-3xl"></div>
+
+        <div class="absolute bottom-0 right-0 w-52 h-52 rounded-full bg-indigo-500 blur-3xl"></div>
+
+    </div>
+
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
         <div>
 
-            <p class="uppercase tracking-[0.3em] text-xs text-cyan-400 font-black">
-
+            <p class="uppercase tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-xs text-cyan-400 font-black">
                 AI Navigation
-
             </p>
 
-            <h2 class="mt-2 text-2xl font-black text-white">
-
+            <h2 class="mt-2 text-xl md:text-2xl font-black text-white">
                 Smart Route Optimization
-
             </h2>
 
-            <p class="mt-2 text-slate-400 leading-7">
-
+            <p class="mt-2 text-sm md:text-base text-slate-400 leading-6 md:leading-7">
                 AI automatically searches the fastest and most sustainable logistics route.
-
             </p>
 
         </div>
 
-        <label class="relative inline-flex cursor-pointer">
+        <label class="relative inline-flex cursor-pointer self-start md:self-auto">
 
             <input
                 id="route"
@@ -1265,99 +1272,15 @@ shadow-[0_0_35px_rgba(34,211,238,.12)] p-6">
                 checked
                 class="peer sr-only">
 
-            <div class="h-11 w-20 rounded-full bg-slate-700 transition peer-checked:bg-cyan-500"></div>
+            <div class="h-10 w-18 md:h-11 md:w-20 rounded-full bg-slate-700 transition peer-checked:bg-cyan-500"></div>
 
-            <div class="absolute left-1 top-1 h-9 w-9 rounded-full bg-white transition-all peer-checked:translate-x-9"></div>
+            <div class="absolute left-1 top-1 h-8 w-8 md:h-9 md:w-9 rounded-full bg-white transition-all peer-checked:translate-x-8 md:peer-checked:translate-x-9"></div>
 
         </label>
 
     </div>
 
-</div> {{-- relative z-10 --}}
 </div>
-<div class="mt-16">
-
-    
-</div>
-
-</div>
-
-<button
-    id="runSimulation"
-    data-url="{{ route('simulation.run') }}"
-    class="group relative w-full overflow-hidden rounded-[28px]
-    border border-cyan-400/30
-    bg-gradient-to-r
-    from-cyan-500
-    via-sky-500
-    to-indigo-600
-    px-8 py-6
-    transition-all duration-500
-    hover:-translate-y-1
-    hover:shadow-[0_0_70px_rgba(34,211,238,.45)]
-    active:scale-[0.98]">
-    
-
-    {{-- Glow --}}
-    <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent
-                translate-x-[-100%] group-hover:translate-x-[100%]
-                transition-transform duration-1000">
-    </div>
-
-    <div class="relative flex items-center justify-between">
-
-        <div class="flex items-center gap-5">
-
-            <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl
-                bg-white/20 backdrop-blur-md text-3xl">
-
-                ⚡
-
-            </div>
-
-            <div class="text-left">
-
-                <p class="uppercase tracking-[0.35em] text-xs font-bold text-cyan-100">
-
-                    AI Simulation
-
-                </p>
-
-                <h2 class="mt-1 text-2xl font-black text-white">
-
-                    Launch Digital Twin
-
-                </h2>
-
-            </div>
-
-        </div>
-
-        <div
-            class="flex h-14 w-14 items-center justify-center rounded-full
-            bg-white/15 backdrop-blur-md
-            transition-transform duration-500
-            group-hover:translate-x-2">
-
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="h-7 w-7 text-white"
-                 fill="none"
-                 viewBox="0 0 24 24"
-                 stroke="currentColor">
-
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5l7 7-7 7"/>
-
-            </svg>
-
-        </div>
-
-    </div>
-
-</button>
 
 <div id="result"></div>
 </div>
