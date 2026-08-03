@@ -991,7 +991,7 @@ via-slate-900
 to-cyan-950
 shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
-< class="px-4 py-6 sm:px-6 md:px-8 md:py-8">
+<div class="px-4 py-6 sm:px-6 md:px-8 md:py-8">
 
     <p class="uppercase tracking-[0.3em] md:tracking-[0.45em] text-cyan-400 text-[10px] md:text-xs font-black">
         AI Control Center
@@ -1005,7 +1005,7 @@ shadow-[0_0_50px_rgba(34,211,238,.12)]">
         Modify operational variables before launching the simulation.
     </p>
 
-    < class="mt-8 md:mt-12">
+    <div class="mt-8 md:mt-12">
 
         <p class="uppercase tracking-[0.25em] md:tracking-[0.3em] text-slate-400 text-[10px] md:text-xs font-bold">
             Vehicle Type
@@ -1087,6 +1087,9 @@ shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
         </div>
 
+    </div>
+
+</div>
 
 <input hidden id="vehicle" value="Truck">
 
@@ -1102,14 +1105,17 @@ shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
     {{-- Temperature --}}
     <div
-class="rounded-3xl
-border border-cyan-500/10
+class="relative overflow-hidden
+rounded-3xl
+border border-cyan-500/20
 bg-gradient-to-br
-from-slate-900/80
-to-slate-800/70
-backdrop-blur-xl
+from-slate-950
+via-slate-900
+to-cyan-950
 p-7
+shadow-[0_0_35px_rgba(34,211,238,.10)]
 hover:border-cyan-400/40
+hover:shadow-[0_0_45px_rgba(34,211,238,.18)]
 transition-all duration-500">
 
         <div class="flex items-center justify-between">
@@ -1160,14 +1166,17 @@ transition-all duration-500">
 
     {{-- Delay --}}
     <div
-class="rounded-3xl
-border border-cyan-500/10
+class="relative overflow-hidden
+rounded-3xl
+border border-cyan-500/20
 bg-gradient-to-br
-from-slate-900/80
-to-slate-800/70
-backdrop-blur-xl
+from-slate-950
+via-slate-900
+to-cyan-950
 p-7
+shadow-[0_0_35px_rgba(34,211,238,.10)]
 hover:border-cyan-400/40
+hover:shadow-[0_0_45px_rgba(34,211,238,.18)]
 transition-all duration-500">
 
         <div class="flex items-center justify-between">
