@@ -502,44 +502,64 @@ $inner .= "
 
         </div>
 
-{{-- ========================================================= --}}
-{{-- LIVE ENVIRONMENTAL INTELLIGENCE --}}
-{{-- ========================================================= --}}
+<div class="mt-8 md:mt-12">
 
-<div class="mt-12">
+<div
+    class="relative overflow-hidden rounded-2xl md:rounded-[42px]
+    bg-gradient-to-br from-[#07111d] via-[#081725] to-[#050b14]
+    border border-cyan-500/20
+    shadow-[0_0_80px_rgba(6,182,212,.15)]">
 
-<div class="relative overflow-hidden rounded-[42px]
-bg-gradient-to-br from-[#07111d] via-[#081725] to-[#050b14]
-border border-cyan-500/20
-shadow-[0_0_80px_rgba(6,182,212,.15)]">
+    <!-- Glow -->
+    <div
+        class="absolute -top-20 -right-10 md:-top-40 md:-right-20
+        w-56 h-56 md:w-[420px] md:h-[420px]
+        bg-cyan-500/15 blur-[100px] md:blur-[160px]">
+    </div>
 
-    {{-- Glow --}}
-    <div class="absolute -top-40 -right-20 w-[420px] h-[420px] bg-cyan-500/15 blur-[160px]"></div>
-    <div class="absolute -bottom-32 -left-20 w-[350px] h-[350px] bg-indigo-500/15 blur-[140px]"></div>
+    <div
+        class="absolute -bottom-16 -left-10 md:-bottom-32 md:-left-20
+        w-48 h-48 md:w-[350px] md:h-[350px]
+        bg-indigo-500/15 blur-[90px] md:blur-[140px]">
+    </div>
 
-    <div class="relative p-10 lg:p-14">
+    <div class="relative px-5 py-8 sm:px-6 md:px-10 lg:px-14 md:py-10 lg:py-14">
 
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+        <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-8">
 
-            <div>
+            <!-- Left -->
+            <div class="flex-1">
 
-                <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-400/20">
+                <div
+                    class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-400/20">
 
-                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
 
-                    <span class="uppercase tracking-[0.45em] text-cyan-300 text-xs font-black">
+                    <span
+                        class="uppercase tracking-[0.2em] md:tracking-[0.45em]
+                        text-[10px] md:text-xs font-black text-cyan-300">
+
                         LIVE ENVIRONMENT
+
                     </span>
 
                 </div>
 
-                <h1 class="mt-6 text-5xl lg:text-6xl font-black text-white leading-tight">
+                <h1
+                    class="mt-5 md:mt-6
+                    text-3xl sm:text-4xl lg:text-5xl xl:text-6xl
+                    font-black text-white leading-tight">
 
                     Environmental Intelligence
 
                 </h1>
 
-                <p class="mt-5 max-w-3xl text-slate-400 text-lg leading-8">
+                <p
+                    class="mt-4 md:mt-5
+                    max-w-3xl
+                    text-sm md:text-base lg:text-lg
+                    leading-7 md:leading-8
+                    text-slate-400">
 
                     AI continuously monitors weather conditions, route quality,
                     environmental impact, and shipment safety in real time.
@@ -548,23 +568,31 @@ shadow-[0_0_80px_rgba(6,182,212,.15)]">
 
             </div>
 
-            <div class="mt-8 lg:mt-0">
+            <!-- Right -->
+            <div class="w-full sm:w-auto">
 
-                <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 px-6 py-5">
+                <div
+                    class="rounded-2xl md:rounded-3xl
+                    border border-emerald-500/20
+                    bg-emerald-500/10
+                    px-5 py-4 md:px-6 md:py-5">
 
-                    <p class="text-emerald-300 uppercase tracking-[0.3em] text-xs font-black">
+                    <p
+                        class="text-[10px] md:text-xs
+                        uppercase tracking-[0.2em] md:tracking-[0.3em]
+                        text-emerald-300 font-black">
 
                         STATUS
 
                     </p>
 
-                    <h2 class="mt-3 text-3xl font-black text-white">
+                    <h2 class="mt-2 md:mt-3 text-2xl md:text-3xl font-black text-white">
 
                         ONLINE
 
                     </h2>
 
-                    <p class="mt-2 text-slate-400">
+                    <p class="mt-2 text-sm md:text-base text-slate-400">
 
                         Last Sync :
                         <span id="environmentTime">{{ now()->format('H:i:s') }}</span>
@@ -577,41 +605,60 @@ shadow-[0_0_80px_rgba(6,182,212,.15)]">
 
         </div>
 
-        {{-- divider --}}
+    </div>
 
-        <div class="my-12 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+</div>
+</div>
 
-        {{-- SECTION 2 AKAN MASUK DI SINI --}}
-        <div class="grid xl:grid-cols-[340px_1fr] gap-8">
+       {{-- divider --}}
+<div class="my-8 md:my-12 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+
+<div class="grid xl:grid-cols-[340px_1fr] gap-6 md:gap-8">
 
     {{-- ========================================= --}}
     {{-- EARTH --}}
     {{-- ========================================= --}}
 
     <div
-    class="relative overflow-hidden rounded-[36px]
-    border border-cyan-500/20
-    bg-gradient-to-br
-    from-slate-900
-    via-[#071827]
-    to-slate-950
-    p-8">
+        class="relative overflow-hidden
+        rounded-2xl md:rounded-[36px]
+        border border-cyan-500/20
+        bg-gradient-to-br
+        from-slate-900
+        via-[#071827]
+        to-slate-950
+        p-5 sm:p-6 md:p-8">
 
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,.15),transparent_70%)]"></div>
+        <div
+            class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,.15),transparent_70%)]">
+        </div>
 
         <div class="relative">
 
-            <div class="sticky top-5 z-20 mb-8 flex items-center justify-between rounded-2xl border border-cyan-500/10 bg-slate-950/60 backdrop-blur-xl px-8 py-5">
+            <!-- Header -->
+            <div
+                class="sticky top-3 md:top-5 z-20 mb-6 md:mb-8
+                flex flex-col sm:flex-row
+                sm:items-center sm:justify-between
+                gap-4
+                rounded-2xl
+                border border-cyan-500/10
+                bg-slate-950/60
+                backdrop-blur-xl
+                px-5 py-4 md:px-8 md:py-5">
 
                 <div>
 
-                    <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
+                    <p
+                        class="uppercase tracking-[0.2em] md:tracking-[0.35em]
+                        text-[10px] md:text-xs
+                        text-cyan-400 font-black">
 
                         SATELLITE
 
                     </p>
 
-                    <h2 class="mt-3 text-white text-2xl font-black">
+                    <h2 class="mt-2 md:mt-3 text-xl md:text-2xl font-black text-white">
 
                         Earth Monitor
 
@@ -619,9 +666,14 @@ shadow-[0_0_80px_rgba(6,182,212,.15)]">
 
                 </div>
 
-                <div class="rounded-full bg-cyan-500/10 px-4 py-2 border border-cyan-500/20">
+                <div
+                    class="self-start sm:self-auto
+                    rounded-full
+                    bg-cyan-500/10
+                    border border-cyan-500/20
+                    px-4 py-2">
 
-                    <span class="text-cyan-300 text-xs font-bold">
+                    <span class="text-[10px] md:text-xs font-bold text-cyan-300">
 
                         CONNECTED
 
@@ -631,113 +683,83 @@ shadow-[0_0_80px_rgba(6,182,212,.15)]">
 
             </div>
 
-            <div class="flex justify-center mt-8">
+            <!-- Earth -->
+            <div class="flex justify-center mt-6 md:mt-8">
 
-                <div class="relative w-56 h-56 mx-auto">
+                <div class="relative w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56">
 
                     <div
-                    class="absolute inset-0 rounded-full
-                    bg-cyan-400/30 blur-[80px] animate-pulse">
+                        class="absolute inset-0 rounded-full
+                        bg-cyan-400/30
+                        blur-[60px] md:blur-[80px]
+                        animate-pulse">
                     </div>
 
-<div
-    id="weatherOrb"
-    class="w-60 h-60 mx-auto"
-
-    data-rain="{{ $environment['weather']['rain'] ?? 0 }}"
-    data-cloud="{{ $environment['weather']['cloud_cover'] ?? 0 }}"
-    data-wind="{{ $environment['weather']['wind_speed_10m'] ?? 0 }}"
-    data-temp="{{ $environment['weather']['temperature_2m'] ?? 25 }}">
-
-</div>
+                    <div
+                        id="weatherOrb"
+                        class="w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 mx-auto"
+                        data-rain="{{ $environment['weather']['rain'] ?? 0 }}"
+                        data-cloud="{{ $environment['weather']['cloud_cover'] ?? 0 }}"
+                        data-wind="{{ $environment['weather']['wind_speed_10m'] ?? 0 }}"
+                        data-temp="{{ $environment['weather']['temperature_2m'] ?? 25 }}">
+                    </div>
 
                 </div>
 
             </div>
 
-<div class="grid grid-cols-2 gap-5 mt-8">
+            <!-- Info -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mt-8">
 
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
+                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
 
-        <p class="text-slate-400 text-sm">
+                    <p class="text-xs md:text-sm text-slate-400">
+                        Location
+                    </p>
 
-            Location
+                    <h2 class="mt-2 text-lg md:text-xl font-black text-white break-words">
+                        {{ data_get($environment, 'location', 'Unknown') }}
+                    </h2>
 
-        </p>
+                </div>
 
-        <h2 class="mt-2 text-white font-black text-xl">
+                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
 
-            {{ data_get($environment, 'location', 'Unknown') }}
+                    <p class="text-xs md:text-sm text-slate-400">
+                        Last Update
+                    </p>
 
-        </h2>
+                    <h2 class="mt-2 text-lg md:text-xl font-black text-cyan-300">
+                        {{ $environment['updated_at'] }}
+                    </h2>
 
-    </div>
+                </div>
 
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
+                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
 
-        <p class="text-slate-400 text-sm">
+                    <p class="text-xs md:text-sm text-slate-400">
+                        Data Source
+                    </p>
 
-            Last Update
+                    <h2 class="mt-2 text-base md:text-lg font-black text-emerald-400">
+                        Open-Meteo API
+                    </h2>
 
-        </p>
+                </div>
 
-        <h2 class="mt-2 text-cyan-300 font-black text-xl">
+                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
 
-            {{ $environment['updated_at'] }}
+                    <p class="text-xs md:text-sm text-slate-400">
+                        AI Status
+                    </p>
 
-        </h2>
+                    <h2 class="mt-2 text-base md:text-lg font-black text-cyan-400">
+                        ONLINE
+                    </h2>
 
-    </div>
+                </div>
 
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
-
-        <p class="text-slate-400 text-sm">
-
-            Data Source
-
-        </p>
-
-        <h2 class="mt-2 text-emerald-400 font-black">
-
-            Open-Meteo API
-
-        </h2>
-
-    </div>
-
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
-
-        <p class="text-slate-400 text-sm">
-
-            AI Status
-
-        </p>
-
-        <h2 class="mt-2 text-cyan-400 font-black">
-
-            ONLINE
-
-        </h2>
-
-    </div>
-
-</div>
+            </div>
 
         </div>
 
@@ -750,183 +772,190 @@ shadow-[0_0_80px_rgba(6,182,212,.15)]">
 {{-- ========================================= --}}
 
 <div
-class="rounded-[36px]
-border border-cyan-500/20
-bg-gradient-to-br
-from-slate-900
-via-slate-950
-to-black
-p-8
-relative
-overflow-hidden">
+    class="relative overflow-hidden
+    rounded-2xl md:rounded-[36px]
+    border border-cyan-500/20
+    bg-gradient-to-br
+    from-slate-900
+    via-slate-950
+    to-black
+    p-5 sm:p-6 md:p-8">
 
-<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,.12),transparent_45%)]"></div>
+    <!-- Glow -->
+    <div
+        class="absolute inset-0
+        bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,.12),transparent_45%)]">
+    </div>
 
-<div class="relative">
+    <div class="relative">
 
-<div class="flex items-start justify-between">
+        <div
+            class="flex flex-col lg:flex-row
+            lg:items-start
+            lg:justify-between
+            gap-6">
 
-<div>
+            <!-- Left -->
+            <div class="flex-1">
 
-<p class="uppercase tracking-[0.4em] text-cyan-400 text-xs font-black">
+                <p
+                    class="uppercase
+                    tracking-[0.2em] md:tracking-[0.4em]
+                    text-[10px] md:text-xs
+                    font-black
+                    text-cyan-400">
 
-LIVE WEATHER COMMAND CENTER
+                    LIVE WEATHER COMMAND CENTER
 
-</p>
+                </p>
 
-<h1
-class="mt-4
-text-5xl
-font-black
-text-white">
+                <h1
+                    class="mt-3 md:mt-4
+                    text-4xl sm:text-5xl lg:text-6xl
+                    font-black
+                    text-white
+                    leading-none">
 
-{{ round($environment['weather']['temperature_2m']) }}°C
+                    {{ round($environment['weather']['temperature_2m']) }}°C
 
-</h1>
+                </h1>
 
-<p class="mt-2 text-slate-400">
+                <p
+                    class="mt-2
+                    text-sm md:text-base
+                    text-slate-400">
 
-Real-Time Environmental Intelligence
+                    Real-Time Environmental Intelligence
 
-</p>
+                </p>
 
-</div>
+            </div>
 
-<div
-class="rounded-2xl
-border border-emerald-500/20
-bg-emerald-500/10
-px-5
-py-3
-text-right">
+            <!-- Right -->
+            <div class="w-full sm:w-auto">
 
-<div class="flex items-center gap-2 justify-end">
+                <div
+                    class="rounded-2xl
+                    border border-emerald-500/20
+                    bg-emerald-500/10
+                    px-4 py-3 md:px-5
+                    text-left sm:text-right">
 
-<div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div class="flex items-center gap-2 sm:justify-end">
 
-<span class="text-emerald-300 font-bold">
+                        <div
+                            class="w-2 h-2 md:w-2.5 md:h-2.5
+                            rounded-full
+                            bg-emerald-400
+                            animate-pulse">
+                        </div>
 
-LIVE
+                        <span class="text-sm md:text-base font-bold text-emerald-300">
+                            LIVE
+                        </span>
 
-</span>
+                    </div>
 
-</div>
+                    <p class="mt-2 text-xs md:text-sm text-slate-400">
 
-<p class="mt-2 text-xs text-slate-400">
+                        Updated {{ $environment['updated_at'] }}
 
-Updated {{ $environment['updated_at'] }}
+                    </p>
 
-</p>
+                </div>
 
-</div>
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
 {{-- KPI GRID --}}
 
-<div class="grid grid-cols-2 xl:grid-cols-3 gap-5 mt-10">
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 mt-8 md:mt-10">
 
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+    <!-- Temperature -->
+    <div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 md:p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
 
-<p class="text-slate-500 text-sm">
+        <p class="text-xs md:text-sm text-slate-500">
+            🌡 Temperature
+        </p>
 
-🌡 Temperature
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-white">
+            {{ round($environment['weather']['temperature_2m']) }}°C
+        </h2>
 
-</p>
+    </div>
 
-<h2 class="mt-3 text-3xl font-black text-white">
+    <!-- Humidity -->
+    <div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 md:p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
 
-{{ round($environment['weather']['temperature_2m']) }}°C
+        <p class="text-xs md:text-sm text-slate-500">
+            💧 Humidity
+        </p>
 
-</h2>
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-cyan-300">
+            {{ $environment['weather']['relative_humidity_2m'] }}%
+        </h2>
 
-</div>
+    </div>
 
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+    <!-- Rain -->
+    <div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 md:p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
 
-<p class="text-slate-500 text-sm">
+        <p class="text-xs md:text-sm text-slate-500">
+            🌧 Rain
+        </p>
 
-💧 Humidity
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-blue-300">
+            {{ $environment['weather']['rain'] }} mm
+        </h2>
 
-</p>
+    </div>
 
-<h2 class="mt-3 text-3xl font-black text-cyan-300">
+    <!-- Wind -->
+    <div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 md:p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
 
-{{ $environment['weather']['relative_humidity_2m'] }}%
+        <p class="text-xs md:text-sm text-slate-500">
+            🌬 Wind
+        </p>
 
-</h2>
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-white">
+            {{ round($environment['weather']['wind_speed_10m']) }}
+            <span class="text-sm md:text-lg">
+                km/h
+            </span>
+        </h2>
 
-</div>
+    </div>
 
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
+    <!-- Cloud -->
+    <div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 md:p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
 
-<p class="text-slate-500 text-sm">
+        <p class="text-xs md:text-sm text-slate-500">
+            ☁ Cloud Cover
+        </p>
 
-🌧 Rain
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-white">
+            {{ $environment['weather']['cloud_cover'] }}%
+        </h2>
 
-</p>
+    </div>
 
-<h2 class="mt-3 text-3xl font-black text-blue-300">
+    <!-- Weather Score -->
+    <div class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 md:p-5 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
 
-{{ $environment['weather']['rain'] }} mm
+        <p class="text-xs md:text-sm text-cyan-300">
+            🌍 Weather Score
+        </p>
 
-</h2>
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-cyan-300">
+            {{ $environment['weather_score'] }}
+        </h2>
 
-</div>
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-🌬 Wind
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-white">
-
-{{ round($environment['weather']['wind_speed_10m']) }}
-
-<span class="text-lg">
-
-km/h
-
-</span>
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-☁ Cloud Cover
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-white">
-
-{{ $environment['weather']['cloud_cover'] }}%
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
-
-<p class="text-cyan-300 text-sm">
-
-🌍 Weather Score
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-cyan-300">
-
-{{ $environment['weather_score'] }}
-
-</h2>
-
-</div>
+    </div>
 
 </div>
 
