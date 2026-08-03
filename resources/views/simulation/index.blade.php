@@ -991,7 +991,7 @@ via-slate-900
 to-cyan-950
 shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
-<div class="px-4 py-6 sm:px-6 md:px-8 md:py-8">
+< class="px-4 py-6 sm:px-6 md:px-8 md:py-8">
 
     <p class="uppercase tracking-[0.3em] md:tracking-[0.45em] text-cyan-400 text-[10px] md:text-xs font-black">
         AI Control Center
@@ -1005,7 +1005,7 @@ shadow-[0_0_50px_rgba(34,211,238,.12)]">
         Modify operational variables before launching the simulation.
     </p>
 
-    <div class="mt-8 md:mt-12">
+    < class="mt-8 md:mt-12">
 
         <p class="uppercase tracking-[0.25em] md:tracking-[0.3em] text-slate-400 text-[10px] md:text-xs font-bold">
             Vehicle Type
@@ -1087,9 +1087,6 @@ shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
         </div>
 
-    </div>
-
-</div>
 
 <input hidden id="vehicle" value="Truck">
 
