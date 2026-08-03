@@ -302,7 +302,6 @@ $carbonSaved = $currentCarbon - $projectedCarbon;
 $efficiencyGain = $projectedEfficiency - $currentEfficiency;  
 
 $forecast = $environment['forecast'] ?? [];
-$currentHour = now()->hour;
 $weatherTrend = [];
 
 if (
@@ -311,29 +310,39 @@ if (
     isset($forecast['time'])
 ) {
 
-    // Current weather
-    $weatherTrend[] = [
-        'time' => now()->format('H:i'),
-        'temp' => $environment['weather']['temperature_2m'] ?? null,
-        'humidity' => $environment['weather']['relative_humidity_2m'] ?? null,
-        'wind' => $environment['weather']['wind_speed_10m'] ?? null,
-        'rain' => $forecast['precipitation_probability'][$currentHour] ?? 0,
-        'cloud' => $environment['weather']['cloud_cover'] ?? null,
-    ];
+    $now = now();
+    $startIndex = 0;
 
-    // Forecast 5 jam
+    // Cari index waktu yang paling dekat dengan waktu sekarang
+    foreach ($forecast['time'] as $index => $time) {
+
+        if (\Carbon\Carbon::parse($time)->greaterThanOrEqualTo($now)) {
+            $startIndex = $index;
+            break;
+        }
+    }
+
+    // Ambil 6 jam ke depan
     for (
-        $i = $currentHour + 1;
-        $i < min($currentHour + 6, count($forecast['time']));
+        $i = $startIndex;
+        $i < min($startIndex + 6, count($forecast['time']));
         $i++
     ) {
+
         $weatherTrend[] = [
+
             'time' => \Carbon\Carbon::parse($forecast['time'][$i])->format('H:i'),
-            'temp' => $forecast['temperature_2m'][$i] ?? null,
-            'humidity' => $forecast['relative_humidity_2m'][$i] ?? null,
-            'wind' => $forecast['wind_speed_10m'][$i] ?? null,
+
+            'temp' => $forecast['temperature_2m'][$i] ?? 0,
+
+            'humidity' => $forecast['relative_humidity_2m'][$i] ?? 0,
+
+            'wind' => $forecast['wind_speed_10m'][$i] ?? 0,
+
             'rain' => $forecast['precipitation_probability'][$i] ?? 0,
-            'cloud' => $forecast['cloud_cover'][$i] ?? null,
+
+            'cloud' => $forecast['cloud_cover'][$i] ?? 0,
+
         ];
     }
 }
