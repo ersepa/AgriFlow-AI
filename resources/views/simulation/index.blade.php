@@ -138,48 +138,53 @@ background:#06b6d4;
 
 </style>
 
-<div class="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 border border-cyan-500/20 shadow-[0_0_80px_rgba(34,211,238,.15)]">
+<div
+    class="relative overflow-hidden rounded-2xl md:rounded-[32px] bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 border border-cyan-500/20 shadow-[0_0_80px_rgba(34,211,238,.15)]">
 
+    <!-- Background Glow -->
     <div class="absolute inset-0 opacity-20">
 
-        <div class="absolute -top-40 -left-32 w-[500px] h-[500px] rounded-full bg-cyan-500 blur-[150px]"></div>
+        <div
+            class="absolute -top-32 -left-24 md:-top-40 md:-left-32 w-72 h-72 md:w-[500px] md:h-[500px] rounded-full bg-cyan-500 blur-[100px] md:blur-[150px]">
+        </div>
 
-        <div class="absolute bottom-0 right-0 w-[450px] h-[450px] rounded-full bg-indigo-600 blur-[150px]"></div>
+        <div
+            class="absolute bottom-0 right-0 w-64 h-64 md:w-[450px] md:h-[450px] rounded-full bg-indigo-600 blur-[100px] md:blur-[150px]">
+        </div>
 
     </div>
 
+    <!-- Grid -->
     <div class="absolute inset-0">
-
-<div class="grid-bg h-full w-full bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:42px_42px]"></div>
-
+        <div
+            class="h-full w-full bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:32px_32px] md:bg-[size:42px_42px]">
+        </div>
     </div>
 
-    <div class="relative px-16 py-20">
+    <div class="relative px-6 py-10 md:px-10 md:py-14 lg:px-16 lg:py-20">
 
-        <div class="flex items-center gap-4">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
 
-            <div class="w-16 h-16 rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
-
+            <div
+                class="w-14 h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-2xl md:text-3xl">
                 🤖
-
             </div>
 
             <div>
 
-                <p class="uppercase tracking-[0.45em] text-cyan-400 text-xs font-black">
-
+                <p
+                    class="uppercase tracking-[0.3em] md:tracking-[0.45em] text-cyan-400 text-[10px] md:text-xs font-black">
                     AI DIGITAL TWIN
-
                 </p>
 
-                <h1 class="mt-3 text-6xl font-black text-white leading-none">
+                <h1
+                    class="mt-2 md:mt-3 text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight">
 
                     Logistics
 
                     <span class="text-cyan-400">
-
                         Simulation
-
                     </span>
 
                 </h1>
@@ -188,58 +193,51 @@ background:#06b6d4;
 
         </div>
 
-        <p class="mt-8 max-w-3xl text-slate-300 text-xl leading-9">
+        <!-- Description -->
+        <p
+            class="mt-6 md:mt-8 max-w-3xl text-slate-300 text-base md:text-lg lg:text-xl leading-7 md:leading-9">
 
-            Build a virtual replica of your shipment and simulate future logistics conditions before they happen. Compare operational strategies, estimate spoilage risk, optimize sustainability, and generate AI-powered decisions in real time.
+            Build a virtual replica of your shipment and simulate future logistics conditions before they happen.
+            Compare operational strategies, estimate spoilage risk, optimize sustainability, and generate AI-powered
+            decisions in real time.
 
         </p>
 
-        <div class="mt-10 flex flex-wrap gap-5">
+        <!-- Cards -->
+        <div class="mt-8 md:mt-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
 
-            <div class="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
 
                 <p class="text-slate-400 text-xs uppercase font-bold">
-
                     AI Engine
-
                 </p>
 
-                <h2 class="mt-2 text-white font-black text-2xl">
-
+                <h2 class="mt-2 text-white font-black text-xl lg:text-2xl">
                     Neural Decision Engine
-
                 </h2>
 
             </div>
 
-            <div class="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
 
                 <p class="text-slate-400 text-xs uppercase font-bold">
-
                     Simulation
-
                 </p>
 
-                <h2 class="mt-2 text-cyan-400 font-black text-2xl">
-
+                <h2 class="mt-2 text-cyan-400 font-black text-xl lg:text-2xl">
                     Real-Time Digital Twin
-
                 </h2>
 
             </div>
 
-            <div class="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
 
                 <p class="text-slate-400 text-xs uppercase font-bold">
-
                     Optimization
-
                 </p>
 
-                <h2 class="mt-2 text-emerald-400 font-black text-2xl">
-
+                <h2 class="mt-2 text-emerald-400 font-black text-xl lg:text-2xl">
                     AI Scenario Analysis
-
                 </h2>
 
             </div>
@@ -993,123 +991,103 @@ via-slate-900
 to-cyan-950
 shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
-<div class="px-8 py-8">
+<div class="px-4 py-6 sm:px-6 md:px-8 md:py-8">
 
-<p class="uppercase tracking-[0.45em] text-cyan-400 text-xs font-black">
+    <p class="uppercase tracking-[0.3em] md:tracking-[0.45em] text-cyan-400 text-[10px] md:text-xs font-black">
+        AI Control Center
+    </p>
 
-AI Control Center
+    <h2 class="mt-2 text-2xl md:text-3xl font-black text-white">
+        Configure Digital Twin
+    </h2>
 
-</p>
+    <p class="mt-2 max-w-2xl text-sm md:text-base text-slate-400 leading-6 md:leading-7">
+        Modify operational variables before launching the simulation.
+    </p>
 
-<h2 class="mt-2 text-3xl font-black text-white">
+    <div class="mt-8 md:mt-12">
 
-Configure Digital Twin
+        <p class="uppercase tracking-[0.25em] md:tracking-[0.3em] text-slate-400 text-[10px] md:text-xs font-bold">
+            Vehicle Type
+        </p>
 
-</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mt-5 md:mt-6">
 
-<p class="mt-2 max-w-2xl text-slate-400 leading-7">
+            <!-- Truck -->
+            <div class="vehicle-card group cursor-pointer rounded-2xl md:rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-5 md:p-8 text-center"
+                data-value="Truck">
 
-Modify operational variables before launching the simulation.
+                <div class="vehicle-icon text-3xl md:text-4xl transition-all duration-500">
+                    🚚
+                </div>
 
-</p>
+                <h2 class="vehicle-title mt-4 md:mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
+                    Truck
+                </h2>
 
-<div class="mt-12">
+                <p class="vehicle-desc text-sm md:text-base text-slate-500 mt-2 transition-colors duration-500">
+                    Standard logistics
+                </p>
 
-<p class="uppercase tracking-[0.3em] text-slate-400 text-xs font-bold">
+            </div>
 
-Vehicle Type
+            <!-- Cold Truck -->
+            <div class="vehicle-card group cursor-pointer rounded-2xl md:rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-5 md:p-8 text-center"
+                data-value="cold">
 
-</p>
+                <div class="vehicle-icon text-3xl md:text-4xl transition-all duration-500">
+                    ❄
+                </div>
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                <h2 class="vehicle-title mt-4 md:mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
+                    Cold Truck
+                </h2>
 
-<div class="vehicle-card group cursor-pointer rounded-3xl border border-slate-700 bg-slate-900 transition-all duration-500 p-8 text-center"
-     data-value="Truck">
+                <p class="vehicle-desc text-sm md:text-base text-slate-500 mt-2 transition-colors duration-500">
+                    Temperature controlled
+                </p>
 
-    <div class="vehicle-icon text-4xl transition-all duration-500">🚚</div>
+            </div>
 
-    <h2 class="vehicle-title mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
+            <!-- Air Cargo -->
+            <div class="vehicle-card group cursor-pointer rounded-2xl md:rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-5 md:p-8 text-center"
+                data-value="plane">
 
-Truck
+                <div class="vehicle-icon text-3xl md:text-4xl transition-all duration-500">
+                    ✈
+                </div>
 
-</h2>
+                <h2 class="vehicle-title mt-4 md:mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
+                    Air Cargo
+                </h2>
 
-    <p class="vehicle-desc text-slate-500 mt-2 transition-colors duration-500">
+                <p class="vehicle-desc text-sm md:text-base text-slate-500 mt-2 transition-colors duration-500">
+                    Fast delivery
+                </p>
 
-Standard logistics
+            </div>
 
-</p>
+            <!-- Sea Cargo -->
+            <div class="vehicle-card group cursor-pointer rounded-2xl md:rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-5 md:p-8 text-center"
+                data-value="ship">
 
-</div>
+                <div class="vehicle-icon text-3xl md:text-4xl transition-all duration-500">
+                    🚢
+                </div>
 
-<div class="vehicle-card group cursor-pointer rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-8 text-center"
-data-value="cold">
+                <h2 class="vehicle-title mt-4 md:mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
+                    Sea Cargo
+                </h2>
 
-    <div class="vehicle-icon text-4xl transition-all duration-500">
+                <p class="vehicle-desc text-sm md:text-base text-slate-500 mt-2 transition-colors duration-500">
+                    Low carbon
+                </p>
 
-❄
+            </div>
 
-</div>
+        </div>
 
-    <h2 class="vehicle-title mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
-
-Cold Truck
-
-</h2>
-
-    <p class="vehicle-desc text-slate-500 mt-2 transition-colors duration-500">
-
-Temperature controlled
-
-</p>
-
-</div>
-
-<div class="vehicle-card group cursor-pointer rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-8 text-center"
-data-value="plane">
-
-    <div class="vehicle-icon text-4xl transition-all duration-500">
-
-✈
-
-</div>
-
-    <h2 class="vehicle-title mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
-
-Air Cargo
-
-</h2>
-
-    <p class="vehicle-desc text-slate-500 mt-2 transition-colors duration-500">
-
-Fast delivery
-
-</p>
-
-</div>
-
-<div class="vehicle-card group cursor-pointer rounded-3xl border border-slate-700 bg-slate-900 hover:border-cyan-400 transition-all duration-500 p-8 text-center"
-data-value="ship">
-
-    <div class="vehicle-icon text-4xl transition-all duration-500">
-
-🚢
-
-</div>
-
-    <h2 class="vehicle-title mt-5 text-slate-300 font-black text-lg transition-colors duration-500">
-
-Sea Cargo
-
-</h2>
-
-    <p class="vehicle-desc text-slate-500 mt-2 transition-colors duration-500">
-
-Low carbon
-
-</p>
-
-</div>
+    </div>
 
 </div>
 
@@ -1537,152 +1515,137 @@ const improvement =
 
 const html=`
 
-<div class="mt-14 rounded-[34px] overflow-hidden border border-slate-200 shadow-2xl">
+<div class="mt-10 md:mt-14 rounded-2xl md:rounded-[34px] overflow-hidden border border-slate-200 shadow-2xl">
 
-<div class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-12 py-12">
+    <div
+        class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-5 py-8 sm:px-8 md:px-12 md:py-12">
 
-    <!-- Glow -->
-    <div class="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
-
-    <div class="absolute -bottom-20 left-0 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl"></div>
-
-    <div class="relative z-10">
-
-        <div class="flex justify-between items-start">
-
-            <div>
-
-                <div class="inline-flex items-center gap-3 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-5 py-2">
-
-                    <span class="h-3 w-3 rounded-full bg-emerald-400 animate-pulse"></span>
-
-                    <span class="text-xs font-black tracking-[0.3em] uppercase text-cyan-300">
-
-                        AI DIGITAL TWIN
-
-                    </span>
-
-                </div>
-
-                <h1 class="mt-6 text-6xl font-black text-white">
-
-                    Simulation Result
-
-                </h1>
-
-                <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
-
-                    AI has analyzed the logistics scenario and generated the
-                    optimal operational strategy based on sustainability,
-                    transportation efficiency, and delivery risk.
-
-                </p>
-
-            </div>
-
-            <div class="flex flex-col gap-4">
-
-                <div class="rounded-3xl border border-emerald-400/20 bg-emerald-500/10 px-6 py-5">
-
-                    <p class="text-xs uppercase tracking-[0.3em] text-emerald-300">
-
-                        Status
-
-                    </p>
-
-                    <h2 class="mt-2 text-2xl font-black text-white">
-
-                        Completed
-
-                    </h2>
-
-                </div>
-
-                <div class="rounded-3xl border border-cyan-400/20 bg-cyan-500/10 px-6 py-5">
-
-                    <p class="text-xs uppercase tracking-[0.3em] text-cyan-300">
-
-                        AI Confidence
-
-                    </p>
-
-                    <h2 class="mt-2 text-3xl font-black text-white">
-
-                        98.7%
-
-                    </h2>
-
-                </div>
-
-            </div>
-
+        <!-- Glow -->
+        <div
+            class="absolute -top-20 -right-20 md:-top-24 md:-right-24 h-56 w-56 md:h-80 md:w-80 rounded-full bg-cyan-500/10 blur-3xl">
         </div>
 
-        <!-- KPI -->
+        <div
+            class="absolute -bottom-16 left-0 md:-bottom-20 h-44 w-44 md:h-64 md:w-64 rounded-full bg-indigo-500/10 blur-3xl">
+        </div>
 
-        <div class="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="relative z-10">
 
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <!-- Header -->
+            <div class="flex flex-col xl:flex-row xl:justify-between gap-8">
 
-                <p class="text-xs uppercase tracking-[0.3em] text-slate-500">
+                <!-- Left -->
+                <div class="flex-1">
 
-                    Risk Reduced
+                    <div
+                        class="inline-flex items-center gap-3 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 md:px-5">
 
-                </p>
+                        <span class="h-2.5 w-2.5 md:h-3 md:w-3 rounded-full bg-emerald-400 animate-pulse"></span>
 
-                <h2 class="mt-3 text-4xl font-black text-emerald-400">
+                        <span
+                            class="text-[10px] md:text-xs font-black tracking-[0.2em] md:tracking-[0.3em] uppercase text-cyan-300">
+                            AI DIGITAL TWIN
+                        </span>
 
-                    -${improvement}%
+                    </div>
 
-                </h2>
+                    <h1
+                        class="mt-5 md:mt-6 text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white leading-tight">
+                        Simulation Result
+                    </h1>
+
+                    <p
+                        class="mt-4 md:mt-5 max-w-3xl text-sm md:text-base lg:text-lg leading-7 md:leading-8 text-slate-300">
+                        AI has analyzed the logistics scenario and generated the
+                        optimal operational strategy based on sustainability,
+                        transportation efficiency, and delivery risk.
+                    </p>
+
+                </div>
+
+                <!-- Right -->
+                <div class="grid grid-cols-2 xl:grid-cols-1 gap-4 w-full xl:w-72">
+
+                    <div
+                        class="rounded-2xl md:rounded-3xl border border-emerald-400/20 bg-emerald-500/10 px-5 py-4">
+
+                        <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-emerald-300">
+                            Status
+                        </p>
+
+                        <h2 class="mt-2 text-xl md:text-2xl font-black text-white">
+                            Completed
+                        </h2>
+
+                    </div>
+
+                    <div
+                        class="rounded-2xl md:rounded-3xl border border-cyan-400/20 bg-cyan-500/10 px-5 py-4">
+
+                        <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-cyan-300">
+                            AI Confidence
+                        </p>
+
+                        <h2 class="mt-2 text-2xl md:text-3xl font-black text-white">
+                            98.7%
+                        </h2>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <!-- KPI -->
+            <div class="mt-8 md:mt-12 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
 
-                <p class="text-xs uppercase tracking-[0.3em] text-slate-500">
+                <div class="rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-5 md:p-6">
 
-                    AI Model
+                    <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500">
+                        Risk Reduced
+                    </p>
 
-                </p>
+                    <h2 class="mt-3 text-3xl md:text-4xl font-black text-emerald-400">
+                        -${improvement}%
+                    </h2>
 
-                <h2 class="mt-3 text-2xl font-black text-white">
+                </div>
 
-                    Digital Twin
+                <div class="rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-5 md:p-6">
 
-                </h2>
+                    <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500">
+                        AI Model
+                    </p>
 
-            </div>
+                    <h2 class="mt-3 text-xl md:text-2xl font-black text-white">
+                        Digital Twin
+                    </h2>
 
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                </div>
 
-                <p class="text-xs uppercase tracking-[0.3em] text-slate-500">
+                <div class="rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-5 md:p-6">
 
-                    Sustainability
+                    <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500">
+                        Sustainability
+                    </p>
 
-                </p>
+                    <h2 class="mt-3 text-3xl md:text-4xl font-black text-cyan-300">
+                        ${data.after.sustainability_score}
+                    </h2>
 
-                <h2 class="mt-3 text-4xl font-black text-cyan-300">
+                </div>
 
-                    ${data.after.sustainability_score}
+                <div class="rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-5 md:p-6">
 
-                </h2>
+                    <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500">
+                        Carbon Saved
+                    </p>
 
-            </div>
+                    <h2 class="mt-3 text-3xl md:text-4xl font-black text-emerald-400">
+                        ${(data.before.carbon-data.after.carbon).toFixed(1)} kg
+                    </h2>
 
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
-
-                <p class="text-xs uppercase tracking-[0.3em] text-slate-500">
-
-                    Carbon Saved
-
-                </p>
-
-                <h2 class="mt-3 text-4xl font-black text-emerald-400">
-
-                    ${(data.before.carbon-data.after.carbon).toFixed(1)} kg
-
-                </h2>
+                </div>
 
             </div>
 
@@ -2037,94 +2000,91 @@ const html=`
 
 </div>
 
-<div class="mt-14 rounded-[32px] border border-cyan-500/20 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 overflow-hidden shadow-[0_0_60px_rgba(34,211,238,.12)]">
+<div
+    class="mt-10 md:mt-14 rounded-2xl md:rounded-[32px] border border-cyan-500/20 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 overflow-hidden shadow-[0_0_60px_rgba(34,211,238,.12)]">
 
     <!-- HEADER -->
-    <div class="px-10 py-8 border-b border-white/10">
+    <div class="px-5 py-6 sm:px-6 md:px-10 md:py-8 border-b border-white/10">
 
-        <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
+        <p
+            class="uppercase tracking-[0.2em] md:tracking-[0.35em] text-cyan-400 text-[10px] md:text-xs font-black">
             Executive AI Summary
         </p>
 
-        <h2 class="mt-3 text-3xl font-black text-white">
+        <h2 class="mt-3 text-2xl md:text-3xl font-black text-white">
             Optimization Report
         </h2>
 
-        <p class="mt-2 text-slate-400">
+        <p class="mt-2 text-sm md:text-base text-slate-400 leading-6">
             AI compared the original shipment against the optimized logistics strategy.
         </p>
 
     </div>
 
     <!-- KPI -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 p-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 p-5 sm:p-6 md:p-8">
 
-        <div class="rounded-3xl border border-cyan-500/20 bg-cyan-500/10 p-6">
+        <div class="rounded-2xl md:rounded-3xl border border-cyan-500/20 bg-cyan-500/10 p-5 md:p-6">
 
-            <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">
+            <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.25em] text-cyan-300">
                 Improvement
             </p>
 
-            <h2 class="counter mt-3 text-5xl font-black text-white"
+            <h2 class="counter mt-3 text-3xl md:text-4xl lg:text-5xl font-black text-white"
                 data-value="${improvement}">
                 0
             </h2>
 
-            <p class="text-cyan-300 font-semibold mt-2">
+            <p class="mt-2 text-sm md:text-base text-cyan-300 font-semibold">
                 %
             </p>
 
         </div>
 
-        <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-6">
+        <div class="rounded-2xl md:rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5 md:p-6">
 
-            <p class="text-xs uppercase tracking-[0.25em] text-emerald-300">
+            <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.25em] text-emerald-300">
                 Carbon Saved
             </p>
 
-            <h2 class="mt-3 text-5xl font-black text-white">
-
+            <h2 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-black text-white">
                 ${(data.before.carbon-data.after.carbon).toFixed(1)}
 
             </h2>
 
-            <p class="text-emerald-300 mt-2">
+            <p class="mt-2 text-sm md:text-base text-emerald-300">
                 kg CO₂
             </p>
 
         </div>
 
-        <div class="rounded-3xl border border-indigo-500/20 bg-indigo-500/10 p-6">
+        <div class="rounded-2xl md:rounded-3xl border border-indigo-500/20 bg-indigo-500/10 p-5 md:p-6">
 
-            <p class="text-xs uppercase tracking-[0.25em] text-indigo-300">
+            <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.25em] text-indigo-300">
                 ETA Saved
             </p>
 
-            <h2 class="mt-3 text-5xl font-black text-white">
-
+            <h2 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-black text-white">
                 ${(data.before.duration-data.after.duration).toFixed(1)}
-
             </h2>
 
-            <p class="text-indigo-300 mt-2">
+            <p class="mt-2 text-sm md:text-base text-indigo-300">
                 hrs
             </p>
 
         </div>
 
-        <div class="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-6">
+        <div class="rounded-2xl md:rounded-3xl border border-amber-500/20 bg-amber-500/10 p-5 md:p-6">
 
-            <p class="text-xs uppercase tracking-[0.25em] text-amber-300">
+            <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.25em] text-amber-300">
                 ESG Rating
             </p>
 
-            <h2 class="mt-3 text-5xl font-black text-white">
-
+            <h2 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-black text-white">
                 A+
-
             </h2>
 
-            <p class="text-amber-300 mt-2">
+            <p class="mt-2 text-sm md:text-base text-amber-300">
                 Excellent
             </p>
 
@@ -2133,47 +2093,37 @@ const html=`
     </div>
 
     <!-- BODY -->
+    <div class="p-5 sm:p-6 md:p-8 pt-0">
 
-    <div class="grid lg gap-8 p-8 pt-0">
+        <div class="rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-5 md:p-8">
 
-        <!-- INSIGHT -->
-
-
-
-        <!-- RECOMMENDATION -->
-
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-8">
-
-            <p class="uppercase tracking-[0.3em] text-cyan-400 text-xs font-black">
-
+            <p
+                class="uppercase tracking-[0.2em] md:tracking-[0.3em] text-cyan-400 text-[10px] md:text-xs font-black">
                 AI Recommendation
-
             </p>
 
-            <div class="mt-6 space-y-4">
+            <div class="mt-5 md:mt-6 space-y-3 md:space-y-4">
 
-                <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-5 py-4 text-white">
-
+                <div
+                    class="rounded-xl md:rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
                     ✅ Use <b>${data.after.vehicle}</b>
-
                 </div>
 
-                <div class="rounded-2xl bg-cyan-500/10 border border-cyan-500/20 px-5 py-4 text-white">
-
+                <div
+                    class="rounded-xl md:rounded-2xl bg-cyan-500/10 border border-cyan-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
                     🚚 Smart Route Optimization Enabled
-
                 </div>
 
-                <div class="rounded-2xl bg-indigo-500/10 border border-indigo-500/20 px-5 py-4 text-white">
-
-                    🌡 Maintain Temperature <b>${document.getElementById("temperature").value}°C</b>
-
+                <div
+                    class="rounded-xl md:rounded-2xl bg-indigo-500/10 border border-indigo-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
+                    🌡 Maintain Temperature
+                    <b>${document.getElementById("temperature").value}°C</b>
                 </div>
 
-                <div class="rounded-2xl bg-amber-500/10 border border-amber-500/20 px-5 py-4 text-white">
-
-                    ⏱ Delay below <b>${document.getElementById("delay").value} day(s)</b>
-
+                <div
+                    class="rounded-xl md:rounded-2xl bg-amber-500/10 border border-amber-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
+                    ⏱ Delay below
+                    <b>${document.getElementById("delay").value} day(s)</b>
                 </div>
 
             </div>
@@ -2183,9 +2133,6 @@ const html=`
     </div>
 
 </div>
-
-</div>
-
 </div>
 
 `;
