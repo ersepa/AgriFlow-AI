@@ -10,11 +10,20 @@ class ChatController extends Controller
 {
     public function chat(Request $request)
     {
-        // 1. Ambil data konteks
-        $data = [
-            'shipments' => \App\Models\Shipment::with('harvest')->latest()->take(10)->get(),
-            'ai_insights' => \App\Models\AiAnalysis::latest()->take(5)->get()
-        ];
+$shipments = \App\Models\Shipment::latest()
+    ->take(5)
+    ->get([
+        'commodity',
+        'origin',
+        'destination',
+        'status'
+    ]);
+
+$summary = "Data Shipment Terbaru:\n";
+
+foreach ($shipments as $shipment) {
+    $summary .= "- {$shipment->commodity} | {$shipment->origin} → {$shipment->destination} | Status: {$shipment->status}\n";
+}
 
         // 2. Buat prompt
 // Di dalam ChatController.php
@@ -71,8 +80,12 @@ Aturan penulisan:
 - Gunakan bullet point (•)
 - Berikan jawaban yang mudah dipahami
 
-Data sistem: " . json_encode($data) . 
-"User bertanya: " . $request->message;
+Data sistem:
+
+{$summary}
+
+User bertanya:
+{$request->message}";
 
         // 3. Panggil API OpenRouter
 $response = Http::withHeaders([
