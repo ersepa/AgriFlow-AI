@@ -251,33 +251,70 @@
 </div>
 
 <script>
-    function toggleChat() {
-        const chatWindow = document.getElementById('chatWindow');
-        chatWindow.classList.toggle('hidden');
-    }
+function toggleChat() {
+    const chatWindow = document.getElementById('chatWindow');
+    chatWindow.classList.toggle('hidden');
+}
 
-    async function sendMessage() {
-        const input = document.getElementById('chatInput');
-        const chatBody = document.getElementById('chatBody');
-        const message = input.value;
-        if (!message) return;
+async function sendMessage() {
 
-        // Tambah pesan user
-        chatBody.innerHTML += `<div class="text-right"><span class="bg-indigo-100 p-2 rounded-lg inline-block">${message}</span></div>`;
-        input.value = '';
+    const input = document.getElementById('chatInput');
+    const chatBody = document.getElementById('chatBody');
 
-        // Kirim ke Controller
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    // Tampilkan pesan user
+    chatBody.innerHTML += `
+        <div class="text-right mb-2">
+            <span class="bg-indigo-100 p-2 rounded-lg inline-block">
+                ${message}
+            </span>
+        </div>
+    `;
+
+    input.value = "";
+
+    try {
+
         const response = await fetch('/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ message: message })
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                message: message
+            })
         });
+
         const data = await response.json();
 
-        // Tambah jawaban AI
-        chatBody.innerHTML += `<div class="text-left"><span class="bg-white border p-2 rounded-lg inline-block shadow-sm">${data.reply}</span></div>`;
-        chatBody.scrollTop = chatBody.scrollHeight;
+        chatBody.innerHTML += `
+            <div class="text-left mb-2">
+                <span class="bg-white border p-2 rounded-lg inline-block shadow-sm">
+                    ${data.reply ?? "AI tidak memberikan jawaban."}
+                </span>
+            </div>
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+
+        chatBody.innerHTML += `
+            <div class="text-left mb-2">
+                <span class="bg-red-100 text-red-600 p-2 rounded-lg inline-block">
+                    Gagal menghubungi AI.
+                </span>
+            </div>
+        `;
+
     }
+
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
 </script>
 
         <script>
