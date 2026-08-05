@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
@@ -74,18 +75,39 @@ Data sistem: " . json_encode($data) .
 "User bertanya: " . $request->message;
 
         // 3. Panggil API OpenRouter
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-            'Content-Type' => 'application/json',
-        ])->post('https://openrouter.ai/api/v1/chat/completions', [
-            'model' => 'meta-llama/llama-3.1-8b-instruct',
-            'messages' => [['role' => 'user', 'content' => $prompt]]
-        ]);
+$response = Http::withHeaders([
+    'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+    'Content-Type' => 'application/json',
+])->post('https://openrouter.ai/api/v1/chat/completions', [
+    'model' => 'meta-llama/llama-3.1-8b-instruct',
+    'messages' => [
+        [
+            'role' => 'user',
+            'content' => $prompt
+        ]
+    ]
+]);
 
-        // 4. Ambil jawaban
-        $answer = $response->json()['choices'][0]['message']['content'] ?? 'Maaf, saya sedang tidak bisa menjawab.';
+// ================= DEBUG =================
+Log::info('OPENROUTER STATUS', [
+    'status' => $response->status(),
+]);
 
-        // 5. Kembalikan ke frontend (JSON response)
-        return response()->json(['reply' => $answer]);
+Log::info('OPENROUTER BODY', [
+    'body' => $response->body(),
+]);
+
+if (!$response->successful()) {
+    return response()->json([
+        'reply' => 'OpenRouter Error: ' . $response->body()
+    ]);
+}
+// =========================================
+
+$answer = $response->json()['choices'][0]['message']['content'] ?? 'Response kosong';
+
+return response()->json([
+    'reply' => $answer
+]);
     }
 }
