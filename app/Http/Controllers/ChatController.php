@@ -15,6 +15,7 @@ $shipments = \App\Models\Shipment::latest()
     ->get();
 
 $summary = "=== DATA SHIPMENT TERBARU ===\n\n";
+$knowledge = file_get_contents(storage_path('app/knowledge.md'));
 
 foreach ($shipments as $shipment) {
 
@@ -51,9 +52,7 @@ Jika user menyapa seperti:
 - siang
 - sore
 
-Balas secara natural seperti:
-
-Balas secara natural seperti:
+Jawab dengan sapaan balik yang ramah dan santai.
 
 Halo! Ada yang bisa aku bantu seputar logistik, pertanian, atau sustainability hari ini? 😊
 
@@ -61,18 +60,17 @@ Jangan pernah bertanya aku siapa.
 
 Jawab seperti chat biasa, bukan seperti artikel.
 
-Kamu mengetahui fitur:
+Gunakan Knowledge Base di bawah sebagai sumber utama informasi mengenai AgriFlow.
 
-- Shipment Monitoring
-- Harvest Monitoring
-- Sustainability Score
-- Carbon Emission
-- Route Optimization
-- Shelf Life Prediction
-- AI Risk Analysis
+Jangan mengarang fitur yang tidak ada.
 
-Jika user bertanya tentang fitur AgriFlow,
-jawab berdasarkan fitur tersebut.
+Jika informasi tidak tersedia pada Knowledge Base atau Data Sistem, katakan bahwa informasi tersebut belum tersedia.
+
+========================
+KNOWLEDGE BASE
+========================
+
+{$knowledge}
 
 ATURAN GAYA JAWABAN:
 
