@@ -15,7 +15,7 @@ $shipments = \App\Models\Shipment::latest()
     ->get();
 
 $summary = "=== DATA SHIPMENT TERBARU ===\n\n";
-$knowledge = "AgriFlow memiliki fitur Dashboard, Harvest Management, Shipment Management, Environmental Monitoring, Route Optimization, AI Optimizer, dan Sustainability Analysis.";
+$knowledge = trim(file_get_contents(storage_path('app/knowledge.md')));
 
 foreach ($shipments as $shipment) {
 
