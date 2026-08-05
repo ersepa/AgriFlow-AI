@@ -10,8 +10,6 @@ class ChatController extends Controller
 {
     public function chat(Request $request)
     {
-
-    dd('MASUK CHAT CONTROLLER');
 $shipments = \App\Models\Shipment::latest()
     ->take(5)
     ->get([
@@ -89,10 +87,6 @@ Data sistem:
 User bertanya:
 {$request->message}";
 
-Log::info('PROMPT LENGTH', [
-    'length' => strlen($prompt)
-]);
-
         // 3. Panggil API OpenRouter
 $response = Http::withHeaders([
     'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
@@ -106,8 +100,6 @@ $response = Http::withHeaders([
         ]
     ]
 ]);
-
-dd($response->status(), $response->body());
 
 // ================= DEBUG =================
 Log::info('OPENROUTER STATUS', [
