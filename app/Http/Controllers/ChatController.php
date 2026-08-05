@@ -10,6 +10,8 @@ class ChatController extends Controller
 {
     public function chat(Request $request)
     {
+
+    dd('MASUK CHAT CONTROLLER');
 $shipments = \App\Models\Shipment::latest()
     ->take(5)
     ->get([
