@@ -229,8 +229,7 @@
 
     <!-- Body -->
 <div id="chatBody"
-    class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-white text-slate-700 text-sm leading-relaxed border-b border-slate-200"
-    style="white-space: pre-line;">
+    class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-white text-slate-700 text-sm leading-relaxed border-b border-slate-200">
         <p class="text-slate-500 italic">
             Halo! Ada yang bisa dibantu soal data pengiriman hari ini?
         </p>
