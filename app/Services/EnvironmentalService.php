@@ -16,6 +16,8 @@ $weather = $this->getWeather(
     $dashboardLng
 );
 
+dd($weather);
+
 if (!$weather) {
 
     return [
