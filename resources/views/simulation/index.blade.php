@@ -2249,10 +2249,18 @@ document.getElementById("runSimulation").addEventListener("click", async functio
         }
     }, 50);
 
-document.querySelectorAll('[data-value]').forEach(option => {
-    option.addEventListener('click', function () {
-        document.getElementById('vehicle').value = this.dataset.value;
-    });
+document.addEventListener('click', function (e) {
+
+    const card = e.target.closest('.vehicle-card');
+
+    if (!card) return;
+
+    const vehicle = card.dataset.value;
+
+    document.getElementById('vehicle').value = vehicle;
+
+    console.log("Vehicle selected:", vehicle);
+
 });
 
     try {
@@ -2262,13 +2270,13 @@ document.querySelectorAll('[data-value]').forEach(option => {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
-            body: JSON.stringify({
-                shipment: document.getElementById("selectedShipment").value,
-                vehicle: document.querySelector('[data-value].selected')?.dataset.value || "Truck",
-                temperature: document.getElementById("temperature").value,
-                delay: document.getElementById("delay").value,
-                route: document.getElementById("route").checked
-            })
+body: JSON.stringify({
+    shipment: document.getElementById("selectedShipment").value,
+    vehicle: document.getElementById("vehicle").value,
+    temperature: document.getElementById("temperature").value,
+    delay: document.getElementById("delay").value,
+    route: document.getElementById("route").checked
+})
         });
 
         const result = await response.json();
