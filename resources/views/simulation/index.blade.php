@@ -2137,26 +2137,43 @@ const html=`
             <div class="mt-5 md:mt-6 space-y-3 md:space-y-4">
 
                 <div
-                    class="rounded-xl md:rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
-                    ✅ Use <b>${data.after.vehicle}</b>
-                </div>
+    class="rounded-xl md:rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
+
+    ${data.after.risk_score < data.before.risk_score
+        ? `✅ <b>${data.after.vehicle}</b> improves operational safety`
+        : `⚠️ <b>${data.after.vehicle}</b> increases operational risk`
+    }
+
+</div>
 
                 <div
-                    class="rounded-xl md:rounded-2xl bg-cyan-500/10 border border-cyan-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
-                    🚚 Smart Route Optimization Enabled
-                </div>
+    class="rounded-xl md:rounded-2xl bg-indigo-500/10 border border-indigo-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
+
+    ${data.after.duration < data.before.duration
+        ? `🚚 Estimated delivery time improves by <b>${(data.before.duration - data.after.duration).toFixed(1)} hours</b>`
+        : `⏱ Estimated delivery time remains <b>${data.after.duration} hours</b>`
+    }
+
+</div>
 
                 <div
-                    class="rounded-xl md:rounded-2xl bg-indigo-500/10 border border-indigo-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
-                    🌡 Maintain Temperature
-                    <b>${document.getElementById("temperature").value}°C</b>
-                </div>
+    class="rounded-xl md:rounded-2xl bg-indigo-500/10 border border-indigo-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
+
+    🌡 Maintain temperature at
+    <b>${document.getElementById("temperature").value}°C</b>
+    to help preserve product quality.
+
+</div>
 
                 <div
-                    class="rounded-xl md:rounded-2xl bg-amber-500/10 border border-amber-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
-                    ⏱ Delay below
-                    <b>${document.getElementById("delay").value} day(s)</b>
-                </div>
+    class="rounded-xl md:rounded-2xl bg-cyan-500/10 border border-cyan-500/20 px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-white">
+
+    ${data.after.carbon < data.before.carbon
+        ? `🌱 Estimated carbon reduction: <b>${(data.before.carbon - data.after.carbon).toFixed(1)} kg CO₂</b>`
+        : `⚠️ Estimated carbon increase: <b>${(data.after.carbon - data.before.carbon).toFixed(1)} kg CO₂</b>`
+    }
+
+</div>
 
             </div>
 
