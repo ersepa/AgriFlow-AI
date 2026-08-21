@@ -2205,10 +2205,16 @@ el.innerHTML=Math.round(value);
 
 }
 
-document.querySelectorAll('.vehicle-card').forEach(card => {
-    card.addEventListener('click', function () {
-        document.getElementById('vehicle').value = this.dataset.value;
-    });
+document.addEventListener('click', function (e) {
+    const card = e.target.closest('.vehicle-card');
+
+    if (!card) return;
+
+    const vehicle = card.dataset.value;
+
+    document.getElementById('vehicle').value = vehicle;
+
+    console.log("Vehicle selected:", vehicle);
 });
 document.getElementById("runSimulation").addEventListener("click", async function () {
     const btn = this;
