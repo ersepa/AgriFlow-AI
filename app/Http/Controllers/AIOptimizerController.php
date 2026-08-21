@@ -78,7 +78,7 @@ $results = new LengthAwarePaginator(
     ]
 );
 
-    $totalShipments = $results->count();
+        $totalShipments = $results->total();
 
 $criticalCount = $results->where('priority_level', 'Critical')->count();
 
