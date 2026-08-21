@@ -1091,7 +1091,7 @@ shadow-[0_0_50px_rgba(34,211,238,.12)]">
 
 </div>
 
-<input hidden id="vehicle" value="Truck">
+<input type="hidden" id="vehicle" value="Truck">
 
 </div>
 
@@ -2236,6 +2236,12 @@ document.getElementById("runSimulation").addEventListener("click", async functio
             if(tasks[taskIndex]) text.innerHTML = tasks[taskIndex];
         }
     }, 50);
+
+document.querySelectorAll('[data-value]').forEach(option => {
+    option.addEventListener('click', function () {
+        document.getElementById('vehicle').value = this.dataset.value;
+    });
+});
 
     try {
         const response = await fetch(btn.dataset.url, {
