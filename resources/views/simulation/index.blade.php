@@ -1670,7 +1670,7 @@ const html=`
                 <div class="rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-5 md:p-6">
 
                     <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500">
-                        Carbon Saved
+                        Carbon Difference
                     </p>
 
                     <h2 class="mt-3 text-3xl md:text-4xl font-black text-emerald-400">
@@ -1871,19 +1871,19 @@ const html=`
 
             <div class="rounded-full bg-emerald-500/10 px-5 py-2 text-emerald-400 font-bold">
 
-                ↓ Carbon Reduced
+                Carbon Difference
 
             </div>
 
             <div class="rounded-full bg-cyan-500/10 px-5 py-2 text-cyan-400 font-bold">
 
-                ↑ Sustainability
+                Sustainability Difference
 
             </div>
 
             <div class="rounded-full bg-indigo-500/10 px-5 py-2 text-indigo-300 font-bold">
 
-                ↓ Delivery Risk
+                Delivery Difference
 
             </div>
 
@@ -2076,7 +2076,7 @@ const html=`
         <div class="rounded-2xl md:rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5 md:p-6">
 
             <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.25em] text-emerald-300">
-                Carbon Saved
+                Carbon Difference
             </p>
 
             <h2 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-black text-white">
