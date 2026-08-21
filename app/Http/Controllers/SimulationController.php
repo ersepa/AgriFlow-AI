@@ -22,79 +22,59 @@ $shipments = Shipment::with('harvest')
         );
 
     }
-    public function run(Request $request)
+public function run(Request $request)
 {
-
     $shipment = Shipment::with('harvest')
         ->findOrFail($request->shipment);
 
     $engine = new DecisionEngine();
 
+    // =========================
+    // BEFORE: kondisi asli shipment
+    // =========================
     $before = $engine->analyze($shipment);
 
+    // AFTER dimulai dari kondisi BEFORE
     $after = $before;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Vehicle
-    |--------------------------------------------------------------------------
-    */
-
-    switch($request->vehicle){
+    // =========================
+    // VEHICLE
+    // =========================
+    switch ($request->vehicle) {
 
         case 'Refrigerated Truck':
-
             $after['risk_score'] -= 20;
             $after['sustainability_score'] += 15;
-
-        break;
+            break;
 
         case 'Electric Truck':
-
             $after['risk_score'] -= 8;
             $after['sustainability_score'] += 20;
-
-        break;
-
+            break;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Temperature
-    |--------------------------------------------------------------------------
-    */
-
-    if($request->temperature <= 5){
-
+    // =========================
+    // TEMPERATURE
+    // =========================
+    if ($request->temperature <= 5) {
         $after['risk_score'] -= 15;
-
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Route
-    |--------------------------------------------------------------------------
-    */
-
-    if($request->route){
-
+    // =========================
+    // ROUTE OPTIMIZATION
+    // =========================
+    if ($request->route) {
         $after['risk_score'] -= 10;
-
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Delay
-    |--------------------------------------------------------------------------
-    */
+    // =========================
+    // DELAY
+    // =========================
+    $after['risk_score'] += ($request->delay * 8);
 
-    $after['risk_score'] +=
-        ($request->delay * 8);
-
-    /*
-    |--------------------------------------------------------------------------
-    */
-
+    // =========================
+    // BATASI RISK 0-100
+    // =========================
     $after['risk_score'] = max(
         0,
         min(
@@ -103,62 +83,97 @@ $shipments = Shipment::with('harvest')
         )
     );
 
+    // =========================
+    // SUSTAINABILITY AFTER
+    // =========================
     $after['sustainability_score'] = max(
         0,
         min(
             100,
             round(
-                100-$after['risk_score']
+                $before['sustainability_score']
+                + ($before['risk_score'] - $after['risk_score'])
             )
         )
     );
-return response()->json([
 
-    'before'=>[
+    // =========================
+    // CARBON AFTER
+    // =========================
+    $afterCarbon = match ($request->vehicle) {
 
-        'risk_score'=>$before['risk_score'],
+        'Electric Truck' =>
+            round($shipment->carbon_emission * 0.45, 1),
 
-        'sustainability_score'=>$before['sustainability_score'],
+        'Refrigerated Truck' =>
+            round($shipment->carbon_emission * 0.85, 1),
 
-        'carbon'=>round($shipment->carbon_emission,1),
+        default =>
+            round($shipment->carbon_emission, 1),
+    };
 
-        'duration'=>round($shipment->duration_hours,1),
+    // =========================
+    // DURATION AFTER
+    // =========================
+    $afterDuration = $request->route
+        ? round($shipment->duration_hours * 0.8, 1)
+        : round($shipment->duration_hours, 1);
 
-        'vehicle'=>'Standard Truck'
+    // =========================
+    // CARBON SAVED
+    // =========================
+    $carbonSaved = round(
+        $shipment->carbon_emission - $afterCarbon,
+        1
+    );
 
-    ],
+    // =========================
+    // RETURN RESULT
+    // =========================
+    return response()->json([
 
-    'after'=>[
+        'before' => [
 
-        'risk_score'=>$after['risk_score'],
+            'risk_score' =>
+                $before['risk_score'],
 
-        'sustainability_score'=>$after['sustainability_score'],
+            'sustainability_score' =>
+                $before['sustainability_score'],
 
-        'carbon'=>match($request->vehicle){
+            'carbon' =>
+                round($shipment->carbon_emission, 1),
 
-            'Electric Truck'
-                =>round($shipment->carbon_emission*0.45,1),
+            'duration' =>
+                round($shipment->duration_hours, 1),
 
-            'Refrigerated Truck'
-                =>round($shipment->carbon_emission*0.85,1),
+            'vehicle' =>
+                'Standard Truck',
+        ],
 
-            default
-                =>round($shipment->carbon_emission,1)
+        'after' => [
 
-        },
+            'risk_score' =>
+                $after['risk_score'],
 
-        'duration'=>$request->route
-            ?round($shipment->duration_hours*0.8,1)
-            :round($shipment->duration_hours,1),
+            'sustainability_score' =>
+                $after['sustainability_score'],
 
-        'vehicle'=>$request->vehicle
+            'carbon' =>
+                $afterCarbon,
 
-    ],
+            'carbon_saved' =>
+                $carbonSaved,
 
-    'shipment'=>$shipment
+            'duration' =>
+                $afterDuration,
 
-]);
+            'vehicle' =>
+                $request->vehicle,
+        ],
 
+        'shipment' =>
+            $shipment,
+    ]);
 }
 
 }

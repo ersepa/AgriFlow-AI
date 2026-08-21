@@ -1638,7 +1638,7 @@ const html=`
                     </p>
 
                     <h2 class="mt-3 text-3xl md:text-4xl font-black text-emerald-400">
-                        -${improvement}%
+                        ${improvement}%
                     </h2>
 
                 </div>
@@ -1674,7 +1674,7 @@ const html=`
                     </p>
 
                     <h2 class="mt-3 text-3xl md:text-4xl font-black text-emerald-400">
-                        ${(data.before.carbon-data.after.carbon).toFixed(1)} kg
+                        ${data.after.carbon_saved.toFixed(1)} kg
                     </h2>
 
                 </div>
