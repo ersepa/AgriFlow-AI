@@ -2204,6 +2204,12 @@ el.innerHTML=Math.round(value);
 });
 
 }
+
+document.querySelectorAll('.vehicle-card').forEach(card => {
+    card.addEventListener('click', function () {
+        document.getElementById('vehicle').value = this.dataset.value;
+    });
+});
 document.getElementById("runSimulation").addEventListener("click", async function () {
     const btn = this;
     // Gunakan ID yang unik atau pastikan cuma satu
@@ -2252,7 +2258,7 @@ document.querySelectorAll('[data-value]').forEach(option => {
             },
             body: JSON.stringify({
                 shipment: document.getElementById("selectedShipment").value,
-                vehicle: document.getElementById("vehicle").value,
+                vehicle: document.querySelector('[data-value].selected')?.dataset.value || "Truck",
                 temperature: document.getElementById("temperature").value,
                 delay: document.getElementById("delay").value,
                 route: document.getElementById("route").checked
