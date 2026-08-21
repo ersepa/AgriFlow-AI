@@ -37,21 +37,33 @@ public function run(Request $request)
     // AFTER dimulai dari kondisi BEFORE
     $after = $before;
 
-    // =========================
-    // VEHICLE
-    // =========================
-    switch ($request->vehicle) {
+// =========================
+// VEHICLE
+// =========================
+switch ($request->vehicle) {
 
-        case 'Refrigerated Truck':
-            $after['risk_score'] -= 20;
-            $after['sustainability_score'] += 15;
-            break;
+    case 'Truck':
+        // Standard Truck
+        break;
 
-        case 'Electric Truck':
-            $after['risk_score'] -= 8;
-            $after['sustainability_score'] += 20;
-            break;
-    }
+    case 'cold':
+        // Cold / Refrigerated Truck
+        $after['risk_score'] -= 20;
+        $after['sustainability_score'] += 15;
+        break;
+
+    case 'ship':
+        // Ship
+        $after['risk_score'] -= 15;
+        $after['sustainability_score'] += 20;
+        break;
+
+    case 'plane':
+        // Plane
+        $after['risk_score'] += 10;
+        $after['sustainability_score'] -= 15;
+        break;
+}
 
     // =========================
     // TEMPERATURE
@@ -100,17 +112,23 @@ public function run(Request $request)
     // =========================
     // CARBON AFTER
     // =========================
-    $afterCarbon = match ($request->vehicle) {
+$afterCarbon = match ($request->vehicle) {
 
-        'Electric Truck' =>
-            round($shipment->carbon_emission * 0.45, 1),
+    'Truck' =>
+        round($shipment->carbon_emission * 1.00, 1),
 
-        'Refrigerated Truck' =>
-            round($shipment->carbon_emission * 0.85, 1),
+    'cold' =>
+        round($shipment->carbon_emission * 0.85, 1),
 
-        default =>
-            round($shipment->carbon_emission, 1),
-    };
+    'ship' =>
+        round($shipment->carbon_emission * 0.60, 1),
+
+    'plane' =>
+        round($shipment->carbon_emission * 1.50, 1),
+
+    default =>
+        round($shipment->carbon_emission, 1),
+};
 
     // =========================
     // DURATION AFTER
