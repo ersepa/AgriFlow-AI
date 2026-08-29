@@ -39,6 +39,7 @@ class ShipmentController extends Controller
             ];
         } catch (\Throwable $e) {
             report($e);
+
             return null;
         }
     }
@@ -53,10 +54,16 @@ class ShipmentController extends Controller
     public function update(Request $request, Shipment $shipment)
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:Harvested,Packed,In Transit,Delivered'],
+            'status' => [
+                'required',
+                'string',
+                'in:Harvested,Packed,In Transit,Delivered',
+            ],
         ]);
 
-        $shipment->update(['status' => $validated['status']]);
+        $shipment->update([
+            'status' => $validated['status'],
+        ]);
 
         return redirect()
             ->route('shipments.index')
@@ -76,19 +83,40 @@ class ShipmentController extends Controller
         DecisionEngine $engine
     ) {
         $validated = $request->validate([
-            'harvest_id' => ['required', 'integer', 'exists:harvests,id'],
-            'origin' => ['required', 'string', 'max:255'],
-            'destination' => ['required', 'string', 'max:255', 'different:origin'],
-            'status' => ['required', 'string', 'in:Harvested,Packed,In Transit,Delivered'],
+            'harvest_id' => [
+                'required',
+                'integer',
+                'exists:harvests,id',
+            ],
+            'origin' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'destination' => [
+                'required',
+                'string',
+                'max:255',
+                'different:origin',
+            ],
+            'status' => [
+                'required',
+                'string',
+                'in:Harvested,Packed,In Transit,Delivered',
+            ],
         ]);
 
         $originCoords = $this->getCoordinates($validated['origin']);
         $destinationCoords = $this->getCoordinates($validated['destination']);
 
         $routeData = null;
+
         if ($originCoords && $destinationCoords) {
             try {
-                $routeData = $routeService->getRoute($originCoords, $destinationCoords);
+                $routeData = $routeService->getRoute(
+                    $originCoords,
+                    $destinationCoords
+                );
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -106,20 +134,29 @@ class ShipmentController extends Controller
 
         if (isset($routeData['features'][0]['properties']['summary'])) {
             $summary = $routeData['features'][0]['properties']['summary'];
+
             $distanceKm = round($summary['distance'] / 1000, 1);
             $durationHours = round($summary['duration'] / 3600, 1);
         }
 
-        // Existing provisional carbon model retained until the dedicated carbon step.
         $carbonEmission = $distanceKm !== null
             ? round($distanceKm * 0.12, 2)
             : null;
 
         $routeScore = null;
+
         if ($distanceKm !== null && $durationHours !== null) {
-            $routeScore = max(0, min(100, round(
-                100 - ($distanceKm / 100) - ($durationHours * 1.2)
-            )));
+            $routeScore = max(
+                0,
+                min(
+                    100,
+                    round(
+                        100
+                        - ($distanceKm / 100)
+                        - ($durationHours * 1.2)
+                    )
+                )
+            );
         }
 
         $shipment = Shipment::create([
@@ -139,9 +176,9 @@ class ShipmentController extends Controller
         ]);
 
         $shipment->load('harvest');
+
         $analysis = $engine->analyze($shipment);
 
-        // Auto-analysis no longer depends on parsing a raw OpenRouter response.
         AiAnalysis::create([
             'shipment_id' => $shipment->id,
             'risk_level' => $analysis['risk_level'],
@@ -154,7 +191,10 @@ class ShipmentController extends Controller
 
         return redirect()
             ->route('shipments.index')
-            ->with('success', 'Shipment created and analyzed successfully.');
+            ->with(
+                'success',
+                'Shipment created and analyzed successfully.'
+            );
     }
 
     public function destroy($id)
@@ -167,10 +207,23 @@ class ShipmentController extends Controller
             ->with('success', 'Shipment berhasil dihapus!');
     }
 
-    public function show($id)
-    {
-        $shipment = Shipment::with(['harvest', 'aiAnalyses'])->findOrFail($id);
+    public function show(
+        $id,
+        DecisionEngine $engine
+    ) {
+        $shipment = Shipment::with([
+            'harvest',
+            'aiAnalyses',
+        ])->findOrFail($id);
 
-        return view('shipments.show', compact('shipment'));
+        $analysis = $engine->analyze($shipment);
+
+        return view(
+            'shipments.show',
+            compact(
+                'shipment',
+                'analysis'
+            )
+        );
     }
 }

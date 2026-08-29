@@ -5,28 +5,33 @@ namespace App\Services\AI;
 use App\Models\CommodityProfile;
 use App\Models\Shipment;
 use App\Services\Agriculture\CommodityProfileService;
+use App\Services\Agriculture\QualityPredictionService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * AgriFlow Decision Engine - Step 2
+ * AgriFlow Decision Engine - Step 3.2
  *
  * Single source of truth for shipment operational intelligence.
  *
- * Step 2 adds a commodity-specific post-harvest knowledge layer:
- * - perishability differs by commodity
- * - temperature is assessed against each commodity profile
- * - recommendations can expose commodity-specific storage conditions
- * - unknown commodities reduce data confidence instead of inventing values
+ * Step 3.1 keeps the domain-informed Quality-at-Arrival model and adds
+ * reconciliation between commodity reference shelf life and recorded expiry, plus freshness consistency guardrails:
+ * - baseline reference shelf life from the commodity knowledge base
+ * - harvest age
+ * - temperature-aware effective transit aging
+ * - chilling penalties for sensitive commodities
+ * - predicted remaining shelf life at arrival
+ * - Quality-at-Arrival and Safe Transit Window
  *
  * IMPORTANT:
- * This is still NOT a statistical spoilage probability model.
- * Quality-at-Arrival and Q10 deterioration modeling come in Step 3.
+ * This is still NOT a statistical spoilage probability model and NOT ML.
+ * It is a transparent deterministic decision-support model.
  */
 class DecisionEngine
 {
     public function __construct(
-        private readonly CommodityProfileService $commodityProfiles
+        private readonly CommodityProfileService $commodityProfiles,
+        private readonly QualityPredictionService $qualityPrediction
     ) {
     }
 
@@ -61,11 +66,20 @@ class DecisionEngine
         $commodityProfile = $this->commodityProfiles->findForCommodity($commodityName);
         $profileSummary = $this->commodityProfiles->summary($commodityProfile);
 
-        $remainingDays = $this->remainingShelfLifeDays($shipment);
-        $temperatureAssessment = $this->buildTemperatureAssessment(
+        $qualityPrediction = $this->qualityPrediction->predict(
             $shipment,
             $commodityProfile,
             $scenario
+        );
+
+        $temperatureAssessment =
+            $qualityPrediction['temperature_assessment'];
+
+        // Step 3.2 uses the precise recorded time window from the quality
+        // model instead of flooring calendar days to an integer.
+        $remainingDays = (float) (
+            $qualityPrediction['recorded_remaining_days']
+            ?? $this->remainingShelfLifeDays($shipment)
         );
 
         $riskComponents = $this->riskComponents(
@@ -76,10 +90,24 @@ class DecisionEngine
             $temperatureAssessment
         );
 
-        $riskScore = $this->clamp(
+        $baseRiskScore = $this->clamp(
             (int) round(array_sum($riskComponents)),
             0,
             100
+        );
+
+        $freshnessGuardrail = $this->freshnessRiskGuardrail(
+            $qualityPrediction
+        );
+
+        $riskScore = max(
+            $baseRiskScore,
+            $freshnessGuardrail['floor']
+        );
+
+        $riskComponents['freshness_guardrail'] = max(
+            0,
+            $riskScore - $baseRiskScore
         );
 
         $priorityScore = $this->calculatePriorityScore(
@@ -114,6 +142,9 @@ class DecisionEngine
             'risk_score' => $riskScore,
             'risk_index' => $riskScore,
             'risk_level' => $this->getRiskLevel($riskScore),
+            'base_risk_score' => $baseRiskScore,
+            'freshness_risk_floor' => $freshnessGuardrail['floor'],
+            'freshness_risk_reason' => $freshnessGuardrail['reason'],
             'priority_score' => $priorityScore,
             'priority_level' => $this->getPriorityLevel($priorityScore),
 
@@ -129,11 +160,75 @@ class DecisionEngine
             'commodity_profile' => $profileSummary,
             'temperature_assessment' => $temperatureAssessment,
 
+            // Quality-at-Arrival intelligence (Step 3)
+            'quality_prediction' => $qualityPrediction,
+            'quality_at_departure' => $qualityPrediction['quality_at_departure'],
+            'quality_at_arrival' => $qualityPrediction['quality_at_arrival'],
+            'quality_status' => $qualityPrediction['quality_status'],
+            'quality_loss_during_transit' => $qualityPrediction['quality_loss_during_transit'],
+            // Operational values after Step 3.1 reconciliation.
+            'predicted_remaining_shelf_life_days' =>
+                $qualityPrediction['remaining_shelf_life_at_arrival_days'],
+            'reference_remaining_shelf_life_days' =>
+                $qualityPrediction['reference_remaining_shelf_life_at_arrival_days']
+                ?? null,
+            'recorded_remaining_shelf_life_days' =>
+                $qualityPrediction['recorded_remaining_at_arrival_days']
+                ?? null,
+            'recorded_remaining_hours' =>
+                $qualityPrediction['recorded_remaining_hours']
+                ?? null,
+            'recorded_remaining_at_arrival_hours' =>
+                $qualityPrediction['recorded_remaining_at_arrival_hours']
+                ?? null,
+            'recorded_freshness_at_departure' =>
+                $qualityPrediction['recorded_freshness_index_at_departure']
+                ?? null,
+            'recorded_freshness_at_arrival' =>
+                $qualityPrediction['recorded_freshness_index_at_arrival']
+                ?? null,
+            'reference_quality_at_departure' =>
+                $qualityPrediction['reference_quality_at_departure']
+                ?? null,
+            'reference_quality_at_arrival' =>
+                $qualityPrediction['reference_quality_at_arrival']
+                ?? null,
+            'expiry_constraint_applied' =>
+                $qualityPrediction['expiry_constraint_applied']
+                ?? false,
+            'shelf_life_reconciliation_status' =>
+                $qualityPrediction['shelf_life_reconciliation_status']
+                ?? 'Unknown',
+            'shelf_life_reconciliation_message' =>
+                $qualityPrediction['shelf_life_reconciliation_message']
+                ?? null,
+            'shelf_life_discrepancy_days' =>
+                $qualityPrediction['shelf_life_discrepancy_days']
+                ?? null,
+            'safe_transit_window_hours' =>
+                $qualityPrediction['safe_transit_window_hours'],
+            'reference_safe_transit_window_hours' =>
+                $qualityPrediction['reference_safe_transit_window_hours']
+                ?? null,
+            'recorded_expiry_window_hours' =>
+                $qualityPrediction['recorded_expiry_window_hours']
+                ?? null,
+            'planned_transit_hours' =>
+                $qualityPrediction['planned_transit_hours']
+                ?? null,
+            'transit_margin_hours' =>
+                $qualityPrediction['transit_margin_hours']
+                ?? null,
+            'safe_transit_status' =>
+                $qualityPrediction['safe_transit_status'],
+
             // Context
-            'remaining_days' => $remainingDays,
+            'remaining_days' => round(max(0, $remainingDays), 2),
+            'remaining_hours' => $qualityPrediction['recorded_remaining_hours'] ?? null,
             'data_confidence' => $this->calculateDataConfidence(
                 $shipment,
-                $commodityProfile
+                $commodityProfile,
+                $qualityPrediction
             ),
             'risk_components' => $riskComponents,
             'explainability' => $this->generateExplainability(
@@ -155,9 +250,9 @@ class DecisionEngine
             'recommended_vehicle' => $recommendation['recommended_vehicle'],
             'recommended_storage' => $recommendation['recommended_storage'],
 
-            // Still a transitional indicator. Step 3 replaces this with the
-            // real QualityPredictionService.
-            'estimated_arrival_quality' => $this->estimateArrivalQuality($riskScore),
+            // Backwards-compatible key now powered by QualityPredictionService.
+            'estimated_arrival_quality' =>
+                $qualityPrediction['quality_at_arrival'],
             'food_waste_level' => $this->getRiskLevel($riskScore),
         ];
     }
@@ -194,6 +289,11 @@ class DecisionEngine
                 'carbon' => round($before['carbon_kg'], 1),
                 'duration' => round($baseDuration, 1),
                 'vehicle' => 'Standard Truck',
+                'quality_at_arrival' => $before['quality_at_arrival'],
+                'remaining_shelf_life_days' =>
+                    $before['predicted_remaining_shelf_life_days'],
+                'safe_transit_window_hours' =>
+                    $before['safe_transit_window_hours'],
             ],
             'after' => [
                 'risk_score' => $after['risk_score'],
@@ -205,6 +305,14 @@ class DecisionEngine
                 ),
                 'duration' => round($afterDuration, 1),
                 'vehicle' => $this->displayVehicle($scenario['vehicle'] ?? 'Truck'),
+                'quality_at_arrival' => $after['quality_at_arrival'],
+                'quality_change' =>
+                    $after['quality_at_arrival']
+                    - $before['quality_at_arrival'],
+                'remaining_shelf_life_days' =>
+                    $after['predicted_remaining_shelf_life_days'],
+                'safe_transit_window_hours' =>
+                    $after['safe_transit_window_hours'],
             ],
             'analysis_before' => $before,
             'analysis_after' => $after,
@@ -249,7 +357,7 @@ class DecisionEngine
      */
     private function riskComponents(
         Shipment $shipment,
-        int $remainingDays,
+        float $remainingDays,
         array $scenario,
         ?CommodityProfile $commodityProfile,
         array $temperatureAssessment
@@ -354,10 +462,70 @@ class DecisionEngine
         return $modifier;
     }
 
+    private function freshnessRiskGuardrail(array $qualityPrediction): array
+    {
+        $quality = $qualityPrediction['quality_at_arrival'] ?? null;
+        $recordedArrivalDays = $qualityPrediction['recorded_remaining_at_arrival_days'] ?? null;
+        $safeStatus = $qualityPrediction['safe_transit_status'] ?? 'Unknown';
+        $expiryStatus = $qualityPrediction['shelf_life_reconciliation_status'] ?? '';
+
+        $floor = 0;
+        $reason = 'No freshness guardrail required.';
+
+        $apply = function (int $candidate, string $candidateReason) use (&$floor, &$reason): void {
+            if ($candidate > $floor) {
+                $floor = $candidate;
+                $reason = $candidateReason;
+            }
+        };
+
+        if ($expiryStatus === 'Recorded expiry reached') {
+            $apply(95, 'Recorded expiry has been reached; immediate operational review is required.');
+        }
+
+        if ($safeStatus === 'Threshold already exceeded') {
+            $apply(92, 'The operational safe transit threshold has already been exceeded.');
+        }
+
+        if ($safeStatus === 'ETA exceeds safe transit window') {
+            $apply(88, 'Planned transit exceeds the estimated operational safe transit window.');
+        }
+
+        if ($quality !== null) {
+            if ($quality < 30) {
+                $apply(88, 'Predicted operational arrival quality is critical.');
+            } elseif ($quality < 50) {
+                $apply(80, 'Predicted operational arrival quality is poor.');
+            } elseif ($quality < 70) {
+                $apply(72, 'Predicted operational arrival quality is at risk.');
+            }
+        }
+
+        if ($recordedArrivalDays !== null) {
+            if ($recordedArrivalDays <= 0) {
+                $apply(92, 'No recorded shelf life remains at the predicted arrival time.');
+            } elseif ($recordedArrivalDays <= 0.5) {
+                $apply(82, 'Less than 12 hours of recorded shelf life is expected to remain at arrival.');
+            } elseif ($recordedArrivalDays <= 1.0) {
+                $apply(76, 'One day or less of recorded shelf life is expected to remain at arrival.');
+            } elseif (
+                $recordedArrivalDays <= 2.0
+                && ($qualityPrediction['expiry_constraint_applied'] ?? false)
+            ) {
+                $apply(70, 'Recorded expiry is the limiting constraint with two days or less remaining at arrival.');
+            }
+        }
+
+        return [
+            'floor' => $floor,
+            'reason' => $reason,
+        ];
+    }
+
     private function calculatePriorityScore(
         Shipment $shipment,
         int $riskScore,
-        int $remainingDays
+        float $remainingDays
     ): int {
         $urgencyScore = match (true) {
             $remainingDays <= 0 => 100,
@@ -442,12 +610,15 @@ class DecisionEngine
 
     private function calculateDataConfidence(
         Shipment $shipment,
-        ?CommodityProfile $commodityProfile
+        ?CommodityProfile $commodityProfile,
+        array $qualityPrediction
     ): int {
         $checks = [
             filled($shipment->harvest?->commodity),
             $commodityProfile !== null,
+            filled($shipment->harvest?->harvest_date),
             filled($shipment->harvest?->expiry_date),
+            ($qualityPrediction['baseline_shelf_life_days'] ?? null) !== null,
             filled($shipment->origin),
             filled($shipment->destination),
             $shipment->distance_km !== null,
@@ -457,14 +628,22 @@ class DecisionEngine
         ];
 
         $complete = count(array_filter($checks));
+        $score = (int) round(($complete / count($checks)) * 100);
 
-        return (int) round(($complete / count($checks)) * 100);
+        // Step 3 predictions without an explicit temperature scenario use a
+        // neutral reference-temperature assumption. Keep the result usable,
+        // but reduce data confidence because actual cargo temperature is unknown.
+        if (($qualityPrediction['temperature_basis'] ?? '') === 'reference_neutral_fallback') {
+            $score -= 8;
+        }
+
+        return $this->clamp($score, 0, 100);
     }
 
     private function generateExplainability(
         Shipment $shipment,
         array $components,
-        int $remainingDays,
+        float $remainingDays,
         ?CommodityProfile $commodityProfile,
         array $temperatureAssessment
     ): array {
@@ -479,8 +658,19 @@ class DecisionEngine
                 'icon' => '📦',
                 'impact' => max(0, $components['remaining_shelf_life']),
                 'reason' => $remainingDays <= 0
-                    ? 'The harvest has reached or exceeded the recorded expiry date.'
-                    : "The harvest has approximately {$remainingDays} day(s) of recorded shelf life remaining.",
+                    ? 'The harvest has reached or exceeded the recorded expiry deadline.'
+                    : sprintf(
+                        'The harvest has approximately %.1f day(s) of recorded shelf life remaining before departure.',
+                        $remainingDays
+                    ),
+            ],
+            [
+                'title' => 'Freshness Constraint',
+                'icon' => '🧭',
+                'impact' => max(0, $components['freshness_guardrail'] ?? 0),
+                'reason' => ($components['freshness_guardrail'] ?? 0) > 0
+                    ? 'The final operational risk was raised by a freshness guardrail because quality, expiry, or transit margin is more critical than the base logistics score alone.'
+                    : 'No additional freshness guardrail was required beyond the base operational risk score.',
             ],
             [
                 'title' => 'Commodity Perishability',
@@ -533,7 +723,7 @@ class DecisionEngine
         return $factors;
     }
 
-    private function buildRiskProjection(int $riskScore, int $remainingDays): array
+    private function buildRiskProjection(int $riskScore, float $remainingDays): array
     {
         $projection = [];
         $urgencyFactor = $remainingDays <= 0
@@ -555,7 +745,7 @@ class DecisionEngine
     private function buildOperationalRecommendation(
         Shipment $shipment,
         int $riskScore,
-        int $remainingDays,
+        float $remainingDays,
         ?CommodityProfile $commodityProfile,
         array $temperatureAssessment
     ): array {
@@ -642,14 +832,6 @@ class DecisionEngine
         ];
     }
 
-    private function estimateArrivalQuality(int $riskScore): int
-    {
-        return $this->clamp(
-            (int) round(100 - ($riskScore * 0.65)),
-            0,
-            100
-        );
-    }
 
     private function getRiskLevel(int $riskScore): string
     {

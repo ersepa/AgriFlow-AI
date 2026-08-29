@@ -1,4 +1,4 @@
-﻿<x-app-layout>
+<x-app-layout>
     {{-- DeveloperDay 2026 / APICTA Grade Design Tokens & Animations --}}
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -45,7 +45,7 @@
             <div>
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-100/80 border border-indigo-200 text-indigo-800 text-xs font-bold tracking-wide mb-2 shadow-sm">
                     <span class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
-                    <span>DEVELOPERDAY 2026 â€¢ ROAD TO APICTA</span>
+                    <span>DEVELOPERDAY 2026 • ROAD TO APICTA</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">AI Intelligence Hub</h1>
                 <p class="text-slate-500 mt-1 font-medium text-sm">Predictive Sustainability Engine & Autonomous Logistics Risk Analytics.</p>
@@ -130,8 +130,8 @@
                         </div>
 
                         <div>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Recorded Time Remaining</p>
-                            <p class="font-extrabold text-white text-base mt-0.5">{{ number_format($shipmentData['remaining_days'], 2) }} Days</p>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Remaining Days</p>
+                            <p class="font-extrabold text-white text-base mt-0.5">{{ $shipmentData['remaining_days'] }} Days</p>
                         </div>
 
                         <div>
@@ -159,7 +159,7 @@
                     </div>
                     
                     <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Risk Index</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waste Probability</p>
                         <p class="mt-2 text-2xl font-black text-white">{{ $wasteProb }}</p>
                     </div>
 
@@ -175,7 +175,7 @@
                     {{-- Route Visualization --}}
                     <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
                         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                            <span>ðŸ—ºï¸</span>
+                            <span>🗺️</span>
                             <span>Live Route GIS Telemetry</span>
                         </h3>
                         <div id="map" class="h-[320px] rounded-xl overflow-hidden border border-slate-700"></div>
@@ -184,10 +184,10 @@
                     {{-- Predicted Spoilage Risk --}}
                     <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
                         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-2">
-                            <span>ðŸ“ˆ</span>
-                            <span>Operational Risk Trend</span>
+                            <span>📈</span>
+                            <span>Predicted Spoilage Curve</span>
                         </h3>
-                        <p class="text-slate-400 text-xs mb-4">Projected operational risk index under current shipment conditions.</p>
+                        <p class="text-slate-400 text-xs mb-4">Estimated degradation rate over remaining shelf-life days.</p>
                         <div class="h-[320px]">
                             <canvas id="riskChart"></canvas>
                         </div>
@@ -254,14 +254,14 @@
 
                     <div class="mt-8 border-t border-slate-700 pt-6">
                         <div class="flex justify-between mb-2">
-                            <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Driver Impact Coverage</span>
+                            <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Overall AI Confidence Index</span>
                             <span class="text-white font-black text-sm">{{ min(100,$totalImpact) }}%</span>
                         </div>
                         <div class="h-3 rounded-full bg-slate-700 overflow-hidden">
                             <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 transition-all duration-1000" style="width: {{ min(100,$totalImpact) }}%"></div>
                         </div>
                         <p class="mt-4 text-slate-300 text-xs leading-relaxed">
-                            <span class="font-bold text-white">Primary Cause:</span> {{ $drivers[0]['reason'] }} This factor contributes the most to the current operational risk model.
+                            <span class="font-bold text-white">Primary Cause:</span> {{ $drivers[0]['reason'] }} This factor contributed the most to the overall AI prediction model.
                         </p>
                     </div>
                 </div>
@@ -287,7 +287,7 @@
                             </svg>
                             <div class="absolute inset-0 flex flex-col items-center justify-center">
                                 <p class="text-5xl font-black text-white">{{ session('priority_score') }}</p>
-                                <p class="text-indigo-400 text-xs font-black uppercase tracking-widest mt-1">{{ session('priority_score', 0) >= 80 ? 'CRITICAL PRIORITY' : (session('priority_score', 0) >= 60 ? 'HIGH PRIORITY' : (session('priority_score', 0) >= 40 ? 'MEDIUM PRIORITY' : 'LOW PRIORITY')) }}</p>
+                                <p class="text-indigo-400 text-xs font-black uppercase tracking-widest mt-1">HIGH PRIORITY</p>
                             </div>
                         </div>
                     </div>
@@ -316,7 +316,7 @@
                             </div>
                             <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4">
                                 <p class="text-[10px] uppercase font-bold text-slate-400">Decision</p>
-                                <p class="text-lg font-black text-emerald-400 mt-1">{{ session('recommended_action', 'Review shipment') }}</p>
+                                <p class="text-lg font-black text-emerald-400 mt-1">Dispatch Now</p>
                             </div>
                         </div>
                     </div>
@@ -327,7 +327,7 @@
                 {{-- Recommendations Footer --}}
                 <div class="pt-6 border-t border-slate-700/80">
                     <p class="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest flex items-center gap-2">
-                        <span>ðŸ’¡</span>
+                        <span>💡</span>
                         <span>AI Actionable Recommendations</span>
                     </p>
                     <div class="text-xs text-indigo-100/90 font-medium leading-relaxed bg-slate-800/80 p-5 rounded-2xl border border-slate-700">
@@ -375,7 +375,7 @@
                             <td class="px-6 py-5 font-black text-slate-900 text-base rounded-l-2xl border-l border-t border-b border-inherit bg-white">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
-                                        🔎
+                                        🌱
                                     </div>
                                     <span class="truncate">{{ $shipment->harvest->commodity ?? 'N/A' }}</span>
                                 </div>
@@ -478,7 +478,7 @@
         data: {
             labels: labels,
             datasets: [{
-                label: 'Operational Risk Index',
+                label: 'Spoilage Risk (%)',
                 data: risks,
                 borderColor: '#6366f1',
                 backgroundColor: 'rgba(99, 102, 241, 0.1)',

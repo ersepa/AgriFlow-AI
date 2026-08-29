@@ -108,7 +108,57 @@ class AiAnalysisController extends Controller
             ->with('prediction_data', $analysis['prediction_data'])
             ->with('explainability', $analysis['explainability'])
             ->with('priority_score', $analysis['priority_score'])
-            ->with('total_impact', collect($analysis['explainability'])->sum('impact'));
+            ->with('total_impact', collect($analysis['explainability'])->sum('impact'))
+            ->with(
+    'quality_prediction',
+    $analysis['quality_prediction'] ?? []
+)
+->with(
+    'quality_at_departure',
+    $analysis['quality_at_departure'] ?? null
+)
+->with(
+    'quality_at_arrival',
+    $analysis['quality_at_arrival'] ?? null
+)
+->with(
+    'quality_status',
+    $analysis['quality_status'] ?? null
+)
+->with(
+    'quality_loss_during_transit',
+    $analysis['quality_loss_during_transit'] ?? null
+)
+->with(
+    'predicted_remaining_shelf_life_days',
+    $analysis[
+        'predicted_remaining_shelf_life_days'
+    ] ?? null
+)
+->with(
+    'safe_transit_window_hours',
+    $analysis[
+        'safe_transit_window_hours'
+    ] ?? null
+)
+->with(
+    'safe_transit_status',
+    $analysis['safe_transit_status'] ?? null
+)
+->with(
+    'temperature_assessment',
+    $analysis['temperature_assessment'] ?? []
+)
+->with(
+    'data_confidence',
+    $analysis['data_confidence'] ?? 0
+)
+->with(
+    'recommended_action',
+    $analysis['recommended_action']
+        ?? 'Review shipment'
+);;
+            
     }
 
     public function history()
@@ -130,13 +180,34 @@ class AiAnalysisController extends Controller
             ->with('success', 'Data berhasil dihapus!');
     }
 
-    public function show($id)
-    {
-        $analysis = AiAnalysis::with('shipment.harvest')->findOrFail($id);
+public function show(
+    $id,
+    DecisionEngine $engine
+) {
+    $analysis = AiAnalysis::with([
+        'shipment.harvest',
+        'shipment.aiAnalyses',
+    ])->findOrFail($id);
 
-        return view('ai-analysis.show', [
-            'analysis' => $analysis,
-            'shipment' => $analysis->shipment,
-        ]);
-    }
+    $shipment = $analysis->shipment;
+
+    abort_if(
+        !$shipment,
+        404,
+        'Shipment not found for this analysis.'
+    );
+
+    $decisionAnalysis = $engine->analyze(
+        $shipment
+    );
+
+    return view(
+        'ai-analysis.show',
+        [
+            'shipment' => $shipment,
+            'analysisRecord' => $analysis,
+            'decisionAnalysis' => $decisionAnalysis,
+        ]
+    );
+}
 }
