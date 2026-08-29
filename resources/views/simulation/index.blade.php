@@ -595,7 +595,7 @@
 
                     const tasks = [
                         "Loading Telemetry Data", "Building Digital Twin Mesh", "Calculating Cold Chain Dynamics",
-                        "Executing Carbon Model", "Predicting Shelf-Life", "Monte Carlo Risk Engine", "Finalizing Strategy"
+                        "Executing Carbon Model", "Predicting Shelf-Life", "Scenario Risk Engine", "Finalizing Strategy"
                     ];
 
                     let progress = 0;
@@ -661,10 +661,10 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-700/80">
                         <div>
                             <span class="px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-widest">
-                                SIMULATION COMPLETED • 98.7% CONFIDENCE
+                                SCENARIO SIMULATION COMPLETED
                             </span>
                             <h2 class="text-3xl font-black text-white mt-2">Digital Twin Optimization Report</h2>
-                            <p class="text-xs text-slate-400 mt-1">Skenario logistik telah disimulasikan secara utuh menggunakan Neural Decision Engine.</p>
+                            <p class="text-xs text-slate-400 mt-1">Skenario logistik telah disimulasikan secara utuh menggunakan AGRIFLOW DECISION ENGINE.</p>
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">

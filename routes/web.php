@@ -165,7 +165,7 @@ $estimatedWasteReduction = min(
     round($greenImpactScore * 0.35)
 );
 
-$engine = new DecisionEngine();
+$engine = app(DecisionEngine::class);
 
 $highestPriorityShipment = \App\Models\Shipment::with('harvest')
     ->whereIn('status', ['Harvested','Packed','In Transit'])
@@ -177,9 +177,18 @@ $highestPriorityShipment = \App\Models\Shipment::with('harvest')
 
 $operationalRecommendation = null;
 
-if($highestPriorityShipment){
-    $operationalRecommendation =
-        $engine->generateOperationalRecommendation($highestPriorityShipment);
+if ($highestPriorityShipment) {
+    $highestPriorityAnalysis = $engine->analyze($highestPriorityShipment);
+
+    $operationalRecommendation = [
+        'action' => $highestPriorityAnalysis['recommended_action'],
+        'reason' => $highestPriorityAnalysis['recommendation_reason'],
+        'dispatch_deadline' => $highestPriorityAnalysis['dispatch_deadline'],
+        'recommended_vehicle' => $highestPriorityAnalysis['recommended_vehicle'],
+        'recommended_storage' => $highestPriorityAnalysis['recommended_storage'],
+        'risk_score' => $highestPriorityAnalysis['risk_score'],
+        'priority_score' => $highestPriorityAnalysis['priority_score'],
+    ];
 }
 
 $dashboardShipments = \App\Models\Shipment::with('harvest')
@@ -238,7 +247,7 @@ $environmentService = new \App\Services\EnvironmentalService();
 
 $environment = $environmentService->getEnvironment(null);
 
-$engine = new DecisionEngine();
+$engine = app(DecisionEngine::class);
 
 foreach(range(1,7) as $day){
 

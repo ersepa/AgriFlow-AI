@@ -2,328 +2,177 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
-use Illuminate\Support\Facades\Cache;
 class GeminiService
 {
-public function generateShipmentExplanation(array $data)
-{
+    /**
+     * LLM explanation layer only.
+     * Numerical risk/priority/sustainability values MUST come from DecisionEngine.
+     */
+    public function generateShipmentExplanation(array $data): array
+    {
+        $recommendedAction = $data['recommended_action'] ?? 'Monitor shipment';
+        $fallbackReason = $data['recommendation_reason']
+            ?? 'The recommendation is based on the current operational risk and shipment condition.';
 
-$prompt = <<<PROMPT
-You are an AI logistics analyst.
+        $prompt = <<<PROMPT
+You are the explanation layer for AgriFlow, an agricultural logistics decision-support system.
 
-Analyze this shipment:
+IMPORTANT:
+- The numerical scores below were already calculated by AgriFlow's Decision Engine.
+- DO NOT recalculate, change, invent, or contradict the scores.
+- Your job is only to explain the decision in clear operational language.
 
+Shipment:
 Commodity: {$data['commodity']}
 Origin: {$data['origin']}
 Destination: {$data['destination']}
 Status: {$data['status']}
-Remaining Days: {$data['remaining_days']}
+Remaining recorded shelf life: {$data['remaining_days']} days
 Distance: {$data['distance']} km
+Risk Index: {$data['risk_score']}/100
+Priority Score: {$data['priority_score']}/100
+Sustainability Score: {$data['sustainability_score']}/100
+Engine Recommendation: {$recommendedAction}
+Engine Reason: {$fallbackReason}
 
-Risk Score: {$data['risk_score']}
-Priority Score: {$data['priority_score']}
-Sustainability Score: {$data['sustainability_score']}
-
-Generate operational logistics advice based on shipment conditions.
-
-Generate a UNIQUE recommendation for this shipment.
-
-Base your recommendation on the COMBINATION of:
-- Remaining shelf life
-- Risk score
-- Transportation distance
-- Shipment status
-- Sustainability score
-- Commodity characteristics
-
-Different shipment conditions should produce different recommendations and explanations.
-
-Examples:
-- High risk + very short shelf life -> Ship immediately
-- High risk + long distance -> Optimize route
-- Medium risk + good shelf life -> Monitor shipment
-- Low sustainability score -> Improve storage condition
-- High priority score but moderate risk -> Prioritize shipment
-
-Do NOT always recommend "Ship immediately".
-
-The explanation must explicitly reference the shipment data.
-
-Recommendation must be one of:
-
-- Ship immediately
-- Prioritize shipment
-- Monitor shipment
-- Improve storage condition
-- Optimize route
-
-Explain the reason based on actual shipment data.
-
-IMPORTANT RULES:
-- Do not mention raw decimal numbers.
-- Never mention days with decimals.
-- Use simple human language.
-- If remaining days is negative, say "shipment has exceeded shelf life".
-- If remaining days is positive, say "remaining shelf life is X days".
-- Do not suggest holding shipment unless explicitly required.
-
-The recommendation must be operational logistics advice.
-
-Allowed recommendations:
-- Ship immediately
-- Prioritize shipment
-- Monitor shipment
-- Improve storage condition
-- Optimize route
-
-Do not recommend unrealistic actions such as holding shipment for many days.
-
-
-Return ONLY valid JSON.
-
+Return ONLY valid JSON in this exact structure:
 {
-  "recommendation": "One short operational recommendation.",
-  "decision_reason": "Explain WHY using the shipment conditions.",
-  "conclusion": "One concise summary sentence.",
-  "confidence": 90
+  "recommendation": "short action",
+  "decision_reason": "1-2 concise sentences explaining the existing engine decision",
+  "conclusion": "one concise sentence"
 }
 
 Rules:
-- confidence must be an integer between 85 and 99.
-- recommendation maximum 6 words.
-- decision_reason maximum 2 sentences.
-- conclusion maximum 1 sentence.
-- No markdown.
-- No extra text.
-
+- Do not output a confidence percentage.
+- Do not call Risk Index a probability.
+- Do not claim a neural network, Monte Carlo model, or real-time sensor data.
+- Do not prescribe an exact storage temperature because commodity-specific profiles are not active yet.
+- Keep the language practical and suitable for a logistics operator.
+- No markdown and no text outside JSON.
 PROMPT;
 
+        try {
+            $response = Http::timeout(15)
+                ->retry(1, 300)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                    'Content-Type' => 'application/json',
+                ])
+                ->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => 'meta-llama/llama-3.1-8b-instruct',
+                    'temperature' => 0,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                ]);
 
-$response = Http::withHeaders([
+            if (!$response->successful()) {
+                return $this->explanationFallback($recommendedAction, $fallbackReason);
+            }
 
-'Authorization'=>'Bearer '.env('OPENROUTER_API_KEY'),
+            $content = $response->json('choices.0.message.content');
 
-'Content-Type'=>'application/json'
+            if (!$content) {
+                return $this->explanationFallback($recommendedAction, $fallbackReason);
+            }
 
-])->post(
-'https://openrouter.ai/api/v1/chat/completions',
-[
+            $content = trim(str_replace(['```json', '```'], '', $content));
+            $result = json_decode($content, true);
 
-'model'=>'meta-llama/llama-3.1-8b-instruct',
+            if (!is_array($result)) {
+                return $this->explanationFallback($recommendedAction, $fallbackReason);
+            }
 
-'temperature'=>0,
+            return [
+                'recommendation' => $result['recommendation'] ?? $recommendedAction,
+                'decision_reason' => $result['decision_reason'] ?? $fallbackReason,
+                'conclusion' => $result['conclusion'] ?? $fallbackReason,
+            ];
+        } catch (\Throwable $e) {
+            report($e);
 
-'messages'=>[
-
-[
-'role'=>'user',
-'content'=>$prompt
-]
-
-]
-
-]);
-
-
-
-$content = 
-$response->json()['choices'][0]['message']['content']
-?? null;
-
-
-if(!$content){
-    return [
-        'recommendation'=>'AI response unavailable',
-        'decision_reason'=>'No explanation generated',
-        'conclusion'=>'Please try again',
-        'confidence'=>0
-    ];
-}
-
-
-// bersihkan markdown
-$content = str_replace(
-    ['```json','```'],
-    '',
-    $content
-);
-
-
-$content = trim($content);
-
-
-$result = json_decode($content,true);
-
-
-// kalau JSON gagal
-if(json_last_error() !== JSON_ERROR_NONE){
-
-    return [
-        'recommendation'=>'AI formatting error',
-        'decision_reason'=>$content,
-        'conclusion'=>'Unable to parse AI response',
-        'confidence'=>0
-    ];
-
-}
-
-
-return $result;
-
-}
-    
-
-public function analyzeShipment(array $data)
-{
-    $response = \Illuminate\Support\Facades\Http::withHeaders([
-        'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-        'Content-Type' => 'application/json',
-    ])->post('https://openrouter.ai/api/v1/chat/completions', [
-        'model' => 'meta-llama/llama-3.1-8b-instruct',
-        // 🔥 Tambahkan ini agar konsisten
-        'temperature' => 0.0, 
-        'messages' => [
-            [
-                'role' => 'user',
-                'content' => "
-You are a logistics sustainability expert.
-Do NOT automatically classify fruits, vegetables,
-or fresh products as highly perishable.
-
-Use the shipment data provided to determine the
-actual spoilage risk during transportation.
-
-Analyze the shipment and provide:
-
-Commodity Perishability: High / Medium / Low
-
-Recommendations:
-- point 1
-- point 2
-- point 3
-
-Explanation:
-short explanation (1-2 sentences)
-
-Shipment Data:
-Commodity: {$data['commodity']}
-Origin: {$data['origin']}
-Destination: {$data['destination']}
-Status: {$data['status']}
-Remaining Days: {$data['remaining_days']}
-Distance: {$data['distance']} km
-Duration: {$data['duration']} hours
-Carbon Emission: {$data['carbon_emission']} kg CO2
-Route Score: {$data['route_score']}/100
-
-Return ONLY in this format:
-
-Commodity Perishability:
-Choose ONLY one:
-High
-Medium
-Low
-
-Recommendations:
-- point 1
-- point 2
-- point 3
-
-Explanation:
-text
-
-STRICT: Output the format above exactly. No conversational text.
-"
-            ]
-        ]
-    ]);
-
-    $json = json_decode($response->body(), true);
-    return $json;
-}
-
-public function getCachedInsight(array $data)
-
-    {
-
-        // Kunci cache 'dashboard_insight' bisa lu ganti kalau mau lebih spesifik
-
-        return Cache::remember('dashboard_insight', 3600, function () use ($data) {
-
-            return $this->generateDashboardInsight($data);
-
-        });
-
+            return $this->explanationFallback($recommendedAction, $fallbackReason);
+        }
     }
 
-public function generateDashboardInsight(array $data)
+    /**
+     * Kept temporarily for backwards compatibility.
+     * Do not use this method to calculate prediction scores.
+     */
+    public function analyzeShipment(array $data): array
+    {
+        return $this->generateShipmentExplanation([
+            'commodity' => $data['commodity'] ?? 'Unknown',
+            'origin' => $data['origin'] ?? '-',
+            'destination' => $data['destination'] ?? '-',
+            'status' => $data['status'] ?? '-',
+            'remaining_days' => $data['remaining_days'] ?? 0,
+            'distance' => $data['distance'] ?? 0,
+            'risk_score' => $data['risk_score'] ?? 0,
+            'priority_score' => $data['priority_score'] ?? 0,
+            'sustainability_score' => $data['sustainability_score'] ?? 0,
+            'recommended_action' => $data['recommended_action'] ?? 'Monitor shipment',
+            'recommendation_reason' => $data['recommendation_reason']
+                ?? 'No additional engine context was supplied.',
+        ]);
+    }
 
+    public function getCachedInsight(array $data)
+    {
+        return Cache::remember('dashboard_insight', 3600, function () use ($data) {
+            return $this->generateDashboardInsight($data);
+        });
+    }
+
+    public function generateDashboardInsight(array $data)
+    {
+        $prompt = <<<PROMPT
+You are an agricultural logistics operations analyst.
+Return ONLY JSON:
 {
-
-$prompt = "
-
-You are an AI logistics analyst.
-
-
-
-Return ONLY clean JSON format like this:
-
-
-
-{
-
-  \"insight\": \"short 1-2 sentence system insight\",
-
-  \"recommendation\": \"short actionable recommendation\"
-
+  "insight": "short 1-2 sentence system insight",
+  "recommendation": "short actionable recommendation"
 }
-
-
 
 Data:
-
 Total Shipments: {$data['totalShipments']}
-
 Delivered: {$data['delivered']}
-
 High Risk: {$data['highRisk']}
-
 Average Score: {$data['avgScore']}
 
-";
+Do not invent additional metrics or claim model accuracy.
+PROMPT;
 
+        try {
+            $response = Http::timeout(15)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                    'Content-Type' => 'application/json',
+                ])
+                ->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => 'meta-llama/llama-3.1-8b-instruct',
+                    'temperature' => 0,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                ]);
 
+            return $response->json('choices.0.message.content') ?? 'No insight';
+        } catch (\Throwable $e) {
+            report($e);
+            return 'No insight';
+        }
+    }
 
-    $response = Http::withHeaders([
-
-        'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-
-        'Content-Type' => 'application/json',
-
-    ])->post('https://openrouter.ai/api/v1/chat/completions', [
-
-        'model' => 'meta-llama/llama-3.1-8b-instruct',
-
-        'messages' => [
-
-            [
-
-                'role' => 'user',
-
-                'content' => $prompt
-
-            ]
-
-        ]
-
-    ]);
-
-
-
-    return $response->json()['choices'][0]['message']['content'] ?? 'No insight';
-
-}
-
+    private function explanationFallback(string $action, string $reason): array
+    {
+        return [
+            'recommendation' => $action,
+            'decision_reason' => $reason,
+            'conclusion' => $reason,
+        ];
+    }
 }

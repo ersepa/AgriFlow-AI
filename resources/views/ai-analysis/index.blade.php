@@ -89,7 +89,7 @@
                         <span>Predictive Analysis Output</span>
                     </h2>
                     <span class="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                        OPENROUTER AI ENGINE
+                        AGRIFLOW DECISION ENGINE
                     </span>
                 </div>
 

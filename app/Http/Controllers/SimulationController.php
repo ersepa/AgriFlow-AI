@@ -3,195 +3,44 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shipment;
-use Illuminate\Http\Request;
 use App\Services\AI\DecisionEngine;
+use Illuminate\Http\Request;
 
 class SimulationController extends Controller
 {
-
     public function index()
     {
+        $shipments = Shipment::with('harvest')
+            ->latest()
+            ->paginate(4);
 
-$shipments = Shipment::with('harvest')
-    ->latest()
-    ->paginate(4);
-
-        return view(
-            'simulation.index',
-            compact('shipments')
-        );
-
-    }
-public function run(Request $request)
-{
-    $shipment = Shipment::with('harvest')
-        ->findOrFail($request->shipment);
-
-    $engine = new DecisionEngine();
-
-    // =========================
-    // BEFORE: kondisi asli shipment
-    // =========================
-    $before = $engine->analyze($shipment);
-
-    // AFTER dimulai dari kondisi BEFORE
-    $after = $before;
-
-// =========================
-// VEHICLE
-// =========================
-switch ($request->vehicle) {
-
-    case 'Truck':
-        // Standard Truck
-        break;
-
-    case 'cold':
-        // Cold / Refrigerated Truck
-        $after['risk_score'] -= 20;
-        $after['sustainability_score'] += 15;
-        break;
-
-    case 'ship':
-        // Ship
-        $after['risk_score'] -= 15;
-        $after['sustainability_score'] += 20;
-        break;
-
-    case 'plane':
-        // Plane
-        $after['risk_score'] += 10;
-        $after['sustainability_score'] -= 15;
-        break;
-}
-
-    // =========================
-    // TEMPERATURE
-    // =========================
-    if ($request->temperature <= 5) {
-        $after['risk_score'] -= 15;
+        return view('simulation.index', compact('shipments'));
     }
 
-    // =========================
-    // ROUTE OPTIMIZATION
-    // =========================
-    if ($request->route) {
-        $after['risk_score'] -= 10;
+    public function run(Request $request, DecisionEngine $engine)
+    {
+        $validated = $request->validate([
+            'shipment' => ['required', 'integer', 'exists:shipments,id'],
+            'vehicle' => ['nullable', 'string', 'in:Truck,cold,ship,plane'],
+            'temperature' => ['nullable', 'numeric', 'between:-10,60'],
+            'delay' => ['nullable', 'numeric', 'min:0', 'max:72'],
+            'route' => ['nullable'],
+        ]);
+
+        $shipment = Shipment::with('harvest')
+            ->findOrFail($validated['shipment']);
+
+        $result = $engine->simulate($shipment, [
+            'vehicle' => $validated['vehicle'] ?? 'Truck',
+            'temperature' => $validated['temperature'] ?? null,
+            'delay' => $validated['delay'] ?? 0,
+            'route' => $request->boolean('route'),
+        ]);
+
+        return response()->json([
+            'before' => $result['before'],
+            'after' => $result['after'],
+            'shipment' => $shipment,
+        ]);
     }
-
-    // =========================
-    // DELAY
-    // =========================
-    $after['risk_score'] += ($request->delay * 8);
-
-    // =========================
-    // BATASI RISK 0-100
-    // =========================
-    $after['risk_score'] = max(
-        0,
-        min(
-            100,
-            round($after['risk_score'])
-        )
-    );
-
-    // =========================
-    // SUSTAINABILITY AFTER
-    // =========================
-    $after['sustainability_score'] = max(
-        0,
-        min(
-            100,
-            round(
-                $before['sustainability_score']
-                + ($before['risk_score'] - $after['risk_score'])
-            )
-        )
-    );
-
-    // =========================
-    // CARBON AFTER
-    // =========================
-$afterCarbon = match ($request->vehicle) {
-
-    'Truck' =>
-        round($shipment->carbon_emission * 1.00, 1),
-
-    'cold' =>
-        round($shipment->carbon_emission * 0.85, 1),
-
-    'ship' =>
-        round($shipment->carbon_emission * 0.60, 1),
-
-    'plane' =>
-        round($shipment->carbon_emission * 1.50, 1),
-
-    default =>
-        round($shipment->carbon_emission, 1),
-};
-
-    // =========================
-    // DURATION AFTER
-    // =========================
-    $afterDuration = $request->route
-        ? round($shipment->duration_hours * 0.8, 1)
-        : round($shipment->duration_hours, 1);
-
-    // =========================
-    // CARBON SAVED
-    // =========================
-    $carbonSaved = round(
-        $shipment->carbon_emission - $afterCarbon,
-        1
-    );
-
-    // =========================
-    // RETURN RESULT
-    // =========================
-    return response()->json([
-
-        'before' => [
-
-            'risk_score' =>
-                $before['risk_score'],
-
-            'sustainability_score' =>
-                $before['sustainability_score'],
-
-            'carbon' =>
-                round($shipment->carbon_emission, 1),
-
-            'duration' =>
-                round($shipment->duration_hours, 1),
-
-            'vehicle' =>
-                'Standard Truck',
-        ],
-
-        'after' => [
-
-            'risk_score' =>
-                $after['risk_score'],
-
-            'sustainability_score' =>
-                $after['sustainability_score'],
-
-            'carbon' =>
-                $afterCarbon,
-
-            'carbon_saved' =>
-                $carbonSaved,
-
-            'duration' =>
-                $afterDuration,
-
-            'vehicle' =>
-                $request->vehicle,
-        ],
-
-        'shipment' =>
-            $shipment,
-    ]);
-}
-
 }
