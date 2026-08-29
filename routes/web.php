@@ -56,6 +56,9 @@ Route::get('/ai-optimizer/explain/{shipment}',
     ->middleware(['auth'])
     ->name('ai-analysis.show');
 
+    Route::delete('/ai-analysis/bulk-destroy', [AiAnalysisController::class, 'bulkDestroy'])->name('ai-analysis.bulk-destroy');
+    Route::delete('/ai-analysis/truncate', [AiAnalysisController::class, 'truncate'])->name('ai-analysis.truncate');
+
     Route::post('/chat', [App\Http\Controllers\ChatController::class, 'chat'])->middleware('auth');
 
 Route::get('/ai-analysis/history', [AiAnalysisController::class, 'history'])

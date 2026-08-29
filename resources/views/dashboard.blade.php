@@ -1,2645 +1,1037 @@
 <x-app-layout>
-
+    {{-- Custom Styles & Light Theme Design System derived from Homepage --}}
     <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes softPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.03); opacity: 0.9; } }
+        @keyframes floating { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+        @keyframes earthRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .animate-card { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
-
-        .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; }
+        .animate-card { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.08s; } 
+        .delay-2 { animation-delay: 0.16s; } 
+        .delay-3 { animation-delay: 0.24s; }
 
         [x-cloak] { display: none !important; }
 
-        .glass-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        /* Light modern card elevation & glass effect */
+        .agri-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+            border-radius: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-        .custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
-}
+        .agri-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 35px -8px rgba(15, 23, 42, 0.08), 0 6px 16px -4px rgba(15, 23, 42, 0.03);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.05);
-    border-radius: 999px;
-}
+        .agri-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(99,102,241,0.8);
-    border-radius: 999px;
-}
+        /* Scrollbar styles */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
+        /* Animated Orb / Earth */
+        .earth { animation: floating 6s ease-in-out infinite, earthRotate 35s linear infinite; }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
+        /* Weather Tabs */
+        .weather-tab {
+            padding: 10px 20px;
+            border-radius: 9999px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            transition: all 0.25s ease;
+            font-weight: 700;
+            font-size: 0.875rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(99,102,241,.5);
-    border-radius: 999px;
-}
+        .weather-tab:hover {
+            transform: translateY(-2px);
+            border-color: #0d9488;
+            color: #0f172a;
+        }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(99,102,241,.8);
-}
+        .weather-tab.active {
+            background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #2563eb 100%);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.4);
+        }
 
-<style>
-
-.earth{
-
-animation:
-
-floating 6s ease-in-out infinite;
-
-box-shadow:
-
-0 0 80px rgba(6,182,212,.35);
-
-}
-
-@keyframes floating{
-
-0%{
-
-transform:translateY(0px);
-
-}
-
-50%{
-
-transform:translateY(-14px);
-
-}
-
-100%{
-
-transform:translateY(0px);
-
-}
-
-}
-
-.earth{
-    animation: earthRotate 35s linear infinite;
-}
-
-@keyframes earthRotate{
-
-    from{
-        transform:rotate(0deg);
-    }
-
-    to{
-        transform:rotate(360deg);
-    }
-
-}
-
-.weather-tab{
-
-padding:12px 20px;
-
-border-radius:9999px;
-
-background:#0f172a;
-
-border:1px solid rgba(255,255,255,.08);
-
-color:#94a3b8;
-
-transition:.35s;
-
-font-weight:700;
-
-}
-
-.weather-tab:hover{
-
-transform:translateY(-2px);
-
-border-color:#22d3ee;
-
-color:white;
-
-}
-
-.weather-tab.active{
-
-background:linear-gradient(90deg,#06b6d4,#22c55e);
-
-color:white;
-
-border-color:transparent;
-
-box-shadow:0 0 25px rgba(34,211,238,.25);
-
-}
-
-</style>
-
+        /* Background grid overlay */
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
     </style>
 
+    <div class="min-h-screen bg-[#f8fafc] bg-grid-pattern text-slate-800 relative overflow-hidden pb-16">
+        
+        {{-- Background Soft Mesh Gradients inspired by Homepage --}}
+        <div class="absolute -top-40 -left-40 w-[600px] h-[600px] bg-emerald-200/40 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="absolute top-1/4 -right-40 w-[550px] h-[550px] bg-indigo-200/35 rounded-full blur-[140px] pointer-events-none"></div>
+        <div class="absolute bottom-10 left-1/3 w-[500px] h-[500px] bg-teal-200/30 rounded-full blur-[130px] pointer-events-none"></div>
 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-slate-950 min-h-screen">
+            {{-- HEADER SECTION: Dashboard Intro with Layered AI Feature Module --}}
+            <div class="mb-10 animate-card">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    
+                    {{-- Left Title & Welcome --}}
+                    <div class="lg:col-span-7">
+                        <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold tracking-wide mb-4 shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>System v2.0 Live • Intelligence Center</span>
+                        </div>
+                        <h1 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+                            Dashboard Agriculture and Logistics System <br class="hidden sm:inline" />
+                            <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600">
+                                Artificial Intelligence
+                            </span>
+                        </h1>
+                        <p class="text-slate-600 mt-3 text-base sm:text-lg font-normal max-w-2xl leading-relaxed">
+                            Welcome back. Here is your real-time supply chain overview, environmental risk predictions, and predictive logistics insights.
+                        </p>
+                    </div>
 
-        <!-- Header -->
+{{-- Right Homepage-Inspired Layered AI Metric Spotlight Module --}}
+<div class="lg:col-span-5 relative py-2">
+    <div class="relative mx-auto max-w-md lg:max-w-none">
+        
+        {{-- Main Center Card Container --}}
+        <div class="bg-white/95 backdrop-blur-md rounded-3xl p-6 border border-slate-200/80 shadow-[0_15px_35px_-10px_rgba(15,23,42,0.08)] flex flex-col justify-between">
+            
+            {{-- Top Header Row: Status & Active Sync --}}
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">AI Supply Chain Status</p>
+                        <h3 class="text-base font-black text-slate-900 mt-0.5">
+                            @if($highRisk > 0)
+                                <span class="text-amber-600">Attention Required</span>
+                            @else
+                                <span class="text-emerald-600">Optimal Performance</span>
+                            @endif
+                        </h3>
+                    </div>
+                </div>
+                
+                <span class="text-[10px] font-extrabold px-3 py-1.5 bg-emerald-100/80 text-emerald-800 rounded-full border border-emerald-200/50 shrink-0">
+                    Active Sync
+                </span>
+            </div>
 
-        <div class="mb-10">
+            {{-- Middle Section: Progress Bar Route Health Score --}}
+            <div class="space-y-2 mb-6">
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-slate-500">Route Health Score</span>
+                    <span class="text-slate-900 font-extrabold">{{ round($avgScore) }}%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200/50">
+                    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 h-2 rounded-full transition-all duration-1000" style="width: {{ $avgScore }}%"></div>
+                </div>
+            </div>
 
-            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-indigo-500 to-cyan-400 tracking-tight">
+            {{-- Bottom Section: Integrated Spotlight Cards (Insight Score & Total Harvest) --}}
+            <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                
+                {{-- Total Harvest Card --}}
+                <div class="bg-slate-50/80 rounded-2xl p-3 border border-slate-200/70 flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0">
+                        ⚖️
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Total Harvest</p>
+                        <p class="text-xs font-black text-slate-900 truncate mt-0.5">
+                            {{ number_format($totalWeight, 0, ',', '.') }} <span class="text-[10px] font-bold text-slate-500">KG</span>
+                        </p>
+                    </div>
+                </div>
 
-                AgriFlow AI Dashboard
+                {{-- Insight Score Badge --}}
+                <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-2xl p-3 shadow-md shadow-indigo-500/20 flex items-center justify-between">
+                    <div>
+                        <p class="text-[9px] font-extrabold uppercase tracking-widest text-indigo-200">Insight Score</p>
+                        <p class="text-sm font-black leading-none mt-1">{{ number_format($avgScore, 1) }}</p>
+                    </div>
+                    <div class="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-xs">
+                        ⚡
+                    </div>
+                </div>
 
-            </h1>
-
-            <p class="text-slate-400 mt-2 font-medium tracking-wide">Real-time agriculture intelligence and predictive analytics.</p>
+            </div>
 
         </div>
 
+    </div>
+</div>
+
+                </div>
+            </div>
 
 
-        <!-- KPI Grid -->
-
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-
-            @php
-
-$items = [ ['Total Harvest', $totalHarvests, 'text-white'], ['Total Weight', number_format($totalWeight, 0, ',', '.') . ' KG', 'text-white'], ['Shipments', $totalShipments, 'text-white'], ['Delivered', $deliveredShipments, 'text-emerald-400'], ['AI Analyses', $totalAnalyses, 'text-indigo-400'], ['High Risk', $highRisk, 'text-rose-400'] ];
-
-            @endphp
-
-            @foreach($items as $i => $item)
-
+            {{-- OPERATIONAL KPI GRID --}}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10 animate-card delay-1">
                 @php
-
-                    $content = "Detail informasi untuk " . $item[0] . ".";
-
-// Wrapper buat kotak modal biar konsisten
-
-$wrapperStart = "<div style='background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 12px;'>";
-
-$wrapperEnd = "</div>";
-
-$emptyMsg = "<div style='color: #94a3b8; font-style: italic; text-align: center;'>Data tidak tersedia saat ini.</div>";
-
-
-
-switch ($item[0]) {
-
-    case 'Total Harvest':
-
-        $shipments = \App\Models\Shipment::with('harvest')->get();
-
-        if ($shipments->isEmpty()) {
-
-            $content = $wrapperStart . $emptyMsg . $wrapperEnd;
-
-        } else {
-
-            $list = $shipments->pluck('harvest.commodity')->unique()->implode(', ');
-
-            $content = $wrapperStart . "Terdapat total <strong>" . $totalHarvests . "</strong> data panen.<br><br>Komoditas: <strong>" . $list . "</strong>" . $wrapperEnd;
-
-        }
-
-        break;
-
-
-
-    case 'Total Weight':
-
-        $weightDetails = \App\Models\Harvest::select('commodity')->selectRaw('SUM(weight) as total_weight')->groupBy('commodity')->get();
-
-        if ($weightDetails->isEmpty()) {
-
-            $content = $wrapperStart . $emptyMsg . $wrapperEnd;
-
-        } else {
-
-            $inner = "<p style='margin-bottom:8px'>Detail berat per komoditas:</p><ul style='list-style: disc; margin-left: 20px;'>";
-
-            foreach ($weightDetails as $w) { $inner .= "<li><strong>" . $w->commodity . "</strong>: " . number_format($w->total_weight, 0) . " KG</li>"; }
-
-            $inner .= "</ul>";
-
-            $content = $wrapperStart . $inner . $wrapperEnd;
-
-        }
-
-        break;
-
-
-
-    case 'Shipments':
-
-    $recentShipments = \App\Models\Shipment::with('harvest')
-        ->latest()
-        ->take(20)
-        ->get();
-
-    if ($recentShipments->isEmpty()) {
-
-        $content = $wrapperStart . $emptyMsg . $wrapperEnd;
-
-    } else {
-
-        $inner = "
-        <p style='margin-bottom:12px;font-weight:bold'>
-            Recent Shipments
-        </p>
-
-        <div class='custom-scrollbar'
-            style='
-                max-height:320px;
-                overflow-y:auto;
-                border:1px solid #e5e7eb;
-                border-radius:12px;
-                padding:12px;
-            '>
-
-        <ul style='list-style:none;padding:0;margin:0'>
-        ";
-
-        foreach ($recentShipments as $s) {
-
-            $statusColor = match($s->status){
-                'Harvested' => '#f59e0b',
-                'Packed' => '#3b82f6',
-                'In Transit' => '#8b5cf6',
-                'Delivered' => '#22c55e',
-                default => '#94a3b8',
-            };
-
-            $inner .= "
-
-            <li style='
-                padding:12px;
-                margin-bottom:10px;
-                border:1px solid #e2e8f0;
-                border-radius:12px;
-            '>
-
-                <strong>{$s->harvest->commodity}</strong><br>
-
-                <span style='font-size:12px;color:#64748b'>
-                    {$s->origin} ➜ {$s->destination}
-                </span>
-
-                <br><br>
-
-                <span
-                    style='
-                        display:inline-block;
-                        background:{$statusColor};
-                        color:white;
-                        padding:3px 10px;
-                        border-radius:999px;
-                        font-size:11px;
-                        font-weight:bold;
-                    '>
-                    {$s->status}
-                </span>
-
-            </li>
-
-            ";
-        }
-
-        $inner .= "
-        </ul>
-
-        <div style='margin-top:15px;text-align:center'>
-            Showing latest 20 shipments
-        </div>
-
-        </div>
-        ";
-
-        $content = $wrapperStart . $inner . $wrapperEnd;
-    }
-
-    break;
-
-
-
-    case 'Delivered':
-
-        $deliveredList = \App\Models\Shipment::where('status', 'Delivered')->with('harvest')->latest()->take(5)->get();
-
-        if ($deliveredList->isEmpty()) {
-
-            $content = $wrapperStart . $emptyMsg . $wrapperEnd;
-
-        } else {
-
-            $inner = "<p style='margin-bottom:8px'>5 Pengiriman berhasil:</p><ul style='list-style: disc; margin-left: 20px;'>";
-
-            foreach ($deliveredList as $s) { $inner .= "<li><strong>" . ($s->harvest->commodity ?? 'N/A') . "</strong></li>"; }
-
-            $inner .= "</ul>";
-
-            $content = $wrapperStart . $inner . $wrapperEnd;
-
-        }
-
-        break;
-
-
-
-    case 'AI Analyses':
-
-$recentAnalyses = \App\Models\AiAnalysis::with('shipment.harvest')
-    ->latest()
-    ->take(20)
-    ->get();
-
-        if ($recentAnalyses->isEmpty()) {
-
-            $content = $wrapperStart . $emptyMsg . $wrapperEnd;
-
-        } else {
-
-$inner = "
-<style>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-        to bottom,
-        #6366f1,
-        #4f46e5
-    );
-    border-radius: 999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-        to bottom,
-        #4f46e5,
-        #4338ca
-    );
-}
-</style>
-
-<p style='margin-bottom:8px'>Recent AI Analyses</p>
-
-<div class='custom-scrollbar'
-     style='
-        max-height:300px;
-        overflow-y:auto;
-        padding-right:8px;
-        border:1px solid #e5e7eb;
-        border-radius:12px;
-        padding:12px;
-     '>
-
-<ul style='list-style:none;padding:0'>
-";
-
-foreach ($recentAnalyses as $a) {
-
-    $commodity = $a->shipment->harvest->commodity ?? 'Unknown';
-
-    $inner .= "
-<li style='
-    margin-bottom:12px;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid #e2e8f0;
-'>
-
-        <strong>Commodity:</strong> {$commodity}<br>
-
-        <strong>Risk:</strong>
-        <span style='color:" .
-            ($a->risk_level === 'High'
-                ? '#ef4444'
-                : ($a->risk_level === 'Medium'
-                    ? '#f59e0b'
-                    : '#22c55e')) .
-        "'>
-            {$a->risk_level}
-        </span>
-        <br>
-
-        <strong>Waste:</strong> {$a->waste_probability}<br>
-
-        <strong>Score:</strong> {$a->sustainability_score}
-
-    </li>";
-}
-
-$inner .= "
-</ul>
-<div style='margin-top:15px; text-align:center;'>
-<a href='" . route('ai-analysis.history') . "'
-   class='inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 hover:-translate-y-0.5 transition-all duration-300'>
-    View All Analyses →
-</a>
-</div>
-
-</div>
-</div>
-";
-
-            $content = $wrapperStart . $inner . $wrapperEnd;
-
-        }
-
-        break;
-
-
-
-    case 'High Risk':
-
-        $highRiskItems = \App\Models\AiAnalysis::where('risk_level', 'High')->with('shipment.harvest')->take(5)->get();
-
-        if ($highRiskItems->isEmpty()) {
-
-            $content = $wrapperStart . $emptyMsg . $wrapperEnd;
-
-        } else {
-
-            $inner = "<p style='margin-bottom:8px'>Daftar risiko tinggi:</p><ul style='list-style: disc; margin-left: 20px;'>";
-
-            foreach ($highRiskItems as $h) { $inner .= "<li>Komoditas: <strong>" . ($h->shipment->harvest->commodity ?? 'N/A') . "</strong></li>"; }
-
-            $inner .= "</ul>";
-
-            $content = $wrapperStart . $inner . $wrapperEnd;
-
-        }
-
-        break;
-
-}
-
+                    $items = [ 
+                        ['Total Harvest', $totalHarvests, 'text-slate-900', 'bg-emerald-50 text-emerald-600', '🌱'], 
+                        ['Total Weight', number_format($totalWeight, 0, ',', '.') . ' KG', 'text-slate-900', 'bg-teal-50 text-teal-600', '📦'], 
+                        ['Shipments', $totalShipments, 'text-slate-900', 'bg-blue-50 text-blue-600', '🚚'], 
+                        ['Delivered', $deliveredShipments, 'text-emerald-600', 'bg-emerald-100 text-emerald-700', '✅'], 
+                        ['AI Analyses', $totalAnalyses, 'text-indigo-600', 'bg-indigo-50 text-indigo-600', '🧠'], 
+                        ['High Risk', $highRisk, 'text-rose-600', 'bg-rose-50 text-rose-600', '🚨'] 
+                    ];
                 @endphp
 
-<div onclick="openModal(this)"
-
-     data-title="{{ $item[0] }}"
-
-     data-content='{!! htmlspecialchars($content) !!}'
-
-         class="glass-card p-6 rounded-3xl cursor-pointer hover:bg-slate-800 transition-all hover:scale-[1.02]">
-
-        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{{ $item[0] }}</p>
-
-        <p class="text-2xl font-black mt-2 {{ $item[2] }}">{{ $item[1] }}</p>
-
-    </div>
-
-            @endforeach
-
-        </div>
-
-{{-- ========================================================= --}}
-{{-- LIVE ENVIRONMENTAL INTELLIGENCE --}}
-{{-- ========================================================= --}}
-
-<div class="mt-12">
-
-<div class="relative overflow-hidden rounded-[42px]
-bg-gradient-to-br from-[#07111d] via-[#081725] to-[#050b14]
-border border-cyan-500/20
-shadow-[0_0_80px_rgba(6,182,212,.15)]">
-
-    {{-- Glow --}}
-    <div class="absolute -top-40 -right-20 w-[420px] h-[420px] bg-cyan-500/15 blur-[160px]"></div>
-    <div class="absolute -bottom-32 -left-20 w-[350px] h-[350px] bg-indigo-500/15 blur-[140px]"></div>
-
-    <div class="relative p-10 lg:p-14">
-
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
-
-            <div>
-
-                <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-400/20">
-
-                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-
-                    <span class="uppercase tracking-[0.45em] text-cyan-300 text-xs font-black">
-                        LIVE ENVIRONMENT
-                    </span>
-
-                </div>
-
-                <h1 class="mt-6 text-5xl lg:text-6xl font-black text-white leading-tight">
-
-                    Environmental Intelligence
-
-                </h1>
-
-                <p class="mt-5 max-w-3xl text-slate-400 text-lg leading-8">
-
-                    AI continuously monitors weather conditions, route quality,
-                    environmental impact, and shipment safety in real time.
-
-                </p>
-
-            </div>
-
-            <div class="mt-8 lg:mt-0">
-
-                <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 px-6 py-5">
-
-                    <p class="text-emerald-300 uppercase tracking-[0.3em] text-xs font-black">
-
-                        STATUS
-
-                    </p>
-
-                    <h2 class="mt-3 text-3xl font-black text-white">
-
-                        ONLINE
-
-                    </h2>
-
-                    <p class="mt-2 text-slate-400">
-
-                        Last Sync :
-                        <span id="environmentTime">{{ now()->format('H:i:s') }}</span>
-
-                    </p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {{-- divider --}}
-
-        <div class="my-12 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-
-        {{-- SECTION 2 AKAN MASUK DI SINI --}}
-        <div class="grid xl:grid-cols-[340px_1fr] gap-8">
-
-    {{-- ========================================= --}}
-    {{-- EARTH --}}
-    {{-- ========================================= --}}
-
-    <div
-    class="relative overflow-hidden rounded-[36px]
-    border border-cyan-500/20
-    bg-gradient-to-br
-    from-slate-900
-    via-[#071827]
-    to-slate-950
-    p-8">
-
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,.15),transparent_70%)]"></div>
-
-        <div class="relative">
-
-            <div class="sticky top-5 z-20 mb-8 flex items-center justify-between rounded-2xl border border-cyan-500/10 bg-slate-950/60 backdrop-blur-xl px-8 py-5">
-
-                <div>
-
-                    <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
-
-                        SATELLITE
-
-                    </p>
-
-                    <h2 class="mt-3 text-white text-2xl font-black">
-
-                        Earth Monitor
-
-                    </h2>
-
-                </div>
-
-                <div class="rounded-full bg-cyan-500/10 px-4 py-2 border border-cyan-500/20">
-
-                    <span class="text-cyan-300 text-xs font-bold">
-
-                        CONNECTED
-
-                    </span>
-
-                </div>
-
-            </div>
-
-            <div class="flex justify-center mt-8">
-
-                <div class="relative w-56 h-56 mx-auto">
-
-                    <div
-                    class="absolute inset-0 rounded-full
-                    bg-cyan-400/30 blur-[80px] animate-pulse">
+                @foreach($items as $i => $item)
+                    @php
+                        $content = "Detail informasi untuk " . $item[0] . ".";
+                        $wrapperStart = "<div style='background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; color: #1e293b;'>";
+                        $wrapperEnd = "</div>";
+                        $emptyMsg = "<div style='color: #64748b; font-style: italic; text-align: center;'>Data tidak tersedia saat ini.</div>";
+
+                        switch ($item[0]) {
+                            case 'Total Harvest':
+                                $shipments = \App\Models\Shipment::with('harvest')->get();
+                                if ($shipments->isEmpty()) {
+                                    $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+                                } else {
+                                    $list = $shipments->pluck('harvest.commodity')->filter()->unique()->implode(', ');
+                                    $content = $wrapperStart . "Terdapat total <strong>" . $totalHarvests . "</strong> data panen.<br><br>Komoditas: <strong>" . ($list ?: 'N/A') . "</strong>" . $wrapperEnd;
+                                }
+                                break;
+
+                            case 'Total Weight':
+                                $weightDetails = \App\Models\Harvest::select('commodity')->selectRaw('SUM(weight) as total_weight')->groupBy('commodity')->get();
+                                if ($weightDetails->isEmpty()) {
+                                    $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+                                } else {
+                                    $inner = "<p style='margin-bottom:8px'>Detail berat per komoditas:</p><ul style='list-style: disc; margin-left: 20px;'>";
+                                    foreach ($weightDetails as $w) { $inner .= "<li><strong>" . $w->commodity . "</strong>: " . number_format($w->total_weight, 0) . " KG</li>"; }
+                                    $inner .= "</ul>";
+                                    $content = $wrapperStart . $inner . $wrapperEnd;
+                                }
+                                break;
+
+                            case 'Shipments':
+                                $recentShipments = \App\Models\Shipment::with('harvest')->latest()->take(20)->get();
+                                if ($recentShipments->isEmpty()) {
+                                    $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+                                } else {
+                                    $inner = "<p style='margin-bottom:12px;font-weight:bold'>Recent Shipments</p><div class='custom-scrollbar' style='max-height:320px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px;padding:12px;background:#fff;'><ul style='list-style:none;padding:0;margin:0'>";
+                                    foreach ($recentShipments as $s) {
+                                        $statusColor = match($s->status){
+                                            'Harvested' => '#f59e0b',
+                                            'Packed' => '#3b82f6',
+                                            'In Transit' => '#8b5cf6',
+                                            'Delivered' => '#10b981',
+                                            default => '#64748b',
+                                        };
+                                        $commodityName = $s->harvest->commodity ?? 'N/A';
+                                        $inner .= "<li style='padding:10px;margin-bottom:8px;border:1px solid #f1f5f9;border-radius:8px;'><strong>{$commodityName}</strong><br><span style='font-size:12px;color:#64748b'>{$s->origin} ➜ {$s->destination}</span><br><span style='display:inline-block;background:{$statusColor};color:white;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;margin-top:4px;'>{$s->status}</span></li>";
+                                    }
+                                    $inner .= "</ul><div style='margin-top:10px;text-align:center;font-size:12px;color:#64748b;'>Showing latest 20 shipments</div></div>";
+                                    $content = $wrapperStart . $inner . $wrapperEnd;
+                                }
+                                break;
+
+                            case 'Delivered':
+                                $deliveredList = \App\Models\Shipment::where('status', 'Delivered')->with('harvest')->latest()->take(5)->get();
+                                if ($deliveredList->isEmpty()) {
+                                    $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+                                } else {
+                                    $inner = "<p style='margin-bottom:8px'>5 Pengiriman berhasil:</p><ul style='list-style: disc; margin-left: 20px;'>";
+                                    foreach ($deliveredList as $s) { $inner .= "<li><strong>" . ($s->harvest->commodity ?? 'N/A') . "</strong></li>"; }
+                                    $inner .= "</ul>";
+                                    $content = $wrapperStart . $inner . $wrapperEnd;
+                                }
+                                break;
+
+                            case 'AI Analyses':
+                                $recentAnalyses = \App\Models\AiAnalysis::with('shipment.harvest')->latest()->take(20)->get();
+                                if ($recentAnalyses->isEmpty()) {
+                                    $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+                                } else {
+                                    $inner = "<p style='margin-bottom:8px'>Recent AI Analyses</p><div class='custom-scrollbar' style='max-height:280px;overflow-y:auto;padding-right:8px;border:1px solid #e2e8f0;border-radius:12px;padding:12px;background:#fff;'><ul style='list-style:none;padding:0'>";
+                                    foreach ($recentAnalyses as $a) {
+                                        $commodity = $a->shipment->harvest->commodity ?? 'Unknown';
+                                        $riskColor = $a->risk_level === 'High' ? '#ef4444' : ($a->risk_level === 'Medium' ? '#f59e0b' : '#10b981');
+                                        $inner .= "<li style='margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid #f1f5f9;'><strong>Commodity:</strong> {$commodity}<br><strong>Risk:</strong> <span style='color:{$riskColor};font-weight:bold;'>{$a->risk_level}</span> | <strong>Score:</strong> {$a->sustainability_score}</li>";
+                                    }
+                                    $inner .= "</ul><div style='margin-top:12px; text-align:center;'><a href='" . route('ai-analysis.history') . "' style='display:inline-block;padding:6px 16px;background:#4f46e5;color:white;border-radius:8px;font-weight:bold;font-size:12px;'>View All Analyses →</a></div></div>";
+                                    $content = $wrapperStart . $inner . $wrapperEnd;
+                                }
+                                break;
+
+                            case 'High Risk':
+                                $highRiskItems = \App\Models\AiAnalysis::where('risk_level', 'High')->with('shipment.harvest')->take(5)->get();
+                                if ($highRiskItems->isEmpty()) {
+                                    $content = $wrapperStart . $emptyMsg . $wrapperEnd;
+                                } else {
+                                    $inner = "<p style='margin-bottom:8px'>Daftar risiko tinggi:</p><ul style='list-style: disc; margin-left: 20px;'>";
+                                    foreach ($highRiskItems as $h) { $inner .= "<li>Komoditas: <strong>" . ($h->shipment->harvest->commodity ?? 'N/A') . "</strong></li>"; }
+                                    $inner .= "</ul>";
+                                    $content = $wrapperStart . $inner . $wrapperEnd;
+                                }
+                                break;
+                        }
+                    @endphp
+
+                    <div onclick="openModal(this)"
+                         data-title="{{ $item[0] }}"
+                         data-content='{!! htmlspecialchars($content) !!}'
+                         class="agri-card p-5 cursor-pointer agri-card-hover flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{{ $item[0] }}</span>
+                            <span class="p-1.5 rounded-lg {{ $item[3] }} text-xs">{{ $item[4] }}</span>
+                        </div>
+                        <p class="text-2xl font-black {{ $item[2] }} tracking-tight">{{ $item[1] }}</p>
                     </div>
-
-<div
-    id="weatherOrb"
-    class="w-60 h-60 mx-auto"
-
-    data-rain="{{ $environment['weather']['rain'] ?? 0 }}"
-    data-cloud="{{ $environment['weather']['cloud_cover'] ?? 0 }}"
-    data-wind="{{ $environment['weather']['wind_speed_10m'] ?? 0 }}"
-    data-temp="{{ $environment['weather']['temperature_2m'] ?? 25 }}">
-
-</div>
-
-                </div>
-
+                @endforeach
             </div>
 
-<div class="grid grid-cols-2 gap-5 mt-8">
 
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
-
-        <p class="text-slate-400 text-sm">
-
-            Location
-
-        </p>
-
-        <h2 class="mt-2 text-white font-black text-xl">
-
-            {{ data_get($environment, 'location', 'Unknown') }}
-
-        </h2>
-
-    </div>
-
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
-
-        <p class="text-slate-400 text-sm">
-
-            Last Update
-
-        </p>
-
-        <h2 class="mt-2 text-cyan-300 font-black text-xl">
-
-            {{ $environment['updated_at'] }}
-
-        </h2>
-
-    </div>
-
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
-
-        <p class="text-slate-400 text-sm">
-
-            Data Source
-
-        </p>
-
-        <h2 class="mt-2 text-emerald-400 font-black">
-
-            Open-Meteo API
-
-        </h2>
-
-    </div>
-
-    <div
-    class="rounded-2xl
-    border border-white/5
-    bg-white/5
-    p-4">
-
-        <p class="text-slate-400 text-sm">
-
-            AI Status
-
-        </p>
-
-        <h2 class="mt-2 text-cyan-400 font-black">
-
-            ONLINE
-
-        </h2>
-
-    </div>
-
-</div>
-
-        </div>
-
-    </div>
-
-
-
-{{-- ========================================= --}}
-{{-- WEATHER COMMAND CENTER --}}
-{{-- ========================================= --}}
-
-<div
-class="rounded-[36px]
-border border-cyan-500/20
-bg-gradient-to-br
-from-slate-900
-via-slate-950
-to-black
-p-8
-relative
-overflow-hidden">
-
-<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,.12),transparent_45%)]"></div>
-
-<div class="relative">
-
-<div class="flex items-start justify-between">
-
-<div>
-
-<p class="uppercase tracking-[0.4em] text-cyan-400 text-xs font-black">
-
-LIVE WEATHER COMMAND CENTER
-
-</p>
-
-<h1
-class="mt-4
-text-5xl
-font-black
-text-white">
-
-{{ round($environment['weather']['temperature_2m']) }}°C
-
-</h1>
-
-<p class="mt-2 text-slate-400">
-
-Real-Time Environmental Intelligence
-
-</p>
-
-</div>
-
-<div
-class="rounded-2xl
-border border-emerald-500/20
-bg-emerald-500/10
-px-5
-py-3
-text-right">
-
-<div class="flex items-center gap-2 justify-end">
-
-<div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-
-<span class="text-emerald-300 font-bold">
-
-LIVE
-
-</span>
-
-</div>
-
-<p class="mt-2 text-xs text-slate-400">
-
-Updated {{ $environment['updated_at'] }}
-
-</p>
-
-</div>
-
-</div>
-
-{{-- KPI GRID --}}
-
-<div class="grid grid-cols-2 xl:grid-cols-3 gap-5 mt-10">
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-🌡 Temperature
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-white">
-
-{{ round($environment['weather']['temperature_2m']) }}°C
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-💧 Humidity
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-cyan-300">
-
-{{ $environment['weather']['relative_humidity_2m'] }}%
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-🌧 Rain
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-blue-300">
-
-{{ $environment['weather']['rain'] }} mm
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-🌬 Wind
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-white">
-
-{{ round($environment['weather']['wind_speed_10m']) }}
-
-<span class="text-lg">
-
-km/h
-
-</span>
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition-all duration-500 hover:-translate-y-2 hover:border-cyan-400/30 hover:shadow-[0_0_35px_rgba(34,211,238,.15)]">
-
-<p class="text-slate-500 text-sm">
-
-☁ Cloud Cover
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-white">
-
-{{ $environment['weather']['cloud_cover'] }}%
-
-</h2>
-
-</div>
-
-<div class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
-
-<p class="text-cyan-300 text-sm">
-
-🌍 Weather Score
-
-</p>
-
-<h2 class="mt-3 text-3xl font-black text-cyan-300">
-
-{{ $environment['weather_score'] }}
-
-</h2>
-
-</div>
-
-</div>
-
-
-
-<hr class="border-slate-800 my-10">
-
-
-<div class="grid lg:grid-cols-2 gap-8">
-
-<div>
-
-<p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
-
-AI WEATHER SUMMARY
-
-</p>
-
-<p class="mt-5 text-slate-300 leading-8">
-
-{{ $environment['recommendation'] }}
-
-</p>
-
-</div>
-
-<div class="space-y-6">
-
-<div>
-
-<div class="flex justify-between text-sm mb-2">
-
-<span class="text-slate-400">
-
-Route Health
-
-</span>
-
-<span class="font-bold text-white">
-
-{{ $environment['route_score'] }}%
-
-</span>
-
-</div>
-
-<div class="h-3 rounded-full bg-slate-800 overflow-hidden">
-
-<div
-class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-700"
-
-style="width:{{ $environment['route_score'] }}%">
-
-</div>
-
-</div>
-
-</div>
-
-<div>
-
-<div class="flex justify-between text-sm mb-2">
-
-<span class="text-slate-400">
-
-AI Confidence
-
-</span>
-
-<span class="font-bold text-white">
-
-{{ $environment['confidence'] }}%
-
-</span>
-
-</div>
-
-<div class="h-3 rounded-full bg-slate-800 overflow-hidden">
-
-<div
-class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400 transition-all duration-700"
-
-style="width:{{ $environment['confidence'] }}%">
-
-</div>
-
-</div>
-
-</div>
-
-<div>
-
-<div class="flex justify-between text-sm mb-2">
-
-<span class="text-slate-400">
-
-Environmental Risk
-
-</span>
-
-<span class="font-bold text-white">
-
-{{ $environment['environmental_risk'] }}%
-
-</span>
-
-</div>
-
-<div class="h-3 rounded-full bg-slate-800 overflow-hidden">
-
-<div
-class="h-full rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-700"
-
-style="width:{{ $environment['environmental_risk'] }}%">
-
-</div>
-
-</div>
-
-</div>
-
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-{{-- ========================================= --}}
-{{-- WEATHER ANALYTICS --}}
-{{-- ========================================= --}}
-
-<section class="mt-14">
-
-<div class="flex justify-between items-end">
-
-    <div>
-
-        <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
-
-            LIVE ENVIRONMENT ANALYTICS
-
-        </p>
-
-        <h2 class="mt-2 text-4xl font-black text-white">
-
-            Weather Forecast
-
-        </h2>
-
-    </div>
-
-    <p class="text-slate-500">
-
-        AI Prediction • Next 6 Hours
-
-    </p>
-    
-
-</div>
-
-<div class="flex flex-wrap gap-3 mt-8 text-white">
-
-    <button class="weather-tab active" data-type="temp">
-        🌡 Temperature
-    </button>
-
-    <button class="weather-tab" data-type="humidity">
-        💧 Humidity
-    </button>
-
-    <button class="weather-tab" data-type="wind">
-        🌬 Wind
-    </button>
-
-    <button class="weather-tab" data-type="rain">
-        🌧 Rain Probability
-    </button>
-
-    <button class="weather-tab" data-type="cloud">
-        ☁ Cloud
-    </button>
-
-</div>
-
-    <div
-class="mt-8 h-[430px] rounded-3xl bg-gradient-to-b from-cyan-500/5 to-transparent p-5 w-full">
-
-        <canvas id="temperatureChart"></canvas>
-
-    </div>
-
-</section>
-    </div>
-
-</div>
-
-</div>
-<br>
-
-<!-- AI Executive Summary -->
-
-<div
-class="mb-10
-rounded-[2rem]
-bg-gradient-to-r
-from-indigo-700
-via-indigo-600
-to-cyan-600
-shadow-2xl
-overflow-hidden">
-
-<div class="p-8">
-
-<div class="flex flex-col lg:flex-row justify-between gap-8">
-
-<div class="flex-1">
-
-<p class="uppercase tracking-[0.35em] text-xs font-black text-indigo-200">
-AI EXECUTIVE SUMMARY
-</p>
-
-<h2 class="text-4xl font-black text-white mt-3">
-🧠 Today's Logistics Recommendation
-</h2>
-
-<p class="text-indigo-100 mt-5 leading-8 text-[15px]">
-
-AI analyzed
-
-<strong>{{ $totalAnalyses }}</strong>
-
-shipment analyses.
-
-<br>
-
-@if($criticalShipments)
-
-🚨
-<strong>{{ $criticalShipments }}</strong>
-
-critical shipment(s) require immediate attention.
-
-<br>
-
-@endif
-
-@if($shipImmediately)
-
-🚚
-<strong>{{ $shipImmediately }}</strong>
-
-shipment(s) should be dispatched immediately.
-
-<br>
-
-@endif
-
-@if($optimizeRoute)
-
-🛣️
-<strong>{{ $optimizeRoute }}</strong>
-
-shipment(s) require route optimization.
-
-<br>
-
-@endif
-
-🌱
-Estimated food waste reduction
-
-<strong>{{ $estimatedWasteReduction }}%</strong>
-
-if AI recommendations are followed.
-
-</p>
-
-<div class="mt-8 grid grid-cols-2 gap-4">
-
-    <div class="p-5 rounded-xl bg-white/15 backdrop-blur border border-white/20">
-        <p class="text-xs uppercase text-indigo-200">AI Analyses</p>
-        <p class="text-3xl font-black text-white mt-1">
-            {{ $totalAnalyses }}
-        </p>
-    </div>
-
-    <div class="p-5 rounded-xl bg-white/15 backdrop-blur border border-white/20">
-        <p class="text-xs uppercase text-indigo-200">Sustainability</p>
-        <p class="text-3xl font-black text-white mt-1">
-            {{ round($avgScore) }}%
-        </p>
-    </div>
-
-</div>
-
-</div>
-
-<div
-class="w-full
-lg:w-[360px]
-rounded-3xl
-bg-white/10
-border border-white/20
-backdrop-blur-xl
-p-6">
-
-<p class="text-xs uppercase tracking-[0.3em] text-indigo-200 font-black">
-AI PERFORMANCE
-</p>
-
-<div class="grid grid-cols-2 gap-4 mt-6">
-
-
-    <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
-        <p class="text-indigo-200 text-xs uppercase">
-            Critical
-        </p>
-
-        <p class="text-3xl font-black text-rose-300 mt-2">
-            {{ $criticalShipments }}
-        </p>
-    </div>
-
-    <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
-        <p class="text-indigo-200 text-xs uppercase">
-            Waste Saved
-        </p>
-
-        <p class="text-3xl font-black text-cyan-300 mt-2">
-            {{ number_format($totalWaste,0) }}kg
-        </p>
-    </div>
-
-</div>
-
-<div class="mt-6 border-t border-white/10 pt-5">
-
-<div class="flex justify-between items-center">
-
-<span class="text-indigo-200 text-sm">
-
-AI Engine
-
-</span>
-
-<span class="text-emerald-300 font-bold">
-
-🟢 Online
-
-</span>
-
-</div>
-
-<div class="flex justify-between items-center mt-3">
-
-<span class="text-indigo-200 text-sm">
-
-Decision Engine
-
-</span>
-
-<span class="text-emerald-300 font-bold">
-
-🟢 Active
-
-</span>
-
-</div>
-
-<div class="flex justify-between items-center mt-3">
-
-<span class="text-indigo-200 text-sm">
-
-Route Optimizer
-
-</span>
-
-<span class="text-emerald-300 font-bold">
-
-🟢 Ready
-
-</span>
-
-</div>
-
-<div class="flex justify-between items-center mt-3">
-
-<span class="text-indigo-200 text-sm">
-
-Prediction Model
-
-</span>
-
-<span class="text-emerald-300 font-bold">
-
-🟢 Running
-
-</span>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-<section class="mt-10">
-
-    <div class="mb-10">
-
-        <p class="uppercase tracking-[0.35em] text-cyan-400 text-xs font-black">
-            AI IMPACT SIMULATION
-        </p>
-
-        <h2 class="mt-3 text-5xl font-black text-white">
-            Before vs After AI Optimization
-        </h2>
-
-        <p class="mt-4 text-slate-400 text-lg max-w-3xl leading-8">
-            Estimated improvements generated by AgriFlow AI if all recommendations are implemented.
-        </p>
-
-    </div>
-
-    <div class="grid lg:grid-cols-2 xl:grid-cols-4 gap-7">
-
-
-
-
-{{-- ====================================================== --}}
-{{-- Operational Risk --}}
-{{-- ====================================================== --}}
-
-<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-cyan-500 duration-300">
-
-<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
-Operational Risk
-</p>
-
-<div class="mt-8 text-center">
-
-<p class="text-slate-500 text-sm">
-Current
-</p>
-
-<h1 class="text-6xl font-black text-white">
-{{ $currentRisk }}%
-</h1>
-
-<div class="my-6">
-
-<div class="w-14 h-14 rounded-full bg-emerald-500/20 mx-auto flex items-center justify-center">
-
-<svg class="w-7 h-7 text-emerald-400"
-fill="none"
-stroke="currentColor"
-viewBox="0 0 24 24">
-
-<path stroke-linecap="round"
-stroke-linejoin="round"
-stroke-width="2.5"
-d="M19 14l-7 7-7-7m7 7V3"/>
-
-</svg>
-
-</div>
-
-</div>
-
-<p class="text-cyan-300 text-sm">
-Optimized
-</p>
-
-<h1 class="text-5xl font-black text-emerald-400">
-{{ $projectedRisk }}%
-</h1>
-
-</div>
-
-<div class="mt-8">
-
-<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
-
-<div
-class="h-full bg-gradient-to-r from-red-500 via-orange-400 to-emerald-400 rounded-full"
-style="width:75%">
-</div>
-
-</div>
-
-<p class="mt-5 text-center font-bold text-emerald-300">
-↓ {{ $riskReduction }}% Lower Risk
-</p>
-
-</div>
-
-</div>
-
-
-
-
-
-
-
-{{-- ====================================================== --}}
-{{-- FOOD WASTE --}}
-{{-- ====================================================== --}}
-
-<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-cyan-500 duration-300">
-
-<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
-Food Waste
-</p>
-
-<div class="mt-8 text-center">
-
-<p class="text-slate-500 text-sm">
-Current
-</p>
-
-<h1 class="text-5xl font-black text-white">
-{{ number_format($currentWaste,0) }}
-</h1>
-
-<p class="text-slate-300 font-bold">
-kg
-</p>
-
-<div class="my-6">
-
-<div class="w-14 h-14 rounded-full bg-cyan-500/20 mx-auto flex items-center justify-center">
-
-<svg class="w-7 h-7 text-cyan-400"
-fill="none"
-stroke="currentColor"
-viewBox="0 0 24 24">
-
-<path stroke-linecap="round"
-stroke-linejoin="round"
-stroke-width="2.5"
-d="M19 14l-7 7-7-7m7 7V3"/>
-
-</svg>
-
-</div>
-
-</div>
-
-<p class="text-cyan-300 text-sm">
-Optimized
-</p>
-
-<h1 class="text-5xl font-black text-cyan-400">
-{{ number_format($projectedWaste,0) }}
-</h1>
-
-<p class="text-cyan-300 font-bold">
-kg
-</p>
-
-</div>
-
-<div class="mt-8">
-
-<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
-
-<div
-class="h-full bg-gradient-to-r from-amber-400 via-cyan-400 to-sky-500 rounded-full"
-style="width:70%">
-</div>
-
-</div>
-
-<p class="mt-5 text-center font-bold text-cyan-300">
-↓ {{ number_format($wasteSaved,0) }} kg Prevented
-</p>
-
-</div>
-
-</div>
-
-
-
-
-
-
-{{-- ====================================================== --}}
-{{-- CARBON --}}
-{{-- ====================================================== --}}
-
-<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-lime-500 duration-300">
-
-<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
-Carbon Emission
-</p>
-
-<div class="mt-8 text-center">
-
-<p class="text-slate-500 text-sm">
-Current
-</p>
-
-<h1 class="text-5xl font-black text-white">
-{{ number_format($currentCarbon,0) }}
-</h1>
-
-<p class="text-slate-300 font-bold">
-kg
-</p>
-
-<div class="my-6">
-
-<div class="w-14 h-14 rounded-full bg-lime-500/20 mx-auto flex items-center justify-center">
-
-🌱
-
-</div>
-
-</div>
-
-<p class="text-lime-300 text-sm">
-Optimized
-</p>
-
-<h1 class="text-5xl font-black text-lime-400">
-{{ number_format($projectedCarbon,0) }}
-</h1>
-
-<p class="text-lime-300 font-bold">
-kg
-</p>
-
-</div>
-
-<div class="mt-8">
-
-<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
-
-<div
-class="h-full bg-gradient-to-r from-emerald-400 to-lime-500 rounded-full"
-style="width:82%">
-</div>
-
-</div>
-
-<p class="mt-5 text-center font-bold text-lime-300">
-↓ {{ number_format($carbonSaved,0) }} kg CO₂ Saved
-</p>
-
-</div>
-
-</div>
-
-
-
-
-
-
-
-{{-- ====================================================== --}}
-{{-- DELIVERY --}}
-{{-- ====================================================== --}}
-
-<div class="rounded-[32px] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 hover:border-indigo-500 duration-300">
-
-<p class="uppercase tracking-widest text-slate-400 text-xs font-black">
-Delivery Efficiency
-</p>
-
-<div class="mt-8 text-center">
-
-<p class="text-slate-500 text-sm">
-Current
-</p>
-
-<h1 class="text-6xl font-black text-white">
-{{ $currentEfficiency }}%
-</h1>
-
-<div class="my-6">
-
-<div class="w-14 h-14 rounded-full bg-indigo-500/20 mx-auto flex items-center justify-center">
-
-⚡
-
-</div>
-
-</div>
-
-<p class="text-indigo-300 text-sm">
-Optimized
-</p>
-
-<h1 class="text-5xl font-black text-indigo-300">
-{{ $projectedEfficiency }}%
-</h1>
-
-</div>
-
-<div class="mt-8">
-
-<div class="h-3 rounded-full bg-slate-700 overflow-hidden">
-
-<div
-class="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-cyan-400 rounded-full"
-style="width:85%">
-</div>
-
-</div>
-
-<p class="mt-5 text-center font-bold text-indigo-300">
-↑ {{ $efficiencyGain }}% Faster
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-<br>
-        <!-- Main Content -->
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <div class="lg:col-span-2 space-y-8 animate-card delay-2">
-
-                <div class="bg-gradient-to-br from-indigo-600 to-purple-800 p-8 rounded-3xl text-white shadow-2xl shadow-indigo-500/20">
-
-                    <p class="uppercase tracking-widest text-xs font-bold opacity-80">AI Insight Score</p>
-
-                    <p class="text-6xl font-black mt-2">{{ number_format($avgScore, 1) }}</p>
-
-                    <p class="mt-4 text-indigo-100 text-sm">Aggregated sustainability performance across all tracked harvest systems.</p>
-
-                </div>
-
-
-
-                <div class="glass-card p-8 rounded-3xl text-white">
-
-                    <div class="flex items-center justify-between mb-6">
-
-                        <h3 class="text-sm font-black uppercase tracking-widest">Priority Actions</h3>
-                            <div class="flex items-center gap-3">
-
-                        <span class="text-[10px] font-bold bg-rose-500/20 text-rose-300 px-3 py-1 rounded-full uppercase">{{ $highRisk }} Critical</span>
-<a href="{{ route('ai-analysis.history') }}"
-   class="group flex items-center gap-1 text-cyan-300 hover:text-white transition-all duration-300">
-
-    <span class="text-[10px] font-black uppercase tracking-wider">
-        View All
-    </span>
-
-    <svg class="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1"
-         fill="none"
-         stroke="currentColor"
-         viewBox="0 0 24 24">
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5l7 7-7 7"/>
-    </svg>
-
-</a>
+            {{-- AI EXECUTIVE SUMMARY PANEL --}}
+            <div class="mb-12 animate-card delay-2">
+                <div class="agri-card p-8 lg:p-10 relative overflow-hidden bg-gradient-to-br from-white via-indigo-50/30 to-emerald-50/30 border-slate-200">
+                    
+                    {{-- Decorative subtle background accents --}}
+                    <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-80 h-80 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                            
+                            <div class="flex-1">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-extrabold tracking-wide mb-3">
+                                    <span>🧠 AI Intelligence Report</span>
+                                </div>
+                                <h2 class="text-3xl font-black text-slate-900 tracking-tight">
+                                    Today's Logistics Executive Recommendation
+                                </h2>
+
+                                <p class="text-slate-600 mt-4 text-base leading-relaxed max-w-3xl">
+                                    AgriFlow AI continuously evaluated <strong>{{ $totalAnalyses }}</strong> shipment operations. 
+                                    @if($criticalShipments)
+                                        🚨 <span class="font-bold text-rose-600">{{ $criticalShipments }} critical shipment(s)</span> require immediate operational attention.
+                                    @endif
+                                    @if($shipImmediately)
+                                        🚚 <span class="font-bold text-slate-800">{{ $shipImmediately }} shipment(s)</span> are ready for instant dispatch.
+                                    @endif
+                                    @if($optimizeRoute)
+                                        🛣️ <span class="font-bold text-slate-800">{{ $optimizeRoute }} route(s)</span> can be optimized to prevent delays.
+                                    @endif
+                                    🌱 Projected food waste reduction reaches <strong>{{ $estimatedWasteReduction }}%</strong> if recommendations are applied.
+                                </p>
+
+                                <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm">
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total AI Analyses</p>
+                                        <p class="text-2xl font-black text-indigo-600 mt-1">{{ $totalAnalyses }}</p>
+                                    </div>
+
+                                    <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm">
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg Sustainability</p>
+                                        <p class="text-2xl font-black text-emerald-600 mt-1">{{ round($avgScore) }}%</p>
+                                    </div>
+
+                                    <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm col-span-2 sm:col-span-1">
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Waste Saved</p>
+                                        <p class="text-2xl font-black text-teal-600 mt-1">{{ number_format($totalWaste, 0, ',', '.') }} <span class="text-xs text-slate-500 font-bold">KG</span></p>
+                                    </div>
+                                </div>
                             </div>
+
+                            {{-- AI System Health & Sub-engines Card --}}
+                            <div class="w-full lg:w-80 bg-white/90 rounded-2xl p-6 border border-slate-200 shadow-md">
+                                <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-4">AI Engine Performance</p>
+                                
+                                <div class="space-y-3.5 text-xs font-semibold">
+                                    <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                        <span class="text-slate-600">AI Core Engine</span>
+                                        <span class="text-emerald-600 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Online</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                        <span class="text-slate-600">Decision Engine</span>
+                                        <span class="text-emerald-600 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                        <span class="text-slate-600">Route Optimizer</span>
+                                        <span class="text-emerald-600 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ready</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-600">Prediction Model</span>
+                                        <span class="text-emerald-600 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Running</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
 
-                        <div class="max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                </div>
+            </div>
 
-@foreach(\App\Models\AiAnalysis::where('risk_level', 'High')->with('shipment.harvest')->get() as $alert)
 
-                    <a href="{{ route('shipments.show', $alert->shipment_id) }}" class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 mb-3 transition-all">
-
+            {{-- LIVE ENVIRONMENTAL INTELLIGENCE --}}
+            <div class="mb-12 animate-card delay-3">
+                <div class="agri-card p-8 lg:p-10 relative overflow-hidden border-slate-200">
+                    
+                    {{-- Section Header --}}
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-200/80">
                         <div>
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-extrabold tracking-wide mb-2">
+                                <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+                                <span>LIVE ENVIRONMENTAL INTELLIGENCE</span>
+                            </div>
+                            <h2 class="text-3xl font-black text-slate-900 tracking-tight">Weather & Route Monitoring</h2>
+                            <p class="text-slate-500 text-sm mt-1">Real-time weather analytics and route risk prediction powered by Open-Meteo API.</p>
+                        </div>
 
-                            <p class="font-bold text-sm">{{ $alert->shipment->harvest->commodity ?? 'Commodity' }}</p>
+                        <div class="flex items-center gap-4">
+                            <div class="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-right">
+                                <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Last Sync</p>
+                                <p class="text-sm font-black text-slate-800" id="environmentTime">{{ now()->format('H:i:s') }}</p>
+                            </div>
+                        </div>
+                    </div>
 
-                            <p class="text-[10px] text-slate-400">{{ Str::limit($alert->recommendations, 60) }}</p>
+                    {{-- Grid Layout for Earth & Weather Command --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                        
+                        {{-- Earth Monitor Column (Diperbaiki secara seamless tanpa potongan kotak) --}}
+                        <div class="xl:col-span-4 bg-slate-900 text-white rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden shadow-xl">
+                            <div class="flex justify-between items-center z-10">
+                                <span class="text-xs font-extrabold uppercase tracking-widest text-teal-400">SATELLITE</span>
+                                <span class="text-[10px] font-bold px-2.5 py-1 bg-teal-500/20 text-teal-300 rounded-full border border-teal-500/30">CONNECTED</span>
+                            </div>
+
+                            {{-- Globe Container dengan Mask Gradient --}}
+                            <div class="my-3 relative flex items-center justify-center h-[260px] w-full overflow-hidden">
+                                <div class="absolute w-56 h-56 bg-teal-500/20 rounded-full blur-3xl"></div>
+                                <div class="relative z-10 w-full h-full flex items-center justify-center [mask-image:radial-gradient(circle,black_55%,transparent_80%)]">
+                                    <div id="weatherOrb" class="w-full h-full flex items-center justify-center bg-transparent"
+                                         data-rain="{{ $environment['weather']['rain'] ?? 0 }}"
+                                         data-cloud="{{ $environment['weather']['cloud_cover'] ?? 0 }}"
+                                         data-wind="{{ $environment['weather']['wind_speed_10m'] ?? 0 }}"
+                                         data-temp="{{ $environment['weather']['temperature_2m'] ?? 25 }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 text-xs z-10">
+                                <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/80">
+                                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Location</p>
+                                    <p class="font-extrabold text-white text-sm mt-0.5 truncate">{{ data_get($environment, 'location', 'Unknown') }}</p>
+                                </div>
+                                <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/80">
+                                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Data Source</p>
+                                    <p class="font-extrabold text-teal-400 text-sm mt-0.5">Open-Meteo API</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Weather Command Center Metrics --}}
+                        <div class="xl:col-span-8 flex flex-col justify-between">
+                            
+                            {{-- Metrics Grid --}}
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                    <p class="text-xs font-bold text-slate-500">🌡 Temperature</p>
+                                    <p class="text-3xl font-black text-slate-900 mt-2">{{ round($environment['weather']['temperature_2m']) }}°C</p>
+                                </div>
+                                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                    <p class="text-xs font-bold text-slate-500">💧 Humidity</p>
+                                    <p class="text-3xl font-black text-teal-600 mt-2">{{ $environment['weather']['relative_humidity_2m'] }}%</p>
+                                </div>
+                                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                    <p class="text-xs font-bold text-slate-500">🌧 Rain Volume</p>
+                                    <p class="text-3xl font-black text-blue-600 mt-2">{{ $environment['weather']['rain'] }} <span class="text-xs font-bold text-slate-400">mm</span></p>
+                                </div>
+                                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                    <p class="text-xs font-bold text-slate-500">🌬 Wind Speed</p>
+                                    <p class="text-3xl font-black text-slate-900 mt-2">{{ round($environment['weather']['wind_speed_10m']) }} <span class="text-xs font-bold text-slate-400">km/h</span></p>
+                                </div>
+                                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                                    <p class="text-xs font-bold text-slate-500">☁ Cloud Cover</p>
+                                    <p class="text-3xl font-black text-slate-900 mt-2">{{ $environment['weather']['cloud_cover'] }}%</p>
+                                </div>
+                                <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
+                                    <p class="text-xs font-bold text-emerald-800">🌍 Weather Score</p>
+                                    <p class="text-3xl font-black text-emerald-700 mt-2">{{ $environment['weather_score'] }}</p>
+                                </div>
+                            </div>
+
+                            {{-- AI Weather Summary & Progress Indicators --}}
+                            <div class="mt-6 p-6 rounded-2xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                <div>
+                                    <p class="text-xs font-extrabold uppercase tracking-wider text-teal-700 mb-2">AI Weather Summary</p>
+                                    <p class="text-sm text-slate-600 leading-relaxed">{{ $environment['recommendation'] }}</p>
+                                </div>
+                                <div class="space-y-3">
+                                    <div>
+                                        <div class="flex justify-between text-xs font-bold mb-1">
+                                            <span class="text-slate-500">Route Health</span>
+                                            <span class="text-slate-900">{{ $environment['route_score'] }}%</span>
+                                        </div>
+                                        <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+                                            <div class="h-full bg-emerald-500 rounded-full" style="width:{{ $environment['route_score'] }}%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-bold mb-1">
+                                            <span class="text-slate-500">AI Confidence</span>
+                                            <span class="text-slate-900">{{ $environment['confidence'] }}%</span>
+                                        </div>
+                                        <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+                                            <div class="h-full bg-indigo-600 rounded-full" style="width:{{ $environment['confidence'] }}%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-bold mb-1">
+                                            <span class="text-slate-500">Environmental Risk</span>
+                                            <span class="text-slate-900">{{ $environment['environmental_risk'] }}%</span>
+                                        </div>
+                                        <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+                                            <div class="h-full bg-rose-500 rounded-full" style="width:{{ $environment['environmental_risk'] }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
 
-                        <span class="text-cyan-400 font-bold text-xs">View →</span>
-
-                    </a>
-
-                    @endforeach
-                </div>
                     </div>
 
-
-
-                <div class="grid grid-cols-1 md:grid-cols- gap-6">
-
-                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-700 p-6 rounded-3xl text-white">
-
-                        <p class="text-xs font-bold opacity-80 uppercase">Green Impact Score</p>
-
-                        <p class="text-4xl font-black mt-2">{{ $greenImpactScore }}%</p>
-
-                    </div>
-
-                    <div class="glass-card p-6 rounded-3xl flex flex-col justify-center">
-
-                        <p class="text-xs font-bold text-slate-400 uppercase">Waste Prevented</p>
-
-                        <p class="text-3xl font-black text-white mt-1">{{ number_format($totalWaste, 0, ',', '.') }} KG</p>
-
-                        <div class="w-full bg-slate-700 h-2 rounded-full mt-3 overflow-hidden">
-
-                            <div class="bg-emerald-500 h-full rounded-full" style="width: {{ $greenImpactScore }}%"></div>
-
+                    {{-- Forecast Analytics Tabs & Chart --}}
+                    <div class="mt-10 pt-8 border-t border-slate-200/80">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <p class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Forecast Analytics</p>
+                                <h3 class="text-xl font-black text-slate-900">AI Weather Prediction • Next 6 Hours</h3>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="weather-tab active" data-type="temp">🌡 Temperature</button>
+                                <button class="weather-tab" data-type="humidity">💧 Humidity</button>
+                                <button class="weather-tab" data-type="wind">🌬 Wind</button>
+                                <button class="weather-tab" data-type="rain">🌧 Rain</button>
+                                <button class="weather-tab" data-type="cloud">☁ Cloud</button>
+                            </div>
                         </div>
 
+                        <div class="h-[320px] w-full pt-4">
+                            <canvas id="temperatureChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            {{-- BEFORE VS AFTER AI IMPACT SIMULATION --}}
+            <div class="mb-12">
+                <div class="mb-6">
+                    <p class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">AI IMPACT SIMULATION</p>
+                    <h2 class="text-3xl font-black text-slate-900 tracking-tight">Before vs After AI Optimization</h2>
+                    <p class="text-slate-500 text-sm mt-1">Direct efficiency and risk comparison achieved when implementing AgriFlow AI logistics model.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    
+                    {{-- 1. Operational Risk --}}
+                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Operational Risk</span>
+                            <div class="mt-6 flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
+                                    <p class="text-2xl font-black text-slate-400 line-through">{{ $currentRisk }}%</p>
+                                </div>
+                                <div class="text-emerald-500 font-bold text-xl">➔</div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-bold text-emerald-600 uppercase">Optimized</p>
+                                    <p class="text-3xl font-black text-emerald-600">{{ $projectedRisk }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
+                            <span>Risk Reduction</span>
+                            <span class="px-2.5 py-1 bg-emerald-50 rounded-full">↓ {{ $riskReduction }}%</span>
+                        </div>
+                    </div>
+
+                    {{-- 2. Food Waste --}}
+                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Food Waste</span>
+                            <div class="mt-6 flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
+                                    <p class="text-xl font-black text-slate-400 line-through">{{ number_format($currentWaste,0) }} <span class="text-xs">kg</span></p>
+                                </div>
+                                <div class="text-teal-500 font-bold text-xl">➔</div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-bold text-teal-600 uppercase">Optimized</p>
+                                    <p class="text-2xl font-black text-teal-600">{{ number_format($projectedWaste,0) }} <span class="text-xs">kg</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-teal-700">
+                            <span>Waste Prevented</span>
+                            <span class="px-2.5 py-1 bg-teal-50 rounded-full">↓ {{ number_format($wasteSaved,0) }} kg</span>
+                        </div>
+                    </div>
+
+                    {{-- 3. Carbon Emission --}}
+                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Carbon Emission</span>
+                            <div class="mt-6 flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
+                                    <p class="text-xl font-black text-slate-400 line-through">{{ number_format($currentCarbon,0) }} <span class="text-xs">kg</span></p>
+                                </div>
+                                <div class="text-emerald-500 font-bold text-xl">➔</div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-bold text-emerald-600 uppercase">Optimized</p>
+                                    <p class="text-2xl font-black text-emerald-600">{{ number_format($projectedCarbon,0) }} <span class="text-xs">kg</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
+                            <span>CO₂ Saved</span>
+                            <span class="px-2.5 py-1 bg-emerald-50 rounded-full">↓ {{ number_format($carbonSaved,0) }} kg</span>
+                        </div>
+                    </div>
+
+                    {{-- 4. Delivery Efficiency --}}
+                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Delivery Efficiency</span>
+                            <div class="mt-6 flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
+                                    <p class="text-2xl font-black text-slate-400 line-through">{{ $currentEfficiency }}%</p>
+                                </div>
+                                <div class="text-indigo-500 font-bold text-xl">➔</div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-bold text-indigo-600 uppercase">Optimized</p>
+                                    <p class="text-3xl font-black text-indigo-600">{{ $projectedEfficiency }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-700">
+                            <span>Speed Gain</span>
+                            <span class="px-2.5 py-1 bg-indigo-50 rounded-full">↑ {{ $efficiencyGain }}% Faster</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            {{-- MAIN CONTENT GRID: Priority Actions, Sustainability & Analytics Charts --}}
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                {{-- Left Column (8 cols): Priority Actions & Sustainability --}}
+                <div class="lg:col-span-8 space-y-8">
+                    
+                    {{-- Priority Actions Panel --}}
+                    <div class="agri-card p-6">
+                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900 uppercase tracking-wider">Priority Actions</h3>
+                                <p class="text-xs text-slate-500">High-risk shipment alerts requiring immediate operational dispatch</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-full uppercase">{{ $highRisk }} Critical</span>
+                                <a href="{{ route('ai-analysis.history') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                                    <span>View All</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="max-h-80 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                            @foreach(\App\Models\AiAnalysis::where('risk_level', 'High')->with('shipment.harvest')->get() as $alert)
+                                <a href="{{ route('shipments.show', $alert->shipment_id) }}" class="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-slate-100/80 transition-all group">
+                                    <div>
+                                        <p class="font-bold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $alert->shipment->harvest->commodity ?? 'Commodity' }}</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">{{ Str::limit($alert->recommendations, 70) }}</p>
+                                    </div>
+                                    <span class="text-indigo-600 font-bold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">View ➔</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Sustainability Impact & Green Score --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-6 rounded-3xl shadow-lg shadow-emerald-600/15 flex flex-col justify-between">
+                            <div>
+                                <p class="text-xs font-extrabold opacity-80 uppercase tracking-wider">Green Impact Score</p>
+                                <p class="text-5xl font-black mt-3">{{ $greenImpactScore }}%</p>
+                            </div>
+                            <p class="text-xs text-emerald-100 mt-4 leading-relaxed">System-wide environmental sustainability compliance rate across active logistics channels.</p>
+                        </div>
+
+                        <div class="agri-card p-6 flex flex-col justify-between">
+                            <div>
+                                <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Waste Prevented Total</p>
+                                <p class="text-3xl font-black text-slate-900 mt-2">{{ number_format($totalWaste, 0, ',', '.') }} <span class="text-sm font-bold text-slate-500">KG</span></p>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                                    <span>Sustainability Efficiency</span>
+                                    <span>{{ $greenImpactScore }}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full rounded-full" style="width: {{ $greenImpactScore }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- System Wawasan Insight --}}
+                    <div class="agri-card p-6 border-l-4 border-l-teal-500">
+                        <h3 class="font-extrabold text-xs text-teal-700 uppercase tracking-wider mb-2">System Insight</h3>
+                        <p class="text-slate-700 text-sm italic font-medium">"{{ $aiInsightText }}"</p>
+                    </div>
+
+                    {{-- Logistics Overview & Verdict --}}
+                    <div class="agri-card p-6 relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-widest text-teal-600 font-extrabold">AI Executive Summary</p>
+                                <h3 class="text-lg font-black text-slate-900">Logistics Overview</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-lg">🤖</div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <p class="text-xs text-slate-500">Critical Shipments</p>
+                                <p class="text-2xl font-black text-rose-600 mt-1">{{ $criticalShipments }}</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <p class="text-xs text-slate-500">Route Optimization</p>
+                                <p class="text-2xl font-black text-teal-600 mt-1">{{ $optimizeRoute }} <span class="text-xs text-slate-400">Routes</span></p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <p class="text-xs text-slate-500">Immediate Dispatch</p>
+                                <p class="text-2xl font-black text-amber-600 mt-1">{{ $shipImmediately }} <span class="text-xs text-slate-400">Shipments</span></p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60">
+                            <p class="text-xs text-emerald-800 font-extrabold uppercase tracking-wider mb-1">AI Verdict</p>
+                            <p class="text-xs text-slate-700 leading-relaxed">
+                                @if($criticalShipments >= 5)
+                                    Several shipments require immediate operational attention. Prioritize dispatch scheduling to minimize spoilage and improve logistics efficiency.
+                                @elseif($criticalShipments >= 2)
+                                    The logistics network remains stable, but several shipments should be monitored to maintain sustainability performance.
+                                @else
+                                    Current logistics performance is healthy. Continue monitoring shipment quality and optimize routes where possible.
+                                @endif
+                            </p>
+                        </div>
                     </div>
 
                 </div>
 
-                    <div class="glass-card p-6 rounded-3xl">
-
-                        <h2 class="font-bold text-white mb-4">System Insight</h2>
-
-                        <p class="text-slate-400 text-xs italic">"{{ $aiInsightText }}"</p>
-
+                {{-- Right Column (4 cols): Risk Chart, Shipment Status & Prediction Trends --}}
+                <div class="lg:col-span-4 space-y-8">
+                    
+                    {{-- Risk Distribution Chart --}}
+                    <div class="agri-card p-6">
+                        <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider mb-4">Risk Distribution</h3>
+                        <div class="h-56"><canvas id="riskChart"></canvas></div>
                     </div>
 
-                    <div class="glass-card p-6 rounded-3xl relative overflow-hidden">
+                    {{-- Shipment Status Chart --}}
+                    <div class="agri-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Shipment Status</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">LIVE</span>
+                        </div>
+                        <div class="h-56"><canvas id="shipmentStatusChart"></canvas></div>
+                    </div>
 
-    <div class="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
+                    {{-- AI Prediction Trend Chart --}}
+                    <div class="agri-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider">AI Prediction Trend</h3>
+                            <span class="text-xs font-bold text-indigo-600">Next 7 Days</span>
+                        </div>
+                        <div class="h-60"><canvas id="predictionChart"></canvas></div>
+                    </div>
 
-    <div class="flex items-center justify-between mb-5">
-        <div>
-            <p class="text-[10px] uppercase tracking-[3px] text-cyan-400 font-black">
-                AI Executive Summary
-            </p>
+                    {{-- Critical Alert Box --}}
+                    @if($latestHighRisk)
+                        @php
+                            $text = $latestHighRisk->recommendations;
+                            $parts = explode('Explanation:', $text);
+                            $recommendation = $parts[0] ?? '';
+                            $explanation = isset($parts[1]) ? 'Explanation:' . $parts[1] : '';
+                        @endphp
 
-            <h2 class="text-xl font-black text-white mt-1">
-                Logistics Overview
-            </h2>
-        </div>
-
-        <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center text-xl">
-            🤖
-        </div>
-    </div>
-
-    <div class="space-y-4">
-
-        <div class="flex items-center justify-between">
-
-            <div>
-                <p class="text-xs text-slate-400">
-                    Critical Shipments
-                </p>
-
-                <p class="text-2xl font-black text-rose-400">
-                    {{ $criticalShipments }}
-                </p>
-            </div>
-
-            <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center">
-                🚨
-            </div>
-
-        </div>
-
-        <div class="h-px bg-white/10"></div>
-
-        <div class="flex items-center justify-between">
-
-            <div>
-
-                <p class="text-xs text-slate-400">
-                    Route Optimization
-                </p>
-
-                <p class="text-lg font-bold text-cyan-300">
-                    {{ $optimizeRoute }} Routes
-                </p>
-
-            </div>
-
-            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-                🛣️
-            </div>
-
-        </div>
-
-        <div class="h-px bg-white/10"></div>
-
-        <div class="flex items-center justify-between">
-
-            <div>
-
-                <p class="text-xs text-slate-400">
-                    Immediate Dispatch
-                </p>
-
-                <p class="text-lg font-bold text-amber-300">
-                    {{ $shipImmediately }} Shipments
-                </p>
-
-            </div>
-
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                🚚
-            </div>
-
-        </div>
-
-        <div class="mt-6">
-
-            <div class="flex justify-between mb-2">
-
-                <span class="text-xs text-slate-400">
-                    Estimated Waste Reduction
-                </span>
-
-                <span class="text-sm font-bold text-emerald-400">
-                    {{ $estimatedWasteReduction }}%
-                </span>
-
-            </div>
-
-            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-
-                <div
-                    class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-500 transition-all duration-700"
-                    style="width: {{ $estimatedWasteReduction }}%">
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="mt-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 p-4">
-
-            <p class="text-xs text-cyan-300 uppercase tracking-widest font-bold mb-2">
-                AI Verdict
-            </p>
-
-            <p class="text-sm text-slate-300 leading-relaxed">
-
-                @if($criticalShipments >= 5)
-
-                    Several shipments require immediate operational attention. Prioritize dispatch scheduling to minimize spoilage and improve logistics efficiency.
-
-                @elseif($criticalShipments >=2)
-
-                    The logistics network remains stable, but several shipments should be monitored to maintain sustainability performance.
-
-                @else
-
-                    Current logistics performance is healthy. Continue monitoring shipment quality and optimize routes where possible.
-
-                @endif
-
-            </p>
-
-        </div>
-
-    </div>
-
-</div>
-
-            </div>
-
-
-
-            <div class="space-y-8 animate-card delay-3">
-
-                <div class="glass-card p-6 rounded-3xl">
-
-                    <h2 class="font-bold text-white mb-6">Risk Distribution</h2>
-
-                    <div class="h-64"><canvas id="riskChart"></canvas></div>
+                        <div class="p-6 rounded-3xl bg-rose-50 border border-rose-200">
+                            <h3 class="font-black text-rose-700 text-sm mb-3 flex items-center gap-2">🚨 Critical Alert</h3>
+                            <div class="space-y-3 text-xs text-slate-700 leading-relaxed">
+                                <div>
+                                    <p class="font-extrabold text-rose-800 uppercase tracking-wider mb-1">Recommendations:</p>
+                                    <p>{{ str_replace('Recommendations:', '', $recommendation) }}</p>
+                                </div>
+                                @if($explanation)
+                                    <div class="pt-3 border-t border-rose-200">
+                                        <p class="italic text-slate-600">{{ $explanation }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
 
                 </div>
 
-                <div class="glass-card p-6 rounded-3xl mt-8">
-
-    <div class="flex items-center justify-between mb-5">
-
-        <h2 class="font-bold text-white">
-            Shipment Status
-        </h2>
-
-        <span class="text-xs text-slate-400 uppercase">
-            Live
-        </span>
-
-    </div>
-
-    <div class="h-64">
-
-        <canvas id="shipmentStatusChart"></canvas>
-
-    </div>
-
-    <div class="glass-card p-6 rounded-3xl">
-    <div class="flex items-center justify-between mb-5">
-        <h2 class="font-bold text-white">
-            AI Prediction Trend
-        </h2>
-
-        <span class="text-xs text-cyan-300">
-            Next 7 Days
-        </span>
-    </div>
-
-    <div class="h-72">
-        <canvas id="predictionChart"></canvas>
-    </div>
-</div>
-
-</div>
-                @if($latestHighRisk)
-
-    @php
-
-        $text = $latestHighRisk->recommendations;
-
-        // Memisahkan teks berdasarkan keyword "Explanation:"
-
-        $parts = explode('Explanation:', $text);
-
-        $recommendation = $parts[0] ?? '';
-
-        $explanation = isset($parts[1]) ? 'Explanation:' . $parts[1] : '';
-
-    @endphp
-
-
-
-    <div class="bg-rose-950/30 p-6 rounded-3xl border border-rose-900/50">
-
-        <h2 class="font-bold text-rose-400 mb-3 flex items-center gap-2">🚨 Critical Alert</h2>
-
-       
-
-        <div class="space-y-4 text-xs text-rose-200 leading-relaxed">
-
-            <div>
-
-                <p class="font-bold text-rose-300 uppercase tracking-wider mb-1">Recommendations:</p>
-
-                <p>{{ str_replace('Recommendations:', '', $recommendation) }}</p>
-
-            </div>
-
-           
-
-            @if($explanation)
-
-            <div class="pt-3 border-t border-rose-900/50">
-
-                <p class="italic text-rose-400/80">{{ $explanation }}</p>
-
-            </div>
-
-            @endif
-
-        </div>
-
-    </div>
-
-@endif
-
             </div>
 
         </div>
-
     </div>
 
-    <!-- Modal -->
-
-    <div id="myModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl">
-
-            <h2 id="modalTitle" class="text-xl font-black text-white mb-4"></h2>
-
-            <div id="modalContent" class="text-slate-300 text-sm"></div>
-
-            <button onclick="closeModal()" class="mt-8 w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-500">Close</button>
-
+    {{-- MODAL DIALOG --}}
+    <div id="myModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl">
+            <h3 id="modalTitle" class="text-xl font-black text-slate-900 mb-4"></h3>
+            <div id="modalContent" class="text-slate-600 text-sm leading-relaxed"></div>
+            <button onclick="closeModal()" class="mt-6 w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors">Close</button>
         </div>
-
     </div>
 
-<script>
-
-    function openModal(element) {
-
-        const title = element.getAttribute('data-title');
-
-        const content = element.getAttribute('data-content');
-
-       
-
-        document.getElementById('modalTitle').innerText = title;
-
-        // Kita decode kembali supaya tag HTML (<ul>, <li>, <strong>) balik lagi
-
-        document.getElementById('modalContent').innerHTML = content;
-
-        document.getElementById('myModal').style.display = 'flex';
-
-    }
-
-
-
-    function closeModal() {
-
-        document.getElementById('myModal').style.display = 'none';
-
-    }
-
-
-
-    // Klik di luar modal buat nutup
-
-    window.onclick = function(event) {
-
-        const modal = document.getElementById('myModal');
-
-        if (event.target == modal) {
-
-            closeModal();
-
+    {{-- SCRIPTS & CHART INTEGRATION --}}
+    <script>
+        function openModal(element) {
+            const title = element.getAttribute('data-title');
+            const content = element.getAttribute('data-content');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('myModal').style.display = 'flex';
         }
 
-    }
+        function closeModal() {
+            document.getElementById('myModal').style.display = 'none';
+        }
 
-</script>
+        window.onclick = function(event) {
+            const modal = document.getElementById('myModal');
+            if (event.target == modal) { closeModal(); }
+        }
+    </script>
 
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
-<script>
-
-    const ctx = document.getElementById('riskChart').getContext('2d');
-
-    // Register plugin secara global atau lokal
-
-    Chart.register(ChartDataLabels);
-
-    new Chart(ctx, {
-
-        type: 'doughnut',
-
-        data: {
-
-            labels: ['Low', 'Medium', 'High'],
-
-            datasets: [{
-
-                data: [{{ $lowRisk }}, {{ $mediumRisk }}, {{ $highRisk }}],
-
-                backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-
-                borderWidth: 0
-
-            }]
-
-        },
-
-options: {
-
-    responsive: true,
-
-    maintainAspectRatio: false,
-
-    plugins: {
-
-            legend: {
-        position: 'bottom',
-        labels: {
-            color: '#fff'
-        }
-    },
-
-        // 1. Datalabels: Untuk angka permanen di chart
-
-        datalabels: {
-
-            color: '#fff',
-
-            font: { weight: 'bold' },
-
-            formatter: (value, ctx) => {
-
-                if (value === 0) return ""; // Sembunyiin kalau 0
-
-                let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
-
-                return ((value * 100) / sum).toFixed(0) + "%";
-
-            }
-
-        },
-
-        // 2. Tooltip: Untuk detail saat di-hover
-
-        tooltip: {
-
-            callbacks: {
-
-                label: function(context) {
-
-                    let value = context.raw;
-
-                    let sum = context.dataset.data.reduce((a, b) => a + b, 0);
-
-                    let percentage = ((value / sum) * 100).toFixed(1);
-
-                    return ` ${context.label}: ${value} (${percentage}%)`;
-
-                }
-
-            }
-
-        }
-
-    }
-
-}
-
-    });
-
-</script>
-
-<script>
-
-const shipmentCtx = document.getElementById('shipmentStatusChart');
-
-new Chart(shipmentCtx, {
-
-    type: 'bar',
-
-    data: {
-
-        labels: [
-            'Harvested',
-            'Packed',
-            'In Transit',
-            'Delivered'
-        ],
-
-        datasets: [{
-
-            data: [
-                {{ $statusHarvested }},
-                {{ $statusPacked }},
-                {{ $statusTransit }},
-                {{ $statusDelivered }}
-            ],
-
-            borderRadius: 12,
-
-            backgroundColor: [
-                '#6366f1',
-                '#f59e0b',
-                '#06b6d4',
-                '#10b981'
-            ]
-
-        }]
-
-    },
-
-    options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        plugins: {
-
-            legend: {
-                display: false
+    <script>
+        // Risk Doughnut Chart
+        const ctx = document.getElementById('riskChart').getContext('2d');
+        Chart.register(ChartDataLabels);
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Low', 'Medium', 'High'],
+                datasets: [{
+                    data: [{{ $lowRisk }}, {{ $mediumRisk }}, {{ $highRisk }}],
+                    backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
             },
-
-            datalabels: {
-
-                color: '#fff',
-
-anchor: 'center',
-align: 'center',
-
-                font: {
-                    size: 14,
-                    weight: 'bold'
-                },
-
-                formatter: function(value){
-                    return value;
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#475569', font: { weight: 'bold', size: 11 } } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { weight: 'bold', size: 12 },
+                        formatter: (value, ctx) => {
+                            if (value === 0) return "";
+                            let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            return ((value * 100) / sum).toFixed(0) + "%";
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw;
+                                let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value / sum) * 100).toFixed(1);
+                                return ` ${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
                 }
-
             }
-
-        },
-
-        scales: {
-
-            x: {
-
-                ticks: {
-                    color: '#fff'
-                },
-
-                grid: {
-                    display: false
-                }
-
-            },
-
-            y: {
-
-                beginAtZero: true,
-
-                ticks: {
-                    color: '#fff'
-                },
-
-                grid: {
-                    color: 'rgba(255,255,255,.08)'
-                }
-
-            }
-
-        }
-
-    },
-
-    plugins: [ChartDataLabels]
-
-});
-
-const predictionCtx =
-document.getElementById('predictionChart');
-
-new Chart(predictionCtx,{
-
-type:'line',
-
-data:{
-
-labels:[
-'Day 1',
-'Day 2',
-'Day 3',
-'Day 4',
-'Day 5',
-'Day 6',
-'Day 7'
-],
-
-datasets:[{
-
-label:'Predicted Risk',
-
-data:@json($predictionTrend),
-
-borderColor:'#06b6d4',
-
-backgroundColor:'rgba(6,182,212,.15)',
-
-fill:true,
-
-tension:.4,
-
-pointRadius:5,
-
-pointHoverRadius:7
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-
-maintainAspectRatio:false,
-
-plugins:{
-
-legend:{
-labels:{
-color:'#fff'
-}
-}
-
-},
-
-scales:{
-
-x:{
-ticks:{
-color:'#fff'
-},
-grid:{
-color:'rgba(255,255,255,.08)'
-}
-},
-
-y:{
-beginAtZero:true,
-max:100,
-ticks:{
-color:'#fff'
-},
-grid:{
-color:'rgba(255,255,255,.08)'
-}
-}
-
-}
-
-}
-
-});
-
-</script>
-<script>
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-const ctx=document.getElementById("temperatureChart");
-
-if(!ctx)return;
-
-const weatherSeries={
-
-temp:@json(collect($weatherTrend)->pluck('temp')),
-
-humidity:@json(collect($weatherTrend)->pluck('humidity')),
-
-wind:@json(collect($weatherTrend)->pluck('wind')),
-
-rain:@json(collect($weatherTrend)->pluck('rain')),
-
-cloud:@json(collect($weatherTrend)->pluck('cloud'))
-
-};
-
-const weatherColor={
-
-temp:"#22d3ee",
-
-humidity:"#38bdf8",
-
-wind:"#22c55e",
-
-rain:"#6366f1",
-
-cloud:"#94a3b8"
-
-};
-
-const gradientColor={
-
-temp:"rgba(34,211,238,.45)",
-
-humidity:"rgba(56,189,248,.45)",
-
-wind:"rgba(34,197,94,.45)",
-
-rain:"rgba(99,102,241,.45)",
-
-cloud:"rgba(148,163,184,.45)"
-
-};
-
-const weatherChart=new Chart(ctx,{
-
-type:"line",
-
-data:{
-
-labels:@json(collect($weatherTrend)->pluck('time')),
-
-datasets:[{
-
-label:"Temperature",
-
-data:weatherSeries.temp,
-
-borderColor:"#22d3ee",
-
-borderWidth:5,
-
-fill:true,
-
-tension:.45,
-
-pointRadius:0,
-
-pointHoverRadius:8,
-
-backgroundColor:(ctx)=>{
-
-const chart=ctx.chart;
-
-const {ctx:canvas,chartArea}=chart;
-
-if(!chartArea)return null;
-
-const gradient=canvas.createLinearGradient(
-0,
-chartArea.top,
-0,
-chartArea.bottom
-);
-
-const activeType="temp";
-
-gradient.addColorStop(
-    0,
-    gradientColor[activeType]
-);
-
-gradient.addColorStop(
-    1,
-    gradientColor[activeType].replace(".45","0")
-);
-
-return gradient;
-
-}
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-
-maintainAspectRatio:false,
-
-interaction:{
-mode:"index",
-intersect:false
-},
-
-plugins: {
-
-    legend:{
-        display:false
-    },
-
-    tooltip:{
-
-        callbacks:{
-
-            label:function(context){
-
-                const label = context.dataset.label;
-
-                const value = context.parsed.y;
-
-                if(label === "Rain Probability"){
-
-                    return label + ": " + value + "%";
-
-                }
-
-                if(label === "Humidity"){
-
-                    return label + ": " + value + "%";
-
-                }
-
-                if(label === "Cloud Cover"){
-
-                    return label + ": " + value + "%";
-
-                }
-
-                if(label === "Temperature"){
-
-                    return label + ": " + value + "°C";
-
-                }
-
-                if(label === "Wind Speed"){
-
-                    return label + ": " + value + " km/h";
-
-                }
-
-                return label + ": " + value;
-
-            }
-
-        }
-
-    }
-
-},
-
-animations:{
-
-tension:{
-
-duration:1800,
-
-easing:"easeInOutQuart"
-
-}
-
-},
-
-scales:{
-
-x:{
-
-grid:{
-display:false
-},
-
-ticks:{
-color:"#94a3b8"
-}
-
-},
-
-y:{
-
-grid:{
-
-color:"rgba(255,255,255,.05)",
-
-drawBorder:false
-
-},
-
-ticks:{
-
-color:"#94a3b8"
-
-}
-
-}
-
-}
-
-}
-
-    });
-
-    // ============================
-    // Weather Tabs
-    // ============================
-
-    document.querySelectorAll(".weather-tab").forEach(tab=>{
-
-        tab.addEventListener("click",()=>{
-
-            document.querySelectorAll(".weather-tab").forEach(btn=>{
-
-                btn.classList.remove("active");
-
-            });
-
-            tab.classList.add("active");
-
-            const type=tab.dataset.type;
-
-const labels = {
-
-    temp: "Temperature",
-
-    humidity: "Humidity",
-
-    wind: "Wind Speed",
-
-    rain: "Rain Probability",
-
-    cloud: "Cloud Cover"
-
-};
-
-            weatherChart.data.datasets[0].label=labels[type];
-
-            weatherChart.data.datasets[0].data=weatherSeries[type];
-
-            weatherChart.data.datasets[0].borderColor=weatherColor[type];
-
-            weatherChart.update('active');
-
         });
 
-    });
+        // Shipment Status Bar Chart
+        const shipmentCtx = document.getElementById('shipmentStatusChart');
+        new Chart(shipmentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Harvested', 'Packed', 'In Transit', 'Delivered'],
+                datasets: [{
+                    data: [{{ $statusHarvested }}, {{ $statusPacked }}, {{ $statusTransit }}, {{ $statusDelivered }}],
+                    borderRadius: 8,
+                    backgroundColor: ['#6366f1', '#f59e0b', '#0d9488', '#10b981']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        color: '#ffffff',
+                        anchor: 'center',
+                        align: 'center',
+                        font: { size: 12, weight: 'bold' },
+                        formatter: function(value){ return value; }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { weight: 'bold' } }, grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
 
-});
+        // AI Prediction Line Chart
+        const predictionCtx = document.getElementById('predictionChart');
+        new Chart(predictionCtx, {
+            type: 'line',
+            data: {
+                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                datasets: [{
+                    label: 'Predicted Risk',
+                    data: @json($predictionTrend),
+                    borderColor: '#0d9488',
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                    fill: true,
+                    tension: .4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#475569', font: { weight: 'bold' } } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } },
+                    y: { beginAtZero: true, max: 100, ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } }
+                }
+            }
+        });
 
-</script>
+        // Weather Forecast Trend Chart
+        document.addEventListener("DOMContentLoaded", () => {
+            const ctx = document.getElementById("temperatureChart");
+            if (!ctx) return;
 
+            const weatherSeries = {
+                temp: @json(collect($weatherTrend)->pluck('temp')),
+                humidity: @json(collect($weatherTrend)->pluck('humidity')),
+                wind: @json(collect($weatherTrend)->pluck('wind')),
+                rain: @json(collect($weatherTrend)->pluck('rain')),
+                cloud: @json(collect($weatherTrend)->pluck('cloud'))
+            };
+
+            const weatherColor = { temp: "#0d9488", humidity: "#2563eb", wind: "#059669", rain: "#4f46e5", cloud: "#64748b" };
+
+            const weatherChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: @json(collect($weatherTrend)->pluck('time')),
+                    datasets: [{
+                        label: "Temperature",
+                        data: weatherSeries.temp,
+                        borderColor: "#0d9488",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: .45,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        backgroundColor: (ctx) => {
+                            const chart = ctx.chart;
+                            const { ctx: canvas, chartArea } = chart;
+                            if (!chartArea) return null;
+                            const gradient = canvas.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                            gradient.addColorStop(0, "rgba(13, 148, 136, 0.25)");
+                            gradient.addColorStop(1, "rgba(13, 148, 136, 0.0)");
+                            return gradient;
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.parsed.y;
+                                    if (label === "Rain Probability" || label === "Humidity" || label === "Cloud Cover") return label + ": " + value + "%";
+                                    if (label === "Temperature") return label + ": " + value + "°C";
+                                    if (label === "Wind Speed") return label + ": " + value + " km/h";
+                                    return label + ": " + value;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: "#64748b", font: { weight: 'bold' } } },
+                        y: { grid: { color: "rgba(226, 232, 240, 0.8)" }, ticks: { color: "#64748b" } }
+                    }
+                }
+            });
+
+            document.querySelectorAll(".weather-tab").forEach(tab => {
+                tab.addEventListener("click", () => {
+                    document.querySelectorAll(".weather-tab").forEach(btn => btn.classList.remove("active"));
+                    tab.classList.add("active");
+                    const type = tab.dataset.type;
+                    const labels = { temp: "Temperature", humidity: "Humidity", wind: "Wind Speed", rain: "Rain Probability", cloud: "Cloud Cover" };
+                    weatherChart.data.datasets[0].label = labels[type];
+                    weatherChart.data.datasets[0].data = weatherSeries[type];
+                    weatherChart.data.datasets[0].borderColor = weatherColor[type];
+                    weatherChart.update('active');
+                });
+            });
+        });
+    </script>
 </x-app-layout>
-

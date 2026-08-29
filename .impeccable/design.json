@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-25T20:17:00Z",
+  "title": "Design System: AgriFlow AI",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Harvest Green", "canonical": "#2f6b43", "tonalRamp": ["#173622", "#204a2f", "#255737", "#2f6b43", "#3a8453", "#5da174", "#97c5a7", "#e4f0e5"] },
+      "neutral-ink": { "role": "neutral", "displayName": "Ink", "canonical": "#17241c", "tonalRamp": ["#0b120e", "#111b15", "#17241c", "#24382c", "#3a5946", "#66736a", "#9baba0", "#dfe7df"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Major page headings and hero metrics." }
+    },
+    "shadows": [
+      { "name": "panel-shadow", "value": "0 8px 24px rgba(34, 58, 39, .05)", "purpose": "Lifts primary cards and panels slightly off the background." },
+      { "name": "interactive-shadow", "value": "0 4px 12px rgba(34, 58, 39, .08)", "purpose": "Provides slight lift on interactive rows or actionable cards during hover states." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tactile and confident primary action with moderate rounding.",
+      "html": "<button class=\"ds-btn-primary\">Open shipments</button>",
+      "css": ".ds-btn-primary { background-color: #2f6b43; color: #ffffff; padding: 8px 16px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; font-family: Figtree, sans-serif; } .ds-btn-primary:hover { background-color: #255737; } .ds-btn-primary:focus-visible { outline: 3px solid rgba(47, 107, 67, .35); outline-offset: 3px; }"
+    },
+    {
+      "name": "Risk Badge (Critical)",
+      "kind": "chip",
+      "refersTo": "badge-critical",
+      "description": "Used to denote critical risk levels with crisp but slightly rounded edges.",
+      "html": "<span class=\"ds-badge-critical\">Critical</span>",
+      "css": ".ds-badge-critical { background-color: #fbe8e6; color: #b53a32; padding: 4px 8px; font-size: 0.75rem; font-weight: 900; border-radius: 4px; display: inline-flex; font-family: Figtree, sans-serif; }"
+    },
+    {
+      "name": "Card Panel",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Structural container for primary focused metrics.",
+      "html": "<div class=\"ds-card-panel\"><p class=\"ds-card-eyebrow\">Environment</p><h3 class=\"ds-card-title\">Conditions</h3></div>",
+      "css": ".ds-card-panel { background-color: #ffffff; border: 1px solid #dfe7df; border-radius: 8px; box-shadow: 0 8px 24px rgba(34, 58, 39, 0.05); padding: 24px; font-family: Figtree, sans-serif; } .ds-card-eyebrow { color: #2f6b43; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 4px 0; } .ds-card-title { margin: 0; font-size: 1.5rem; font-weight: 900; color: #17241c; }"
+    },
+    {
+      "name": "Secondary Context Area",
+      "kind": "card",
+      "refersTo": "card-secondary",
+      "description": "Used for grouped information, filters, and supporting data.",
+      "html": "<div class=\"ds-context-panel\"><p class=\"ds-context-text\">Secondary supporting data</p></div>",
+      "css": ".ds-context-panel { background-color: #F4F7F4; border: 1px solid #dfe7df; border-radius: 8px; padding: 16px; font-family: Figtree, sans-serif; } .ds-context-text { margin: 0; color: #66736a; font-size: 0.875rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Logistics Navigator",
+    "overview": "AgriFlow AI serves as a precise, guided, and structured decision engine for agricultural operations. The visual language is earthy and confident, grounding the operator in the realities of the field while maintaining the clarity of a high-stakes logistics terminal. The interface prioritizes actionable signals—turning complex environmental and routing data into scannable queues and clear recommendations.",
+    "keyCharacteristics": [
+      "Actionable density: Information is tightly packed but meticulously structured with strong visual rhythm.",
+      "Signal over noise: Color is reserved almost exclusively for status, risk, and primary actions.",
+      "Tabular precision: Numeric data uses tabular-nums for scannable comparison.",
+      "Restrained warmth: The interface feels precise but not rigid, warm but not soft, premium but not decorative."
+    ],
+    "rules": [
+      { "name": "The Signal Isolation Rule", "body": "Color is information, not decoration. The interface is largely monochromatic (ink, field white, sage) until a status or risk requires attention. Do not solve visual flatness by adding decorative colors, gradients, or glowing effects.", "section": "colors" },
+      { "name": "The Tabular Rule", "body": "Any numeric data meant to be compared vertically (metrics, scores, temperatures) must use tabular lining figures (font-variant-numeric: tabular-nums).", "section": "typography" },
+      { "name": "The Surface Hierarchy Rule", "body": "Avoid making every content region a white card. Use Sage Surface (#F4F7F4) for secondary regions, contexts, or sidebars. Reserve elevated pure white panels for primary, focused content.", "section": "layout" }
+    ],
+    "dos": [
+      "Do use the established risk colors strictly for their semantic meaning (Green = Low, Amber = High, Red = Critical).",
+      "Do wrap primary interactive elements in the standard focus ring for accessibility.",
+      "Do use Sage Surface (#F4F7F4) to group secondary information and reduce the sea of white cards.",
+      "Do use moderate, restrained radii (6px–12px) to make the UI feel premium and approachable."
+    ],
+    "donts": [
+      "Don't mandate 0px square corners for structural elements; the interface should not feel overly rigid or boxy.",
+      "Don't add excessive gradients, glassmorphism, glow effects, or generic AI SaaS aesthetics.",
+      "Don't make every piece of content a white card. Use surface hierarchy to differentiate primary and secondary data."
+    ]
+  }
+}

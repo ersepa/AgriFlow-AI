@@ -19,6 +19,23 @@ class AiAnalysisController extends Controller
         return view('ai-analysis.index', compact('shipments'));
     }
 
+    // Hapus data terpilih
+public function bulkDestroy(Request $request)
+{
+    $ids = json_decode($request->ids, true);
+    if (!empty($ids)) {
+        AiAnalysis::whereIn('id', $ids)->delete();
+    }
+    return redirect()->back()->with('success', 'Data terpilih berhasil dihapus.');
+}
+
+// Hapus seluruh history
+public function truncate()
+{
+    AiAnalysis::truncate();
+    return redirect()->back()->with('success', 'Seluruh riwayat analisis berhasil dikosongkan.');
+}
+
     // proses AI analyze
 public function analyze(Shipment $shipment, GeminiService $ai)
 {
