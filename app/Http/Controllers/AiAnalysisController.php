@@ -7,6 +7,7 @@ use App\Models\Shipment;
 use App\Services\AI\DecisionEngine;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
+use App\Services\Routing\FreshnessAwareRouteService;
 
 class AiAnalysisController extends Controller
 {
@@ -36,13 +37,21 @@ class AiAnalysisController extends Controller
      * The LLM is only an explanation layer and cannot replace those actions.
      */
     public function analyze(
-        Shipment $shipment,
-        DecisionEngine $engine,
-        GeminiService $ai
-    ) {
+    Shipment $shipment,
+    DecisionEngine $engine,
+    GeminiService $ai,
+    FreshnessAwareRouteService $freshnessRoutes
+)
+ {
         $shipment->loadMissing('harvest');
 
         $analysis = $engine->analyze($shipment);
+        $routeDecision =
+    $freshnessRoutes
+        ->assessCurrentRoute(
+            $shipment,
+            $analysis
+        );
         $plan = $analysis['recommendation_plan'] ?? [];
         $actions = $analysis['recommended_actions'] ?? [];
 
@@ -149,7 +158,11 @@ class AiAnalysisController extends Controller
             ->with('recommended_actions', $actions)
             ->with('recommended_action', $analysis['recommended_action'])
             ->with('recommendation_reason', $analysis['recommendation_reason'])
-            ->with('expected_outcome', $expectedOutcome);
+            ->with('expected_outcome', $expectedOutcome)
+            ->with(
+    'route_decision',
+    $routeDecision
+);;
     }
 
     public function history()
@@ -171,32 +184,44 @@ class AiAnalysisController extends Controller
             ->with('success', 'Data berhasil dihapus!');
     }
 
-    public function show(
-        $id,
-        DecisionEngine $engine
-    ) {
-        $analysis = AiAnalysis::with([
-            'shipment.harvest',
-            'shipment.aiAnalyses',
-        ])->findOrFail($id);
+public function show(
+    $id,
+    DecisionEngine $engine,
+    FreshnessAwareRouteService $freshnessRoutes
+) {
+    $analysis = AiAnalysis::with([
+        'shipment.harvest',
+        'shipment.aiAnalyses',
+    ])->findOrFail($id);
 
-        $shipment = $analysis->shipment;
+    $shipment = $analysis->shipment;
 
-        abort_if(
-            !$shipment,
-            404,
-            'Shipment not found for this analysis.'
+    abort_if(
+        !$shipment,
+        404,
+        'Shipment not found for this analysis.'
+    );
+
+    $decisionAnalysis =
+        $engine->analyze(
+            $shipment
         );
 
-        $decisionAnalysis = $engine->analyze($shipment);
+    $routeDecision =
+        $freshnessRoutes
+            ->assessCurrentRoute(
+                $shipment,
+                $decisionAnalysis
+            );
 
-        return view(
-            'ai-analysis.show',
-            [
-                'shipment' => $shipment,
-                'analysisRecord' => $analysis,
-                'decisionAnalysis' => $decisionAnalysis,
-            ]
-        );
-    }
+    return view(
+        'ai-analysis.show',
+        [
+            'shipment' => $shipment,
+            'analysisRecord' => $analysis,
+            'decisionAnalysis' => $decisionAnalysis,
+            'routeDecision' => $routeDecision,
+        ]
+    );
+}
 }

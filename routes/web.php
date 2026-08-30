@@ -48,6 +48,20 @@ Route::get('/ai-optimizer/explain/{shipment}',
     [AIOptimizerController::class, 'explain']
 )->name('ai.explain');
 
+Route::get(
+    '/ai-optimizer/route/{shipment}',
+    [AIOptimizerController::class, 'routeGeometry']
+)
+    ->middleware('auth')
+    ->name('ai-optimizer.route');
+
+Route::get(
+    '/ai-optimizer/freshness-routes/{shipment}',
+    [AIOptimizerController::class, 'freshnessRoutes']
+)
+    ->middleware('auth')
+    ->name('ai-optimizer.freshness-routes');
+
     Route::get('/ai-optimizer', [AIOptimizerController::class, 'index'])
     ->middleware('auth')
     ->name('ai-optimizer');

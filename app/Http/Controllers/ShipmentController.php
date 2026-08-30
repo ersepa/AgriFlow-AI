@@ -9,6 +9,7 @@ use App\Services\AI\DecisionEngine;
 use App\Services\RouteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Services\Routing\FreshnessAwareRouteService;
 
 class ShipmentController extends Controller
 {
@@ -207,23 +208,35 @@ class ShipmentController extends Controller
             ->with('success', 'Shipment berhasil dihapus!');
     }
 
-    public function show(
-        $id,
-        DecisionEngine $engine
-    ) {
-        $shipment = Shipment::with([
-            'harvest',
-            'aiAnalyses',
-        ])->findOrFail($id);
+public function show(
+    $id,
+    DecisionEngine $engine,
+    FreshnessAwareRouteService $freshnessRoutes
+) {
+    $shipment = Shipment::with([
+        'harvest',
+        'aiAnalyses'
+    ])->findOrFail($id);
 
-        $analysis = $engine->analyze($shipment);
-
-        return view(
-            'shipments.show',
-            compact(
-                'shipment',
-                'analysis'
-            )
+    $analysis =
+        $engine->analyze(
+            $shipment
         );
-    }
+
+    $routeDecision =
+        $freshnessRoutes
+            ->assessCurrentRoute(
+                $shipment,
+                $analysis
+            );
+
+    return view(
+        'shipments.show',
+        compact(
+            'shipment',
+            'analysis',
+            'routeDecision'
+        )
+    );
 }
+    }

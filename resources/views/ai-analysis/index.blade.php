@@ -270,6 +270,7 @@
                 @endif
 
 {{-- Step 4.2 Intervention Recommendations --}}
+@include('ai-analysis.partials.route-decision')
 @include('ai-analysis.partials.intervention-recommendations')
 
             </div>

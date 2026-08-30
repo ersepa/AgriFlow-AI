@@ -426,9 +426,18 @@
                 </div>
 
                 {{-- STEP 4.3: Current Operational Risk + Intervention Plan --}}
-                @include('shared.step43-risk-summary', ['step43Analysis' => $analysis])
+@include('shared.step43-risk-summary')
 
-                @include('shared.step43-intervention-plan', ['step43Analysis' => $analysis])
+@include(
+    'shared.step52-route-summary',
+    [
+        'routeDecision' =>
+            $routeDecision
+            ?? null
+    ]
+)
+
+@include('shared.step43-intervention-plan')
 
 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800">
 
