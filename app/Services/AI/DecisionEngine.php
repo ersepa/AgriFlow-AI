@@ -10,12 +10,13 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * AgriFlow Decision Engine - Step 3.2
+ * AgriFlow Decision Engine - Step 4
  *
  * Single source of truth for shipment operational intelligence.
  *
- * Step 3.1 keeps the domain-informed Quality-at-Arrival model and adds
- * reconciliation between commodity reference shelf life and recorded expiry, plus freshness consistency guardrails:
+ * Step 4 keeps the Step 3.2 freshness model and adds a dedicated,
+ * explainable OperationalRiskService. Freshness outputs are now the dominant
+ * risk inputs rather than a post-hoc guardrail:
  * - baseline reference shelf life from the commodity knowledge base
  * - harvest age
  * - temperature-aware effective transit aging
@@ -31,7 +32,9 @@ class DecisionEngine
 {
     public function __construct(
         private readonly CommodityProfileService $commodityProfiles,
-        private readonly QualityPredictionService $qualityPrediction
+        private readonly QualityPredictionService $qualityPrediction,
+        private readonly OperationalRiskService $operationalRisk,
+        private readonly InterventionRecommendationService $interventionRecommendations
     ) {
     }
 
@@ -82,33 +85,25 @@ class DecisionEngine
             ?? $this->remainingShelfLifeDays($shipment)
         );
 
-        $riskComponents = $this->riskComponents(
+        // Step 4: freshness-aware operational risk assessment.
+        // The dedicated service owns the risk model; DecisionEngine orchestrates it.
+        $riskAssessment = $this->operationalRisk->assess(
             $shipment,
-            $remainingDays,
-            $scenario,
             $commodityProfile,
+            $qualityPrediction,
             $temperatureAssessment
         );
 
-        $baseRiskScore = $this->clamp(
-            (int) round(array_sum($riskComponents)),
-            0,
-            100
-        );
+        $riskScore = $riskAssessment['risk_score'];
 
-        $freshnessGuardrail = $this->freshnessRiskGuardrail(
-            $qualityPrediction
-        );
-
-        $riskScore = max(
-            $baseRiskScore,
-            $freshnessGuardrail['floor']
-        );
-
-        $riskComponents['freshness_guardrail'] = max(
-            0,
-            $riskScore - $baseRiskScore
-        );
+        // Backwards-compatible numeric component map for older consumers.
+        $riskComponents = collect($riskAssessment['components'])
+            ->mapWithKeys(
+                fn (array $component, string $key) => [
+                    $key => $component['contribution'],
+                ]
+            )
+            ->all();
 
         $priorityScore = $this->calculatePriorityScore(
             $shipment,
@@ -129,11 +124,14 @@ class DecisionEngine
             $scenario
         );
 
-        $recommendation = $this->buildOperationalRecommendation(
+        // Step 4.2: deterministic multi-action intervention plan.
+        // LLMs may explain this plan elsewhere, but do not generate or replace
+        // the core operational actions.
+        $recommendationPlan = $this->interventionRecommendations->recommend(
             $shipment,
-            $riskScore,
-            $remainingDays,
             $commodityProfile,
+            $qualityPrediction,
+            $riskAssessment,
             $temperatureAssessment
         );
 
@@ -141,10 +139,17 @@ class DecisionEngine
             // Core operational outputs
             'risk_score' => $riskScore,
             'risk_index' => $riskScore,
-            'risk_level' => $this->getRiskLevel($riskScore),
-            'base_risk_score' => $baseRiskScore,
-            'freshness_risk_floor' => $freshnessGuardrail['floor'],
-            'freshness_risk_reason' => $freshnessGuardrail['reason'],
+            'risk_level' => $riskAssessment['risk_level'],
+            'risk_severity' => $riskAssessment['risk_severity'],
+            'risk_model' => $riskAssessment['model_name'],
+            'risk_model_version' => $riskAssessment['model_version'],
+            'base_risk_score' => $riskAssessment['base_risk_score'],
+            'freshness_risk_floor' => $riskAssessment['critical_override_floor'],
+            'freshness_risk_reason' => $riskAssessment['critical_override_reason'],
+            'risk_assessment' => $riskAssessment,
+            'urgency_level' => $riskAssessment['urgency_level'],
+            'intervention_required' => $riskAssessment['intervention_required'],
+            'intervention_reason' => $riskAssessment['urgency_reason'],
             'priority_score' => $priorityScore,
             'priority_level' => $this->getPriorityLevel($priorityScore),
 
@@ -231,12 +236,8 @@ class DecisionEngine
                 $qualityPrediction
             ),
             'risk_components' => $riskComponents,
-            'explainability' => $this->generateExplainability(
-                $shipment,
-                $riskComponents,
-                $remainingDays,
-                $commodityProfile,
-                $temperatureAssessment
+            'explainability' => $this->riskExplainability(
+                $riskAssessment
             ),
             'prediction_data' => $this->buildRiskProjection(
                 $riskScore,
@@ -244,16 +245,19 @@ class DecisionEngine
             ),
 
             // Prescriptive outputs
-            'recommended_action' => $recommendation['action'],
-            'recommendation_reason' => $recommendation['reason'],
-            'dispatch_deadline' => $recommendation['dispatch_deadline'],
-            'recommended_vehicle' => $recommendation['recommended_vehicle'],
-            'recommended_storage' => $recommendation['recommended_storage'],
+            'recommendation_plan' => $recommendationPlan,
+            'recommended_actions' => $recommendationPlan['actions'],
+            'recommended_action' => $recommendationPlan['primary_action'],
+            'recommendation_reason' => $recommendationPlan['decision_rationale'],
+            'expected_outcome' => $recommendationPlan['expected_outcome'],
+            'dispatch_deadline' => $recommendationPlan['action_window'],
+            'recommended_vehicle' => $recommendationPlan['recommended_vehicle'],
+            'recommended_storage' => $recommendationPlan['recommended_storage'],
 
             // Backwards-compatible key now powered by QualityPredictionService.
             'estimated_arrival_quality' =>
                 $qualityPrediction['quality_at_arrival'],
-            'food_waste_level' => $this->getRiskLevel($riskScore),
+            'food_waste_level' => $riskAssessment['risk_level'],
         ];
     }
 
@@ -330,196 +334,6 @@ class DecisionEngine
         return (int) floor(
             Carbon::now()->diffInDays(Carbon::parse($expiryDate), false)
         );
-    }
-
-    private function buildTemperatureAssessment(
-        Shipment $shipment,
-        ?CommodityProfile $profile,
-        array $scenario
-    ): array {
-        $temperature = array_key_exists('temperature', $scenario)
-            && $scenario['temperature'] !== null
-                ? (float) $scenario['temperature']
-                : null;
-
-        $exposureHours = (float) ($shipment->duration_hours ?? 0)
-            + max(0, (float) ($scenario['delay'] ?? 0));
-
-        return $this->commodityProfiles->assessTemperature(
-            $profile,
-            $temperature,
-            $exposureHours
-        );
-    }
-
-    /**
-     * Base score remains operational, but Step 2 adds commodity perishability.
-     */
-    private function riskComponents(
-        Shipment $shipment,
-        float $remainingDays,
-        array $scenario,
-        ?CommodityProfile $commodityProfile,
-        array $temperatureAssessment
-    ): array {
-        $distance = (float) ($shipment->distance_km ?? 0);
-        $duration = (float) ($shipment->duration_hours ?? 0);
-
-        $shelfLife = match (true) {
-            $remainingDays <= 0 => 45,
-            $remainingDays <= 2 => 36,
-            $remainingDays <= 5 => 25,
-            $remainingDays <= 7 => 15,
-            $remainingDays <= 14 => 8,
-            default => 4,
-        };
-
-        $commodityPerishability = $this->commodityProfiles
-            ->perishabilityRisk($commodityProfile);
-
-        $distanceRisk = match (true) {
-            $distance >= 1000 => 20,
-            $distance >= 500 => 16,
-            $distance >= 300 => 12,
-            $distance >= 100 => 8,
-            default => 3,
-        };
-
-        $durationRisk = match (true) {
-            $duration >= 24 => 15,
-            $duration >= 12 => 12,
-            $duration >= 8 => 9,
-            $duration >= 4 => 7,
-            $duration > 0 => 3,
-            default => 0,
-        };
-
-        $statusRisk = match ($shipment->status) {
-            'Harvested' => 10,
-            'Packed' => 7,
-            'In Transit' => 5,
-            'Delivered' => 0,
-            default => 4,
-        };
-
-        return [
-            'remaining_shelf_life' => $shelfLife,
-            'commodity_perishability' => $commodityPerishability,
-            'transport_distance' => $distanceRisk,
-            'transit_duration' => $durationRisk,
-            'shipment_status' => $statusRisk,
-            'scenario_adjustment' => $this->scenarioRiskModifier(
-                $scenario,
-                $commodityProfile,
-                $temperatureAssessment
-            ),
-        ];
-    }
-
-    /**
-     * Step 2 scenario modifier.
-     *
-     * Temperature benefit/penalty now comes from CommodityProfileService.
-     * A refrigerated vehicle is NOT automatically considered safe unless the
-     * scenario temperature itself is appropriate for the commodity.
-     */
-    private function scenarioRiskModifier(
-        array $scenario,
-        ?CommodityProfile $commodityProfile,
-        array $temperatureAssessment
-    ): int {
-        if ($scenario === []) {
-            return 0;
-        }
-
-        $modifier = 0;
-        $vehicle = strtolower((string) ($scenario['vehicle'] ?? 'truck'));
-        $delay = max(0, (float) ($scenario['delay'] ?? 0));
-        $routeOptimized = filter_var(
-            $scenario['route'] ?? false,
-            FILTER_VALIDATE_BOOLEAN
-        );
-
-        // Temperature is the actual biological condition we care about.
-        $modifier += (int) ($temperatureAssessment['risk_modifier'] ?? 0);
-
-        // Refrigerated capability gets only a small operational benefit when
-        // temperature control is recommended. The actual temperature still
-        // determines whether conditions are safe.
-        if (
-            in_array($vehicle, ['cold', 'refrigerated', 'refrigerated truck'], true)
-            && $commodityProfile?->temperature_control_recommended
-        ) {
-            $modifier -= 2;
-        }
-
-        if ($routeOptimized) {
-            $modifier -= 5;
-        }
-
-        $modifier += (int) round($delay * 3);
-
-        return $modifier;
-    }
-
-    private function freshnessRiskGuardrail(array $qualityPrediction): array
-    {
-        $quality = $qualityPrediction['quality_at_arrival'] ?? null;
-        $recordedArrivalDays = $qualityPrediction['recorded_remaining_at_arrival_days'] ?? null;
-        $safeStatus = $qualityPrediction['safe_transit_status'] ?? 'Unknown';
-        $expiryStatus = $qualityPrediction['shelf_life_reconciliation_status'] ?? '';
-
-        $floor = 0;
-        $reason = 'No freshness guardrail required.';
-
-        $apply = function (int $candidate, string $candidateReason) use (&$floor, &$reason): void {
-            if ($candidate > $floor) {
-                $floor = $candidate;
-                $reason = $candidateReason;
-            }
-        };
-
-        if ($expiryStatus === 'Recorded expiry reached') {
-            $apply(95, 'Recorded expiry has been reached; immediate operational review is required.');
-        }
-
-        if ($safeStatus === 'Threshold already exceeded') {
-            $apply(92, 'The operational safe transit threshold has already been exceeded.');
-        }
-
-        if ($safeStatus === 'ETA exceeds safe transit window') {
-            $apply(88, 'Planned transit exceeds the estimated operational safe transit window.');
-        }
-
-        if ($quality !== null) {
-            if ($quality < 30) {
-                $apply(88, 'Predicted operational arrival quality is critical.');
-            } elseif ($quality < 50) {
-                $apply(80, 'Predicted operational arrival quality is poor.');
-            } elseif ($quality < 70) {
-                $apply(72, 'Predicted operational arrival quality is at risk.');
-            }
-        }
-
-        if ($recordedArrivalDays !== null) {
-            if ($recordedArrivalDays <= 0) {
-                $apply(92, 'No recorded shelf life remains at the predicted arrival time.');
-            } elseif ($recordedArrivalDays <= 0.5) {
-                $apply(82, 'Less than 12 hours of recorded shelf life is expected to remain at arrival.');
-            } elseif ($recordedArrivalDays <= 1.0) {
-                $apply(76, 'One day or less of recorded shelf life is expected to remain at arrival.');
-            } elseif (
-                $recordedArrivalDays <= 2.0
-                && ($qualityPrediction['expiry_constraint_applied'] ?? false)
-            ) {
-                $apply(70, 'Recorded expiry is the limiting constraint with two days or less remaining at arrival.');
-            }
-        }
-
-        return [
-            'floor' => $floor,
-            'reason' => $reason,
-        ];
     }
 
     private function calculatePriorityScore(
@@ -640,87 +454,34 @@ class DecisionEngine
         return $this->clamp($score, 0, 100);
     }
 
-    private function generateExplainability(
-        Shipment $shipment,
-        array $components,
-        float $remainingDays,
-        ?CommodityProfile $commodityProfile,
-        array $temperatureAssessment
-    ): array {
-        $commodityName = $shipment->harvest?->commodity ?? 'Unknown commodity';
-        $profileLabel = $commodityProfile
-            ? ($commodityProfile->local_name ?: $commodityProfile->name)
-            : $commodityName;
-
-        $factors = [
-            [
-                'title' => 'Remaining Shelf Life',
-                'icon' => '📦',
-                'impact' => max(0, $components['remaining_shelf_life']),
-                'reason' => $remainingDays <= 0
-                    ? 'The harvest has reached or exceeded the recorded expiry deadline.'
-                    : sprintf(
-                        'The harvest has approximately %.1f day(s) of recorded shelf life remaining before departure.',
-                        $remainingDays
-                    ),
-            ],
-            [
-                'title' => 'Freshness Constraint',
-                'icon' => '🧭',
-                'impact' => max(0, $components['freshness_guardrail'] ?? 0),
-                'reason' => ($components['freshness_guardrail'] ?? 0) > 0
-                    ? 'The final operational risk was raised by a freshness guardrail because quality, expiry, or transit margin is more critical than the base logistics score alone.'
-                    : 'No additional freshness guardrail was required beyond the base operational risk score.',
-            ],
-            [
-                'title' => 'Commodity Perishability',
-                'icon' => '🌱',
-                'impact' => max(0, $components['commodity_perishability']),
-                'reason' => $commodityProfile
-                    ? sprintf(
-                        '%s is classified as %s perishability in the current AgriFlow post-harvest profile.',
-                        $profileLabel,
-                        strtolower($commodityProfile->perishability_level)
-                    )
-                    : 'No validated commodity profile was found, so AgriFlow applies a neutral fallback perishability score.',
-            ],
-            [
-                'title' => 'Transportation Distance',
-                'icon' => '🚚',
-                'impact' => max(0, $components['transport_distance']),
-                'reason' => 'Longer transport distance increases operational exposure before delivery.',
-            ],
-            [
-                'title' => 'Transit Duration',
-                'icon' => '⏱️',
-                'impact' => max(0, $components['transit_duration']),
-                'reason' => 'Longer transit time consumes more of the product’s remaining usable life.',
-            ],
-            [
-                'title' => 'Shipment Status',
-                'icon' => '📍',
-                'impact' => max(0, $components['shipment_status']),
-                'reason' => 'The current logistics stage affects how urgently the shipment should be handled.',
-            ],
+    private function riskExplainability(array $riskAssessment): array
+    {
+        $iconMap = [
+            'quality' => 'Q',
+            'shelf-life' => 'SL',
+            'transit-margin' => 'TM',
+            'temperature' => 'T',
+            'commodity' => 'C',
+            'stage' => 'S',
+            'transport' => 'TR',
         ];
 
-        if (($temperatureAssessment['available'] ?? false) === true) {
-            $temperatureImpact = (int) ($temperatureAssessment['risk_modifier'] ?? 0);
-
-            $factors[] = [
-                'title' => 'Commodity Temperature Fit',
-                'icon' => '🌡️',
-                'impact' => abs($temperatureImpact),
-                'reason' => $temperatureAssessment['message'] ?? 'Temperature was assessed against the commodity profile.',
-            ];
-        }
-
-        usort(
-            $factors,
-            fn (array $a, array $b) => $b['impact'] <=> $a['impact']
-        );
-
-        return $factors;
+        return collect($riskAssessment['components'] ?? [])
+            ->map(function (array $component) use ($iconMap) {
+                return [
+                    'title' => $component['title'],
+                    'icon' => $iconMap[$component['icon'] ?? ''] ?? '•',
+                    // Existing Blade expects an "impact" number. In Step 4
+                    // this is weighted contribution points to the 0–100 index.
+                    'impact' => $component['contribution'],
+                    'pressure_score' => $component['score'],
+                    'weight' => $component['weight'],
+                    'reason' => $component['reason'],
+                ];
+            })
+            ->sortByDesc('impact')
+            ->values()
+            ->all();
     }
 
     private function buildRiskProjection(int $riskScore, float $remainingDays): array

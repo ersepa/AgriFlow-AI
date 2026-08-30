@@ -269,8 +269,16 @@
                 </div>
                 @endif
 
-{{-- Step 4.2 Intervention Recommendations --}}
-@include('ai-analysis.partials.intervention-recommendations')
+                {{-- Recommendations Footer --}}
+                <div class="pt-6 border-t border-slate-700/80">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest flex items-center gap-2">
+                        <span>ðŸ’¡</span>
+                        <span>AI Actionable Recommendations</span>
+                    </p>
+                    <div class="text-xs text-indigo-100/90 font-medium leading-relaxed bg-slate-800/80 p-5 rounded-2xl border border-slate-700">
+                        <span>Recomendations</span>{!! nl2br(e(explode('Recommendations:', $ai)[1] ?? 'No recommendations provided for this route.')) !!}
+                    </div>
+                </div>
 
             </div>
         @endif

@@ -567,6 +567,11 @@
                     </div>
                 </div>
 
+                {{-- STEP 4.3: Current Operational Risk + Intervention Plan --}}
+                @include('shared.step43-risk-summary', ['step43Analysis' => $decisionAnalysis])
+
+                @include('shared.step43-intervention-plan', ['step43Analysis' => $decisionAnalysis])
+
                 {{-- Persisted AI Decision --}}
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800">
                     <div class="flex items-center gap-4 mb-8 border-b border-slate-800 pb-5">
