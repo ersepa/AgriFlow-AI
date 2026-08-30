@@ -80,10 +80,19 @@
                 <p class="text-[9px] uppercase font-black text-slate-500 tracking-widest">
                     Arrival Quality
                 </p>
-                <p class="text-2xl font-black text-white mt-2">
-                    {{ $quality !== null ? $quality : '—' }}
-                    <span class="text-xs text-slate-500">/100</span>
-                </p>
+                @if($quality !== null)
+                    <p class="text-2xl font-black text-white mt-2">
+                        {{ $quality }}
+                        <span class="text-xs text-slate-500">/100</span>
+                    </p>
+                @else
+                    <p class="text-sm font-black text-slate-300 mt-2">
+                        Not estimated
+                    </p>
+                    <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">
+                        No validated fresh-produce quality curve for this commodity model.
+                    </p>
+                @endif
             </div>
 
             <div class="bg-slate-800/70 rounded-2xl border border-slate-700 p-4">

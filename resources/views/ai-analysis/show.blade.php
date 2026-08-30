@@ -106,32 +106,46 @@
             $analysisRecord?->recommendations
             ?? '';
 
-        $parts = explode(
-            'Explanation:',
-            $rawRecommendations
-        );
+$parts = explode(
+    'Explanation:',
+    $rawRecommendations
+);
 
-        $recommendationsList =
-            isset($parts[0])
-                ? array_filter(
-                    array_map(
-                        'trim',
-                        explode(
-                            '-',
-                            str_replace(
-                                'Recommendations:',
+$recommendationText =
+    trim(
+        str_replace(
+            'Recommendations:',
+            '',
+            $parts[0] ?? ''
+        )
+    );
+
+$recommendationsList =
+    $recommendationText !== ''
+        ? array_values(
+            array_filter(
+                array_map(
+                    static fn (string $line): string =>
+                        trim(
+                            preg_replace(
+                                '/^\s*-\s*/',
                                 '',
-                                $parts[0]
+                                $line
                             )
-                        )
-                    )
+                        ),
+                    preg_split(
+                        '/\R/',
+                        $recommendationText
+                    ) ?: []
                 )
-                : [];
+            )
+        )
+        : [];
 
-        $explanation =
-            isset($parts[1])
-                ? trim($parts[1])
-                : '';
+$explanation =
+    isset($parts[1])
+        ? trim($parts[1])
+        : '';
 
         /*
          * Step 1 stores recommendation as:

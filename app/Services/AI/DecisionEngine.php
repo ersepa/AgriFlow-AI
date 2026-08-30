@@ -311,8 +311,13 @@ class DecisionEngine
                 'vehicle' => $this->displayVehicle($scenario['vehicle'] ?? 'Truck'),
                 'quality_at_arrival' => $after['quality_at_arrival'],
                 'quality_change' =>
-                    $after['quality_at_arrival']
-                    - $before['quality_at_arrival'],
+    $after['quality_at_arrival'] !== null
+    && $before['quality_at_arrival'] !== null
+        ? (
+            $after['quality_at_arrival']
+            - $before['quality_at_arrival']
+        )
+        : null,
                 'remaining_shelf_life_days' =>
                     $after['predicted_remaining_shelf_life_days'],
                 'safe_transit_window_hours' =>

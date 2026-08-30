@@ -47,28 +47,129 @@
 
         <details class="mt-5 group">
             <summary class="cursor-pointer list-none flex items-center justify-between gap-4 bg-slate-800/50 border border-slate-700 rounded-xl px-5 py-4">
-                <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Commodity Handling Guidance</span>
+                <span class="text-xs font-black text-slate-300 uppercase tracking-widest">
+                    Commodity Handling Guidance
+                </span>
                 <span class="text-indigo-300 group-open:rotate-45 transition-transform">+</span>
             </summary>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
-                @foreach([
-                    'Transport' => $plan['recommended_vehicle'] ?? null,
-                    'Temperature' => $plan['recommended_temperature_range'] ?? null,
-                    'Humidity' => $plan['recommended_humidity_range'] ?? null,
-                    'Chilling Threshold' => $plan['chilling_threshold'] ?? null,
-                ] as $label => $value)
+
+            @if(($plan['quality_model_type'] ?? null) === 'storage_stability')
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4 px-1">
                     <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">{{ $label }}</p>
-                        <p class="text-sm font-bold text-slate-200 mt-2">{{ $value ?: 'Not available' }}</p>
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Storage Model
+                        </p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            Dry Commodity Stability
+                        </p>
                     </div>
-                @endforeach
-            </div>
-            @if(!empty($plan['reference_source_url']))
-                <a href="{{ $plan['reference_source_url'] }}" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex mt-4 text-xs font-black text-cyan-400 hover:text-cyan-300 uppercase tracking-widest">
-                    {{ $plan['reference_source_name'] ?? 'View commodity reference source' }} →
-                </a>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Moisture Reference
+                        </p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            @if(($plan['safe_moisture_short_term_max_percent'] ?? null) !== null)
+                                ≤ {{ number_format($plan['safe_moisture_short_term_max_percent'], 1) }}%
+                                @if(
+                                    ($plan['safe_moisture_long_term_max_percent'] ?? null) !== null
+                                    && $plan['safe_moisture_long_term_max_percent']
+                                        != $plan['safe_moisture_short_term_max_percent']
+                                )
+                                    · long-term ≤ {{ number_format($plan['safe_moisture_long_term_max_percent'], 1) }}%
+                                @endif
+                            @else
+                                Not available
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Relative Humidity Guidance
+                        </p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            @if(($plan['safe_relative_humidity_max_percent'] ?? null) !== null)
+                                ≤ {{ number_format($plan['safe_relative_humidity_max_percent'], 0) }}% RH
+                            @else
+                                Not available
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Evidence Status
+                        </p>
+                        <p class="text-sm font-bold text-amber-300 mt-2">
+                            {{ $plan['storage_evidence_status'] ?? 'Condition telemetry not available' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4 bg-slate-950/30 border border-slate-800 rounded-xl p-4">
+                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                        Transport Guidance
+                    </p>
+                    <p class="text-sm font-bold text-slate-200 mt-2">
+                        {{ $plan['recommended_vehicle'] ?? 'Keep cargo dry and protected from moisture ingress.' }}
+                    </p>
+
+                    @if(!empty($plan['storage_science_note']))
+                        <p class="text-xs text-slate-500 leading-relaxed mt-3">
+                            {{ $plan['storage_science_note'] }}
+                        </p>
+                    @endif
+                </div>
+            @else
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4 px-1">
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Transport</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $plan['recommended_vehicle'] ?? 'Use appropriate transport conditions.' }}
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Temperature</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $plan['recommended_temperature_range'] ?? 'Not available' }}
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Humidity</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $plan['recommended_humidity_range'] ?? 'Not available' }}
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Chilling Threshold</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $plan['chilling_threshold'] ?? 'No validated threshold stored' }}
+                        </p>
+                    </div>
+                </div>
             @endif
+
+            <div class="mt-4 bg-slate-950/30 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Profile</p>
+                    <p class="text-xs text-slate-300 mt-1">
+                        {{ $plan['commodity_profile_name'] ?? 'Commodity profile unavailable' }}
+                    </p>
+                </div>
+
+                @if(!empty($plan['reference_source_url']))
+                    <a href="{{ $plan['reference_source_url'] }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="text-xs font-black text-cyan-400 hover:text-cyan-300 uppercase tracking-widest">
+                        {{ $plan['reference_source_name'] ?? 'View reference source' }} →
+                    </a>
+                @endif
+            </div>
         </details>
     </div>
 @endif

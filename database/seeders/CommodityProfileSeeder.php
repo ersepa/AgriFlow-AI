@@ -113,5 +113,72 @@ class CommodityProfileSeeder extends Seeder
                 "Commodity '{$profile['name']}' has optimal_humidity_min greater than optimal_humidity_max."
             );
         }
+
+        $commodityClass =
+            $profile['commodity_class']
+            ?? 'fresh_produce';
+
+        $qualityModel =
+            $profile['quality_model_type']
+            ?? 'shelf_life_quality';
+
+        $allowedClasses = [
+            'fresh_produce',
+            'dry_commodity',
+            'dry_grain',
+        ];
+
+        $allowedModels = [
+            'shelf_life_quality',
+            'storage_stability',
+        ];
+
+        if (!in_array($commodityClass, $allowedClasses, true)) {
+            throw new RuntimeException(
+                "Commodity '{$profile['name']}' has unsupported commodity_class '{$commodityClass}'."
+            );
+        }
+
+        if (!in_array($qualityModel, $allowedModels, true)) {
+            throw new RuntimeException(
+                "Commodity '{$profile['name']}' has unsupported quality_model_type '{$qualityModel}'."
+            );
+        }
+
+        if ($qualityModel === 'storage_stability') {
+            $hasStorageThreshold =
+                ($profile['safe_moisture_short_term_max_percent'] ?? null) !== null
+                || ($profile['safe_moisture_long_term_max_percent'] ?? null) !== null
+                || ($profile['safe_relative_humidity_max_percent'] ?? null) !== null;
+
+            if (!$hasStorageThreshold) {
+                throw new RuntimeException(
+                    "Dry commodity '{$profile['name']}' must include at least one validated storage-stability threshold."
+                );
+            }
+        }
+
+        foreach (
+            [
+                'safe_moisture_short_term_max_percent',
+                'safe_moisture_long_term_max_percent',
+                'safe_relative_humidity_max_percent',
+            ]
+            as $percentageField
+        ) {
+            $value = $profile[$percentageField] ?? null;
+
+            if (
+                $value !== null
+                && (
+                    (float) $value < 0
+                    || (float) $value > 100
+                )
+            ) {
+                throw new RuntimeException(
+                    "Commodity '{$profile['name']}' has invalid {$percentageField}."
+                );
+            }
+        }
     }
 }

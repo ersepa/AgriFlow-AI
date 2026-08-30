@@ -46,6 +46,18 @@ class QualityPredictionService
     ): array {
         $shipment->loadMissing('harvest');
 
+        if (
+            $profile
+            && ($profile->quality_model_type ?? null)
+                === 'storage_stability'
+        ) {
+            return $this->predictDryCommodity(
+                $shipment,
+                $profile,
+                $scenario
+            );
+        }
+
         $baselineShelfLife = $this->baselineShelfLifeDays($profile);
         $harvestAgeDays = $this->harvestAgeDays($shipment);
         $transitHours = $this->scenarioTransitHours($shipment, $scenario);
@@ -142,7 +154,15 @@ class QualityPredictionService
             $recordedFreshnessAtArrival
         );
 
-        $qualityLoss = max(0, $qualityAtDeparture - $qualityAtArrival);
+        $qualityLoss =
+            $qualityAtDeparture !== null
+            && $qualityAtArrival !== null
+                ? max(
+                    0,
+                    $qualityAtDeparture
+                    - $qualityAtArrival
+                )
+                : null;
 
         $referenceSafeTransitWindowHours = $this->safeTransitWindowHours(
             $baselineShelfLife,
@@ -258,10 +278,15 @@ class QualityPredictionService
             'shelf_life_reconciliation_message' => $reconciliation['message'],
             'shelf_life_discrepancy_days' => $reconciliation['discrepancy_days'],
 
-            'prediction_available' => $baselineShelfLife !== null,
+            'prediction_available' =>
+                $baselineShelfLife !== null,
+            'condition_model_type' =>
+                'shelf_life_quality',
+            'operational_window_available' =>
+                $safeTransitWindowHours !== null,
             'prediction_basis' => $profile
-                ? 'Validated commodity storage profile + harvest age + transit duration + scenario temperature'
-                : 'Insufficient commodity profile; quality prediction is limited',
+                ? 'Validated fresh-produce storage-life profile + harvest age + transit duration + scenario temperature'
+                : 'No validated fresh-produce shelf-life profile; biological quality is not estimated',
 
             'source_name' => $profile?->source_name,
             'source_url' => $profile?->source_url,
@@ -273,6 +298,282 @@ class QualityPredictionService
                 'Reference storage life is a commodity profile range and may vary by cultivar, maturity, and handling conditions.',
                 'Recorded expiry is treated as an operational deadline, not proof of biological spoilage.',
                 'When reference shelf life and recorded expiry disagree, operational outputs use the more conservative constraint and expose the discrepancy.',
+            ],
+        ];
+    }
+
+    private function predictDryCommodity(
+        Shipment $shipment,
+        CommodityProfile $profile,
+        array $scenario
+    ): array {
+        $transitHours =
+            $this->scenarioTransitHours(
+                $shipment,
+                $scenario
+            );
+
+        $recordedWindow =
+            $this->recordedFreshnessWindow(
+                $shipment,
+                $transitHours
+            );
+
+        $recordedRemainingAtDeparture =
+            $recordedWindow[
+                'remaining_at_departure_days'
+            ];
+
+        $recordedRemainingAtArrival =
+            $recordedWindow[
+                'remaining_at_arrival_days'
+            ];
+
+        $safeTransitWindowHours =
+            $recordedWindow[
+                'remaining_at_departure_hours'
+            ];
+
+        $transitMarginHours =
+            $safeTransitWindowHours !== null
+                ? round(
+                    $safeTransitWindowHours
+                    - $transitHours,
+                    1
+                )
+                : null;
+
+        $moisture =
+            array_key_exists(
+                'moisture_percent',
+                $scenario
+            )
+                && $scenario[
+                    'moisture_percent'
+                ] !== ''
+                ? (float) $scenario[
+                    'moisture_percent'
+                ]
+                : null;
+
+        $relativeHumidity =
+            array_key_exists(
+                'relative_humidity_percent',
+                $scenario
+            )
+                && $scenario[
+                    'relative_humidity_percent'
+                ] !== ''
+                ? (float) $scenario[
+                    'relative_humidity_percent'
+                ]
+                : null;
+
+        $storageHorizon =
+            (string) (
+                $scenario[
+                    'storage_horizon'
+                ] ?? 'short_term'
+            );
+
+        $storageStability =
+            $this->commodityProfiles
+                ->assessStorageStability(
+                    $profile,
+                    $moisture,
+                    $relativeHumidity,
+                    $storageHorizon
+                );
+
+        return [
+            'model_name' =>
+                'AgriFlow Dry Commodity Storage Stability Model',
+            'model_version' =>
+                'step5.2.1-storage-stability-v1',
+            'model_type' =>
+                'deterministic_reference_threshold_model',
+            'condition_model_type' =>
+                'storage_stability',
+
+            /*
+             * Deliberately unavailable:
+             * FAO/IRRI storage thresholds do not justify transforming
+             * green coffee or milled rice into a fresh-produce
+             * shelf-life quality curve.
+             */
+            'baseline_shelf_life_days' => null,
+            'baseline_shelf_life_basis' =>
+                'not_applicable_to_storage_stability_model',
+            'reference_remaining_shelf_life_at_departure_days' =>
+                null,
+            'reference_remaining_shelf_life_at_arrival_days' =>
+                null,
+            'reference_quality_at_departure' => null,
+            'reference_quality_at_arrival' => null,
+            'quality_at_departure' => null,
+            'quality_at_arrival' => null,
+            'quality_loss_during_transit' => null,
+            'quality_status' =>
+                'Not estimated for dry commodity',
+            'quality_basis' =>
+                'no_fabricated_fresh_produce_quality_curve',
+
+            'harvest_age_days' =>
+                round(
+                    $this->harvestAgeDays(
+                        $shipment
+                    ),
+                    2
+                ),
+
+            'recorded_declared_shelf_life_days' =>
+                $recordedWindow[
+                    'declared_window_days'
+                ],
+            'recorded_declared_shelf_life_hours' =>
+                $recordedWindow[
+                    'declared_window_hours'
+                ],
+            'recorded_elapsed_at_departure_hours' =>
+                $recordedWindow[
+                    'elapsed_at_departure_hours'
+                ],
+            'recorded_remaining_days' =>
+                $recordedRemainingAtDeparture,
+            'recorded_remaining_hours' =>
+                $recordedWindow[
+                    'remaining_at_departure_hours'
+                ],
+            'recorded_remaining_at_arrival_days' =>
+                $recordedRemainingAtArrival,
+            'recorded_remaining_at_arrival_hours' =>
+                $recordedWindow[
+                    'remaining_at_arrival_hours'
+                ],
+
+            /*
+             * Backwards-compatible operational-window keys.
+             * These are recorded deadline values, NOT biological shelf life.
+             */
+            'remaining_shelf_life_at_departure_days' =>
+                $recordedRemainingAtDeparture,
+            'remaining_shelf_life_at_arrival_days' =>
+                $recordedRemainingAtArrival,
+
+            'recorded_freshness_index_at_departure' =>
+                null,
+            'recorded_freshness_index_at_arrival' =>
+                null,
+
+            'transit_hours' =>
+                round(
+                    $transitHours,
+                    2
+                ),
+            'planned_transit_hours' =>
+                round(
+                    $transitHours,
+                    2
+                ),
+
+            'temperature_c' =>
+                array_key_exists(
+                    'temperature',
+                    $scenario
+                )
+                    && $scenario[
+                        'temperature'
+                    ] !== ''
+                    ? (float) $scenario[
+                        'temperature'
+                    ]
+                    : null,
+            'temperature_basis' =>
+                'not_used_as_primary_dry_commodity_driver',
+            'temperature_assessment' =>
+                $this->commodityProfiles
+                    ->assessTemperature(
+                        $profile,
+                        array_key_exists(
+                            'temperature',
+                            $scenario
+                        )
+                            && $scenario[
+                                'temperature'
+                            ] !== ''
+                            ? (float) $scenario[
+                                'temperature'
+                            ]
+                            : null,
+                        $transitHours
+                    ),
+
+            'q10_used' => null,
+            'q10_basis' =>
+                'not_applicable',
+            'reference_temperature_c' =>
+                null,
+            'temperature_deterioration_factor' =>
+                null,
+            'effective_transit_age_days' =>
+                null,
+            'effective_age_at_departure_days' =>
+                null,
+            'effective_age_at_arrival_days' =>
+                null,
+
+            'reference_safe_transit_window_hours' =>
+                null,
+            'recorded_expiry_window_hours' =>
+                $safeTransitWindowHours,
+            'safe_transit_window_hours' =>
+                $safeTransitWindowHours,
+            'transit_margin_hours' =>
+                $transitMarginHours,
+            'safe_transit_status' =>
+                $this->safeTransitStatus(
+                    $safeTransitWindowHours,
+                    $transitHours
+                ),
+
+            'expiry_constraint_applied' =>
+                $safeTransitWindowHours !== null,
+            'shelf_life_reconciliation_status' =>
+                $safeTransitWindowHours !== null
+                    ? 'Recorded operational deadline only'
+                    : 'No operational deadline recorded',
+            'shelf_life_reconciliation_message' =>
+                $safeTransitWindowHours !== null
+                    ? 'Dry-commodity storage stability is not converted into a biological shelf-life curve. The recorded expiry is retained only as an operational deadline.'
+                    : 'No recorded expiry is available. Storage condition must be evaluated from commodity-specific moisture/RH evidence.',
+            'shelf_life_discrepancy_days' =>
+                null,
+
+            'prediction_available' => false,
+            'operational_window_available' =>
+                $safeTransitWindowHours !== null,
+            'storage_stability_reference_available' =>
+                true,
+            'storage_stability_assessment' =>
+                $storageStability,
+
+            'prediction_basis' =>
+                'Validated dry-commodity storage thresholds. Biological arrival quality is intentionally not estimated without an evidence-backed dry-commodity quality model.',
+
+            'source_name' =>
+                $profile->source_name,
+            'source_url' =>
+                $profile->source_url,
+            'source_references' =>
+                $profile->source_references
+                ?? [],
+
+            'limitations' => [
+                'This is not a trained machine-learning model.',
+                'Moisture and relative humidity thresholds are reference storage limits, not probabilities of spoilage.',
+                'Without cargo moisture/RH telemetry, AgriFlow reports the evidence gap instead of inventing a quality score.',
+                'Recorded expiry is an operational deadline and is not proof of biological spoilage.',
+                'Green coffee, roasted coffee, coffee cherry, milled rice, and paddy require distinct storage profiles.',
             ],
         ];
     }
@@ -446,9 +747,9 @@ class QualityPredictionService
         ?float $baselineShelfLife,
         float $effectiveAgeDays,
         int $additionalPenalty
-    ): int {
+    ): ?int {
         if ($baselineShelfLife === null || $baselineShelfLife <= 0) {
-            return 50;
+            return null;
         }
 
         $lifeFractionRemaining = max(
@@ -626,14 +927,21 @@ class QualityPredictionService
     }
 
     private function conservativeQualityIndex(
-        int $referenceQuality,
+        ?int $referenceQuality,
         ?int $recordedFreshnessIndex
-    ): int {
+    ): ?int {
+        if ($referenceQuality === null) {
+            return null;
+        }
+
         if ($recordedFreshnessIndex === null) {
             return $referenceQuality;
         }
 
-        return min($referenceQuality, $recordedFreshnessIndex);
+        return min(
+            $referenceQuality,
+            $recordedFreshnessIndex
+        );
     }
 
     private function conservativeSafeWindowHours(
@@ -725,8 +1033,12 @@ class QualityPredictionService
         ];
     }
 
-    private function qualityStatus(int $quality): string
+    private function qualityStatus(?int $quality): string
     {
+        if ($quality === null) {
+            return 'Unavailable';
+        }
+
         return match (true) {
             $quality >= 85 => 'Excellent',
             $quality >= 70 => 'Good',

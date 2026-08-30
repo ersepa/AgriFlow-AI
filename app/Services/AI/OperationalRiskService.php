@@ -43,11 +43,14 @@ class OperationalRiskService
     ): array {
         $components = [
             'arrival_quality' => $this->arrivalQualityPressure(
-                $qualityPrediction['quality_at_arrival'] ?? null
+                $qualityPrediction['quality_at_arrival'] ?? null,
+                $profile,
+                $qualityPrediction
             ),
             'shelf_life_pressure' => $this->shelfLifePressure(
                 $qualityPrediction['remaining_shelf_life_at_arrival_days'] ?? null,
-                (bool) ($qualityPrediction['expiry_constraint_applied'] ?? false)
+                (bool) ($qualityPrediction['expiry_constraint_applied'] ?? false),
+                $profile
             ),
             'transit_margin' => $this->transitMarginPressure(
                 $qualityPrediction['transit_margin_hours'] ?? null,
@@ -98,7 +101,7 @@ class OperationalRiskService
 
         return [
             'model_name' => 'AgriFlow Operational Risk Engine',
-            'model_version' => 'step4-v1',
+            'model_version' => 'step5.2.2-dry-decision-polish',
             'model_type' => 'deterministic_weighted_risk_model',
             'risk_score' => $finalScore,
             'base_risk_score' => $baseScore,
@@ -112,7 +115,6 @@ class OperationalRiskService
             'urgency_level' => $urgency['level'],
             'urgency_rank' => $urgency['rank'],
             'intervention_required' => $urgency['intervention_required'],
-            'intervention_status' => $urgency['intervention_status'],
             'dispatch_deadline' => $urgency['dispatch_deadline'],
             'urgency_reason' => $urgency['reason'],
             'limitations' => [
@@ -120,12 +122,62 @@ class OperationalRiskService
                 'The model is deterministic and has not been statistically calibrated against outcome labels.',
                 'Actual cargo sensor telemetry, packaging condition, mechanical damage, atmosphere, and microbial measurements are not yet included.',
                 'Temperature exposure uses scenario data when available; otherwise uncertainty is represented explicitly.',
+                'For dry commodities, missing moisture/RH telemetry is represented as evidence uncertainty rather than a fabricated arrival-quality score.',
             ],
         ];
     }
 
-    private function arrivalQualityPressure(?float $quality): array
-    {
+    private function arrivalQualityPressure(
+        ?float $quality,
+        ?CommodityProfile $profile,
+        array $qualityPrediction = []
+    ): array {
+        $dryModel =
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability';
+
+        if ($dryModel) {
+            $storageAssessment =
+                $qualityPrediction[
+                    'storage_stability_assessment'
+                ] ?? [];
+
+            $available =
+                (bool) (
+                    $storageAssessment[
+                        'available'
+                    ] ?? false
+                );
+
+            $status =
+                $storageAssessment[
+                    'status'
+                ] ?? 'Storage telemetry required';
+
+            $score = match (true) {
+                !$available => 45,
+                $status ===
+                    'Outside reference storage limits'
+                    => 90,
+                $status ===
+                    'Within available reference limits'
+                    => 10,
+                default => 45,
+            };
+
+            return [
+                'title' =>
+                    'Storage Condition Evidence',
+                'icon' => 'quality',
+                'score' => $score,
+                'reason' =>
+                    $storageAssessment[
+                        'message'
+                    ]
+                    ?? 'Dry-commodity condition requires moisture/RH evidence; no synthetic arrival-quality score is created.',
+            ];
+        }
+
         $score = match (true) {
             $quality === null => 45,
             $quality >= 85 => 10,
@@ -150,7 +202,8 @@ class OperationalRiskService
 
     private function shelfLifePressure(
         ?float $remainingDays,
-        bool $expiryConstraintApplied
+        bool $expiryConstraintApplied,
+        ?CommodityProfile $profile = null
     ): array {
         $score = match (true) {
             $remainingDays === null => 45,
@@ -169,18 +222,35 @@ class OperationalRiskService
             $score = min(100, $score + 5);
         }
 
+        $dryModel =
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability';
+
         return [
-            'title' => 'Shelf-Life Pressure',
+            'title' => $dryModel
+                ? 'Operational Deadline Pressure'
+                : 'Shelf-Life Pressure',
             'icon' => 'shelf-life',
             'score' => $score,
             'reason' => $remainingDays === null
-                ? 'Operational remaining shelf life is unavailable.'
-                : sprintf(
-                    'Approximately %.2f day(s) of operational shelf life are expected to remain at arrival%s.',
-                    max(0, $remainingDays),
-                    $expiryConstraintApplied
-                        ? ', with recorded expiry acting as the limiting constraint'
-                        : ''
+                ? (
+                    $dryModel
+                        ? 'No recorded operational deadline is available; biological shelf life is not fabricated for this dry commodity.'
+                        : 'Operational remaining shelf life is unavailable.'
+                )
+                : (
+                    $dryModel
+                        ? sprintf(
+                            'Approximately %.2f day(s) remain before the recorded operational deadline. This is not claimed as biological shelf life.',
+                            max(0, $remainingDays)
+                        )
+                        : sprintf(
+                            'Approximately %.2f day(s) of operational shelf life are expected to remain at arrival%s.',
+                            max(0, $remainingDays),
+                            $expiryConstraintApplied
+                                ? ', with recorded expiry acting as the limiting constraint'
+                                : ''
+                        )
                 ),
         ];
     }
@@ -230,6 +300,7 @@ class OperationalRiskService
             'Above optimum' => $severity === 'high' ? 85 : ($severity === 'medium' ? 65 : 40),
             'Below optimum' => $severity === 'high' ? 80 : ($severity === 'medium' ? 60 : 35),
             'Unknown commodity profile' => 45,
+            'Temperature reference unavailable' => 35,
             'Not provided' => 35,
             default => 40,
         };
@@ -255,15 +326,28 @@ class OperationalRiskService
             default => 50,
         };
 
+        $dryModel =
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability';
+
         return [
-            'title' => 'Commodity Perishability',
+            'title' => $dryModel
+                ? 'Commodity Storage Sensitivity'
+                : 'Commodity Perishability',
             'icon' => 'commodity',
             'score' => $score,
             'reason' => $profile
-                ? sprintf(
-                    '%s is classified as %s perishability in the current AgriFlow commodity profile.',
-                    $profile->local_name ?: $profile->name,
-                    $profile->perishability_level
+                ? (
+                    $dryModel
+                        ? sprintf(
+                            '%s uses dry-commodity storage thresholds; this component is an AgriFlow operational sensitivity class, not a biological spoilage probability.',
+                            $profile->local_name ?: $profile->name
+                        )
+                        : sprintf(
+                            '%s is classified as %s perishability in the current AgriFlow commodity profile.',
+                            $profile->local_name ?: $profile->name,
+                            $profile->perishability_level
+                        )
                 )
                 : 'No validated commodity profile is available, so AgriFlow applies a neutral-conservative pressure.',
         ];
@@ -391,7 +475,6 @@ class OperationalRiskService
                 'level' => 'Immediate',
                 'rank' => 4,
                 'intervention_required' => true,
-                'intervention_status' => 'Required immediately',
                 'dispatch_deadline' => 'Immediate operational review',
                 'reason' => 'Critical freshness or transit constraints require immediate intervention.',
             ];
@@ -402,7 +485,6 @@ class OperationalRiskService
                 'level' => 'High',
                 'rank' => 3,
                 'intervention_required' => true,
-                'intervention_status' => 'Required',
                 'dispatch_deadline' => 'Within 6 hours',
                 'reason' => 'High operational risk and/or a short remaining shelf-life window makes delay undesirable.',
             ];
@@ -412,10 +494,16 @@ class OperationalRiskService
             return [
                 'level' => 'Elevated',
                 'rank' => 2,
+
+                /*
+                 * Step 4.1 final mapping:
+                 * Moderate operational risk means monitor/review,
+                 * not mandatory intervention.
+                 */
                 'intervention_required' => false,
-                'intervention_status' => 'Monitor',
                 'dispatch_deadline' => 'Within 24 hours',
-                'reason' => 'The shipment should be monitored and reviewed within 24 hours, but immediate intervention is not required under the current conditions.',
+                'reason' =>
+                    'The shipment should be monitored and reviewed within 24 hours, but immediate intervention is not required under the current conditions.',
             ];
         }
 
@@ -423,7 +511,6 @@ class OperationalRiskService
             'level' => 'Routine',
             'rank' => 1,
             'intervention_required' => false,
-            'intervention_status' => 'Routine monitoring',
             'dispatch_deadline' => 'Flexible',
             'reason' => 'Current operational exposure is low under the available inputs.',
         ];

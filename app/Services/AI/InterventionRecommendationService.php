@@ -31,18 +31,24 @@ class InterventionRecommendationService
         $expiryConstraint = (bool) ($qualityPrediction['expiry_constraint_applied'] ?? false);
         $temperatureStatus = $temperatureAssessment['status'] ?? 'Not provided';
 
+        $isDryCommodity =
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability';
+
         $actions = [
             $this->primaryAction($severity, $urgency, $deadline),
             $this->freshnessAction(
                 $remainingDays,
                 $marginHours,
                 $safeStatus,
-                $expiryConstraint
+                $expiryConstraint,
+                $profile
             ),
             $this->conditionAction(
                 $profile,
                 $temperatureStatus,
-                $temperatureAssessment
+                $temperatureAssessment,
+                $qualityPrediction
             ),
         ];
 
@@ -50,7 +56,7 @@ class InterventionRecommendationService
 
         return [
             'engine' => 'AgriFlow Intervention Recommendation Engine',
-            'version' => 'step4.3-v1',
+            'version' => 'step5.2.2-dry-decision-polish',
             'actions' => $actions,
             'primary_action' => $actions[0]['action'] ?? 'Monitor shipment',
             'primary_reason' => $actions[0]['reason'] ?? 'Continue operational monitoring.',
@@ -74,6 +80,27 @@ class InterventionRecommendationService
             'commodity_profile_name' => $profile?->local_name ?: $profile?->name,
             'reference_source_name' => $profile?->source_name,
             'reference_source_url' => $profile?->source_url,
+
+            // Step 5.2.2 dry-commodity guidance.
+            'quality_model_type' =>
+                $profile?->quality_model_type,
+            'commodity_class' =>
+                $profile?->commodity_class,
+            'safe_moisture_short_term_max_percent' =>
+                $profile?->safe_moisture_short_term_max_percent,
+            'safe_moisture_long_term_max_percent' =>
+                $profile?->safe_moisture_long_term_max_percent,
+            'safe_relative_humidity_max_percent' =>
+                $profile?->safe_relative_humidity_max_percent,
+            'reference_storage_max_months' =>
+                $profile?->reference_storage_max_months,
+            'storage_science_note' =>
+                $profile?->storage_science_note,
+            'storage_evidence_status' =>
+                $this->storageEvidenceStatus(
+                    $profile,
+                    $qualityPrediction
+                ),
         ];
     }
 
@@ -119,8 +146,12 @@ class InterventionRecommendationService
         ?float $remainingDays,
         ?float $marginHours,
         string $safeStatus,
-        bool $expiryConstraint
+        bool $expiryConstraint,
+        ?CommodityProfile $profile = null
     ): array {
+        $isDryCommodity =
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability';
         if (in_array($safeStatus, ['Threshold already exceeded', 'ETA exceeds safe transit window'], true)) {
             return [
                 'type' => 'freshness',
@@ -135,10 +166,16 @@ class InterventionRecommendationService
         if ($remainingDays !== null && $remainingDays <= 1.0) {
             return [
                 'type' => 'freshness',
-                'label' => 'Shelf-life protection',
-                'action' => 'Minimize dwell time and avoid non-essential handling delays',
-                'reason' => 'One day or less of operational shelf life is expected to remain at arrival.',
-                'window' => 'During the current shipment cycle',
+                'label' => $isDryCommodity
+                    ? 'Operational deadline protection'
+                    : 'Shelf-life protection',
+                'action' =>
+                    'Minimize dwell time and avoid non-essential handling delays',
+                'reason' => $isDryCommodity
+                    ? 'One day or less remains before the recorded operational deadline. AgriFlow does not claim this as biological shelf life.'
+                    : 'One day or less of operational shelf life is expected to remain at arrival.',
+                'window' =>
+                    'During the current shipment cycle',
                 'priority' => 2,
             ];
         }
@@ -146,11 +183,29 @@ class InterventionRecommendationService
         if ($expiryConstraint) {
             return [
                 'type' => 'freshness',
-                'label' => 'Recorded expiry protection',
-                'action' => 'Protect the recorded shelf-life window from additional delay',
+                'label' => $isDryCommodity
+                    ? 'Recorded deadline protection'
+                    : 'Recorded expiry protection',
+                'action' => $isDryCommodity
+                    ? 'Protect the recorded operational deadline from additional delay'
+                    : 'Protect the recorded shelf-life window from additional delay',
                 'reason' => $marginHours !== null
-                    ? sprintf('Recorded expiry is the limiting constraint, with approximately %.1f hour(s) of transit margin currently available.', max(0, $marginHours))
-                    : 'Recorded expiry is more conservative than the commodity reference shelf-life model.',
+                    ? (
+                        $isDryCommodity
+                            ? sprintf(
+                                'The recorded deadline is the current operational constraint, with approximately %.1f hour(s) of transit margin available. This is not claimed as biological shelf life.',
+                                max(0, $marginHours)
+                            )
+                            : sprintf(
+                                'Recorded expiry is the limiting constraint, with approximately %.1f hour(s) of transit margin currently available.',
+                                max(0, $marginHours)
+                            )
+                    )
+                    : (
+                        $isDryCommodity
+                            ? 'A recorded operational deadline exists; AgriFlow does not convert it into a biological dry-commodity shelf-life claim.'
+                            : 'Recorded expiry is more conservative than the commodity reference shelf-life model.'
+                    ),
                 'window' => 'Until arrival',
                 'priority' => 2,
             ];
@@ -158,9 +213,15 @@ class InterventionRecommendationService
 
         return [
             'type' => 'freshness',
-            'label' => 'Freshness checkpoint',
-            'action' => 'Recheck freshness if the planned dispatch time changes materially',
-            'reason' => 'Shelf-life and transit margin should be recalculated when the actual dispatch plan changes.',
+            'label' => $isDryCommodity
+                ? 'Operational window checkpoint'
+                : 'Freshness checkpoint',
+            'action' => $isDryCommodity
+                ? 'Recheck the operational deadline and storage evidence if the dispatch plan changes materially'
+                : 'Recheck freshness if the planned dispatch time changes materially',
+            'reason' => $isDryCommodity
+                ? 'Dry-commodity storage stability depends on condition evidence and the recorded operational window; it should be reassessed after meaningful schedule changes.'
+                : 'Shelf-life and transit margin should be recalculated when the actual dispatch plan changes.',
             'window' => 'Before material schedule changes',
             'priority' => 2,
         ];
@@ -169,8 +230,80 @@ class InterventionRecommendationService
     private function conditionAction(
         ?CommodityProfile $profile,
         string $temperatureStatus,
-        array $temperatureAssessment
+        array $temperatureAssessment,
+        array $qualityPrediction = []
     ): array {
+        $isDryCommodity =
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability';
+
+        if ($isDryCommodity) {
+            $storageAssessment =
+                $qualityPrediction[
+                    'storage_stability_assessment'
+                ] ?? [];
+
+            $available =
+                (bool) (
+                    $storageAssessment[
+                        'available'
+                    ] ?? false
+                );
+
+            $status =
+                $storageAssessment[
+                    'status'
+                ] ?? 'Storage telemetry required';
+
+            if (!$available) {
+                return [
+                    'type' => 'condition',
+                    'label' =>
+                        'Storage condition verification',
+                    'action' =>
+                        'Verify cargo moisture and storage/transport relative humidity before dispatch where possible',
+                    'reason' =>
+                        'Validated moisture/RH reference thresholds are available for this dry commodity, but actual cargo moisture/RH telemetry was not provided.',
+                    'window' =>
+                        'Before dispatch',
+                    'priority' => 3,
+                ];
+            }
+
+            if (
+                $status ===
+                    'Outside reference storage limits'
+            ) {
+                return [
+                    'type' => 'condition',
+                    'label' =>
+                        'Dry-condition intervention',
+                    'action' =>
+                        'Correct moisture or humidity exposure toward the validated storage reference limits before accepting additional dwell time',
+                    'reason' =>
+                        $storageAssessment[
+                            'message'
+                        ]
+                        ?? 'Available storage telemetry is outside the validated dry-commodity reference limits.',
+                    'window' =>
+                        'Before or during dispatch',
+                    'priority' => 3,
+                ];
+            }
+
+            return [
+                'type' => 'condition',
+                'label' =>
+                    'Dry-condition preservation',
+                'action' =>
+                    'Maintain dry handling and protect the cargo from moisture ingress or re-wetting through arrival',
+                'reason' =>
+                    'Available storage telemetry does not exceed the current reference limits; preserving dry conditions reduces avoidable storage exposure.',
+                'window' => 'Through arrival',
+                'priority' => 3,
+            ];
+        }
+
         if ($temperatureStatus === 'Not provided') {
             return [
                 'type' => 'condition',
@@ -224,13 +357,39 @@ class InterventionRecommendationService
         $remaining = $qualityPrediction['remaining_shelf_life_at_arrival_days'] ?? null;
         $primaryDriver = $riskAssessment['top_drivers'][0]['title'] ?? 'current operational conditions';
 
+        $isDryCommodity =
+            ($qualityPrediction[
+                'condition_model_type'
+            ] ?? null) === 'storage_stability';
+
         $qualityText = $quality !== null
-            ? sprintf('arrival quality %.0f/100', $quality)
-            : 'unavailable arrival quality';
+            ? sprintf(
+                'arrival quality %.0f/100',
+                $quality
+            )
+            : (
+                $isDryCommodity
+                    ? 'arrival quality intentionally not estimated for the dry-commodity storage model'
+                    : 'unavailable arrival quality'
+            );
 
         $remainingText = $remaining !== null
-            ? sprintf('%.2f day(s) of remaining operational life', max(0, $remaining))
-            : 'an uncertain remaining shelf-life window';
+            ? (
+                $isDryCommodity
+                    ? sprintf(
+                        '%.2f day(s) before the recorded operational deadline',
+                        max(0, $remaining)
+                    )
+                    : sprintf(
+                        '%.2f day(s) of remaining operational life',
+                        max(0, $remaining)
+                    )
+            )
+            : (
+                $isDryCommodity
+                    ? 'no recorded operational deadline'
+                    : 'an uncertain remaining shelf-life window'
+            );
 
         return sprintf(
             '%s risk with %s urgency is driven primarily by %s, alongside %s and %s.',
@@ -254,6 +413,14 @@ class InterventionRecommendationService
 
     private function recommendedVehicle(?CommodityProfile $profile): string
     {
+        if (
+            ($profile?->quality_model_type ?? null)
+                === 'storage_stability'
+        ) {
+            return
+                'Dry, weather-protected transport; prevent moisture ingress and re-wetting';
+        }
+
         return $profile?->temperature_control_recommended
             ? 'Temperature-controlled transport recommended'
             : 'Standard transport may be suitable; preserve commodity reference handling conditions';
@@ -263,6 +430,37 @@ class InterventionRecommendationService
     {
         if (!$profile) {
             return 'Use validated commodity-specific handling guidance when available.';
+        }
+
+        if (
+            ($profile->quality_model_type ?? null)
+                === 'storage_stability'
+        ) {
+            $parts = [];
+
+            if (
+                $profile->safe_moisture_short_term_max_percent
+                !== null
+            ) {
+                $parts[] = sprintf(
+                    'Moisture ≤ %.1f%% short-term reference',
+                    (float) $profile->safe_moisture_short_term_max_percent
+                );
+            }
+
+            if (
+                $profile->safe_relative_humidity_max_percent
+                !== null
+            ) {
+                $parts[] = sprintf(
+                    'RH ≤ %.0f%% reference',
+                    (float) $profile->safe_relative_humidity_max_percent
+                );
+            }
+
+            return $parts !== []
+                ? implode('; ', $parts)
+                : 'Preserve dry storage conditions using the validated commodity reference.';
         }
 
         $parts = array_values(array_filter([
@@ -319,6 +517,35 @@ class InterventionRecommendationService
             'Below %.1f°C may present chilling risk under the current commodity profile',
             (float) $profile->chilling_threshold_c
         );
+    }
+
+    private function storageEvidenceStatus(
+        ?CommodityProfile $profile,
+        array $qualityPrediction
+    ): ?string {
+        if (
+            !$profile
+            || ($profile->quality_model_type ?? null)
+                !== 'storage_stability'
+        ) {
+            return null;
+        }
+
+        $assessment =
+            $qualityPrediction[
+                'storage_stability_assessment'
+            ] ?? [];
+
+        if (
+            !($assessment['available'] ?? false)
+        ) {
+            return
+                'Cargo moisture/RH telemetry not provided';
+        }
+
+        return
+            $assessment['status']
+            ?? 'Storage condition evidence available';
     }
 
     private function deduplicate(array $actions): array

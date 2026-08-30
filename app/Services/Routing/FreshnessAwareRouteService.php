@@ -403,12 +403,26 @@ class FreshnessAwareRouteService
             ) {
                 $analysis = $candidate['analysis'];
 
-                $freshness = $this->clamp(
-                    (float) (
-                        $analysis['quality_at_arrival']
-                        ?? 0
+                $qualityAvailable =
+                    isset(
+                        $analysis[
+                            'quality_at_arrival'
+                        ]
                     )
-                );
+                    && is_numeric(
+                        $analysis[
+                            'quality_at_arrival'
+                        ]
+                    );
+
+                $freshness =
+                    $qualityAvailable
+                        ? $this->clamp(
+                            (float) $analysis[
+                                'quality_at_arrival'
+                            ]
+                        )
+                        : null;
 
                 $riskProtection = $this->clamp(
                     100
@@ -454,7 +468,12 @@ class FreshnessAwareRouteService
 
                 $components = [
                     'freshness_preservation' =>
-                        round($freshness, 1),
+                        $freshness !== null
+                            ? round(
+                                $freshness,
+                                1
+                            )
+                            : null,
 
                     'risk_protection' =>
                         round($riskProtection, 1),
@@ -470,15 +489,39 @@ class FreshnessAwareRouteService
                 ];
 
                 $weighted = 0.0;
+                $availableWeight = 0.0;
 
                 foreach (
                     self::WEIGHTS
                     as $key => $weight
                 ) {
+                    $component =
+                        $components[$key]
+                        ?? null;
+
+                    if ($component === null) {
+                        continue;
+                    }
+
                     $weighted +=
-                        ($components[$key] ?? 0)
+                        $component
                         * $weight;
+
+                    $availableWeight +=
+                        $weight;
                 }
+
+                /*
+                 * Scientific-consistency rule:
+                 * an unavailable arrival-quality component is excluded,
+                 * not silently converted to 0/100. Remaining evidence is
+                 * re-normalized to 100% of the route score.
+                 */
+                $weighted =
+                    $availableWeight > 0
+                        ? $weighted
+                            / $availableWeight
+                        : 0.0;
 
                 $feasibility =
                     $this->feasibility(
@@ -505,9 +548,19 @@ class FreshnessAwareRouteService
                             $components,
 
                         'projected_arrival_quality' =>
-                            (int) round(
-                                $freshness
-                            ),
+                            $freshness !== null
+                                ? (int) round(
+                                    $freshness
+                                )
+                                : null,
+
+                        'arrival_quality_available' =>
+                            $freshness !== null,
+
+                        'route_score_basis' =>
+                            $freshness !== null
+                                ? 'all_step5_components'
+                                : 'available_evidence_reweighted_without_arrival_quality',
 
                         'projected_quality_status' =>
                             $analysis[
@@ -696,13 +749,23 @@ class FreshnessAwareRouteService
             );
         }
 
-        return sprintf(
-            '%s ranks highest at %d/100 by balancing projected arrival quality (%d/100), operational risk (%d/100), transit margin, duration, and carbon exposure.',
-            $best['label'],
-            $best['route_score'],
+        $qualityPhrase =
             $best[
                 'projected_arrival_quality'
-            ],
+            ] !== null
+                ? sprintf(
+                    'projected arrival quality (%d/100)',
+                    $best[
+                        'projected_arrival_quality'
+                    ]
+                )
+                : 'available storage-condition evidence';
+
+        return sprintf(
+            '%s ranks highest at %d/100 by balancing %s, operational risk (%d/100), transit margin, duration, and carbon exposure.',
+            $best['label'],
+            $best['route_score'],
+            $qualityPhrase,
             $best[
                 'projected_risk_score'
             ]
@@ -712,17 +775,27 @@ class FreshnessAwareRouteService
     private function singleRouteReason(
         array $route
     ): string {
+        $qualityPhrase =
+            $route[
+                'projected_arrival_quality'
+            ] !== null
+                ? sprintf(
+                    'projected arrival quality %d/100',
+                    $route[
+                        'projected_arrival_quality'
+                    ]
+                )
+                : 'arrival quality not estimated because the current commodity model does not support a validated fresh-produce quality curve';
+
         return sprintf(
-            'The current route scores %d/100 with %s freshness feasibility, projected arrival quality %d/100, and operational risk %d/100. No alternative route is claimed unless a real routing candidate is available.',
+            'The current route scores %d/100 with %s freshness feasibility, %s, and operational risk %d/100. No alternative route is claimed unless a real routing candidate is available.',
             $route['route_score'],
             strtolower(
                 $route[
                     'freshness_feasibility'
                 ]
             ),
-            $route[
-                'projected_arrival_quality'
-            ],
+            $qualityPhrase,
             $route[
                 'projected_risk_score'
             ]
@@ -826,13 +899,23 @@ class FreshnessAwareRouteService
     ): string {
         $best = $ranked[0];
 
-        return sprintf(
-            'No freshness-safe route is available. %s is the best available route at %d/100, but it still breaches the operational freshness window with projected arrival quality %d/100 and operational risk %d/100. Routing alone cannot recover this shipment; immediate operational intervention is required.',
-            $best['label'],
-            $best['route_score'],
+        $qualityPhrase =
             $best[
                 'projected_arrival_quality'
-            ],
+            ] !== null
+                ? sprintf(
+                    'projected arrival quality %d/100',
+                    $best[
+                        'projected_arrival_quality'
+                    ]
+                )
+                : 'arrival quality unavailable under the current evidence-backed commodity model';
+
+        return sprintf(
+            'No freshness-safe route is available. %s is the best available route at %d/100, but it still breaches the operational freshness window with %s and operational risk %d/100. Routing alone cannot recover this shipment; immediate operational intervention is required.',
+            $best['label'],
+            $best['route_score'],
+            $qualityPhrase,
             $best[
                 'projected_risk_score'
             ]

@@ -96,35 +96,105 @@
                 <span class="text-indigo-300 group-open:rotate-45 transition-transform">+</span>
             </summary>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4 px-1">
-                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Transport</p>
-                    <p class="text-sm font-bold text-slate-200 mt-2">
-                        {{ $recommendationPlan['recommended_vehicle'] ?? 'Use appropriate transport conditions.' }}
-                    </p>
+            @if(($recommendationPlan['quality_model_type'] ?? null) === 'storage_stability')
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4 px-1">
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Storage Model
+                        </p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            Dry Commodity Stability
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Moisture Reference
+                        </p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            @if(($recommendationPlan['safe_moisture_short_term_max_percent'] ?? null) !== null)
+                                ≤ {{ number_format($recommendationPlan['safe_moisture_short_term_max_percent'], 1) }}%
+                                @if(
+                                    ($recommendationPlan['safe_moisture_long_term_max_percent'] ?? null) !== null
+                                    && $recommendationPlan['safe_moisture_long_term_max_percent']
+                                        != $recommendationPlan['safe_moisture_short_term_max_percent']
+                                )
+                                    · long-term ≤ {{ number_format($recommendationPlan['safe_moisture_long_term_max_percent'], 1) }}%
+                                @endif
+                            @else
+                                Not available
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Relative Humidity Guidance
+                        </p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            @if(($recommendationPlan['safe_relative_humidity_max_percent'] ?? null) !== null)
+                                ≤ {{ number_format($recommendationPlan['safe_relative_humidity_max_percent'], 0) }}% RH
+                            @else
+                                Not available
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                            Evidence Status
+                        </p>
+                        <p class="text-sm font-bold text-amber-300 mt-2">
+                            {{ $recommendationPlan['storage_evidence_status'] ?? 'Condition telemetry not available' }}
+                        </p>
+                    </div>
                 </div>
 
-                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Temperature</p>
-                    <p class="text-sm font-bold text-slate-200 mt-2">
-                        {{ $recommendationPlan['recommended_temperature_range'] ?? 'Not available' }}
+                <div class="mt-4 bg-slate-950/30 border border-slate-800 rounded-xl p-4">
+                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+                        Transport Guidance
                     </p>
-                </div>
+                    <p class="text-sm font-bold text-slate-200 mt-2">
+                        {{ $recommendationPlan['recommended_vehicle'] ?? 'Keep cargo dry and protected from moisture ingress.' }}
+                    </p>
 
-                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Humidity</p>
-                    <p class="text-sm font-bold text-slate-200 mt-2">
-                        {{ $recommendationPlan['recommended_humidity_range'] ?? 'Not available' }}
-                    </p>
+                    @if(!empty($recommendationPlan['storage_science_note']))
+                        <p class="text-xs text-slate-500 leading-relaxed mt-3">
+                            {{ $recommendationPlan['storage_science_note'] }}
+                        </p>
+                    @endif
                 </div>
+            @else
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4 px-1">
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Transport</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $recommendationPlan['recommended_vehicle'] ?? 'Use appropriate transport conditions.' }}
+                        </p>
+                    </div>
 
-                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-                    <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Chilling Threshold</p>
-                    <p class="text-sm font-bold text-slate-200 mt-2">
-                        {{ $recommendationPlan['chilling_threshold'] ?? 'No validated threshold stored' }}
-                    </p>
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Temperature</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $recommendationPlan['recommended_temperature_range'] ?? 'Not available' }}
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Humidity</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $recommendationPlan['recommended_humidity_range'] ?? 'Not available' }}
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Chilling Threshold</p>
+                        <p class="text-sm font-bold text-slate-200 mt-2">
+                            {{ $recommendationPlan['chilling_threshold'] ?? 'No validated threshold stored' }}
+                        </p>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <div class="mt-4 bg-slate-950/30 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>

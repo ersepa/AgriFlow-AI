@@ -44,6 +44,12 @@ class CommodityProfileService
             'name' => $profile->name,
             'local_name' => $profile->local_name,
             'category' => $profile->category,
+            'commodity_class' =>
+                $profile->commodity_class
+                ?? 'fresh_produce',
+            'quality_model_type' =>
+                $profile->quality_model_type
+                ?? 'shelf_life_quality',
             'profile_context' => $profile->profile_context,
             'perishability_level' => $profile->perishability_level,
             'temperature_control_recommended' => $profile->temperature_control_recommended,
@@ -55,7 +61,22 @@ class CommodityProfileService
             'optimal_humidity_max' => $profile->optimal_humidity_max,
             'chilling_threshold_c' => $profile->chilling_threshold_c,
             'q10_factor' => $profile->q10_factor,
+
+            'safe_moisture_short_term_max_percent' =>
+                $profile->safe_moisture_short_term_max_percent,
+            'safe_moisture_long_term_max_percent' =>
+                $profile->safe_moisture_long_term_max_percent,
+            'safe_relative_humidity_max_percent' =>
+                $profile->safe_relative_humidity_max_percent,
+            'reference_storage_max_months' =>
+                $profile->reference_storage_max_months,
+            'storage_science_note' =>
+                $profile->storage_science_note,
+
             'storage_recommendation' => $this->storageRecommendation($profile),
+            'source_references' =>
+                $profile->source_references
+                ?? [],
             'source_name' => $profile->source_name,
             'source_url' => $profile->source_url,
             'notes' => $profile->notes,
@@ -75,6 +96,26 @@ class CommodityProfileService
                 'temperature_c' => null,
                 'risk_modifier' => 0,
                 'message' => 'No scenario temperature was provided.',
+            ];
+        }
+
+        if (
+            $profile
+            && ($profile->quality_model_type ?? null)
+                === 'storage_stability'
+            && (
+                $profile->optimal_temp_min === null
+                || $profile->optimal_temp_max === null
+            )
+        ) {
+            return [
+                'available' => true,
+                'status' => 'Temperature reference unavailable',
+                'severity' => 'unknown',
+                'temperature_c' => round($temperatureC, 1),
+                'risk_modifier' => 0,
+                'message' =>
+                    'This dry-commodity profile is driven by validated moisture/RH storage evidence. No exact cargo-temperature threshold is asserted from the current source set.',
             ];
         }
 
@@ -210,9 +251,53 @@ class CommodityProfileService
 
     public function storageRecommendation(?CommodityProfile $profile): string
     {
+        if (!$profile) {
+            return 'Verify commodity-specific storage requirements';
+        }
+
         if (
-            !$profile
-            || $profile->optimal_temp_min === null
+            ($profile->quality_model_type ?? null)
+                === 'storage_stability'
+        ) {
+            $parts = [];
+
+            if (
+                $profile->safe_moisture_short_term_max_percent
+                !== null
+            ) {
+                $parts[] = sprintf(
+                    'Moisture ≤ %.1f%% for short-term storage guidance',
+                    (float) $profile->safe_moisture_short_term_max_percent
+                );
+            }
+
+            if (
+                $profile->safe_moisture_long_term_max_percent
+                !== null
+            ) {
+                $parts[] = sprintf(
+                    'Moisture ≤ %.1f%% for longer storage guidance',
+                    (float) $profile->safe_moisture_long_term_max_percent
+                );
+            }
+
+            if (
+                $profile->safe_relative_humidity_max_percent
+                !== null
+            ) {
+                $parts[] = sprintf(
+                    'RH ≤ %.0f%% where the cited source supports this limit',
+                    (float) $profile->safe_relative_humidity_max_percent
+                );
+            }
+
+            return $parts !== []
+                ? implode('; ', $parts)
+                : 'Verify dry-commodity moisture and humidity conditions';
+        }
+
+        if (
+            $profile->optimal_temp_min === null
             || $profile->optimal_temp_max === null
         ) {
             return 'Verify commodity-specific storage requirements';
@@ -238,6 +323,114 @@ class CommodityProfileService
         }
 
         return $temp . $humidity;
+    }
+
+    public function assessStorageStability(
+        ?CommodityProfile $profile,
+        ?float $moisturePercent = null,
+        ?float $relativeHumidityPercent = null,
+        string $storageHorizon = 'short_term'
+    ): array {
+        if (
+            !$profile
+            || ($profile->quality_model_type ?? null)
+                !== 'storage_stability'
+        ) {
+            return [
+                'applicable' => false,
+                'status' => 'Not applicable',
+                'severity' => 'unknown',
+                'message' =>
+                    'Storage-stability assessment is only used for validated dry-commodity profiles.',
+            ];
+        }
+
+        $moistureLimit =
+            $storageHorizon === 'long_term'
+                ? $profile->safe_moisture_long_term_max_percent
+                : $profile->safe_moisture_short_term_max_percent;
+
+        $rhLimit =
+            $profile->safe_relative_humidity_max_percent;
+
+        if (
+            $moisturePercent === null
+            && $relativeHumidityPercent === null
+        ) {
+            return [
+                'applicable' => true,
+                'available' => false,
+                'status' => 'Storage telemetry required',
+                'severity' => 'unknown',
+                'moisture_percent' => null,
+                'moisture_limit_percent' =>
+                    $moistureLimit,
+                'relative_humidity_percent' => null,
+                'relative_humidity_limit_percent' =>
+                    $rhLimit,
+                'message' =>
+                    'Validated storage thresholds exist, but cargo moisture/RH telemetry was not provided. AgriFlow does not fabricate a condition score.',
+            ];
+        }
+
+        $breaches = [];
+
+        if (
+            $moisturePercent !== null
+            && $moistureLimit !== null
+            && $moisturePercent > $moistureLimit
+        ) {
+            $breaches[] = sprintf(
+                'moisture %.1f%% exceeds the %.1f%% reference limit',
+                $moisturePercent,
+                $moistureLimit
+            );
+        }
+
+        if (
+            $relativeHumidityPercent !== null
+            && $rhLimit !== null
+            && $relativeHumidityPercent > $rhLimit
+        ) {
+            $breaches[] = sprintf(
+                'RH %.1f%% exceeds the %.1f%% reference limit',
+                $relativeHumidityPercent,
+                $rhLimit
+            );
+        }
+
+        if ($breaches !== []) {
+            return [
+                'applicable' => true,
+                'available' => true,
+                'status' => 'Outside reference storage limits',
+                'severity' => 'high',
+                'moisture_percent' => $moisturePercent,
+                'moisture_limit_percent' => $moistureLimit,
+                'relative_humidity_percent' =>
+                    $relativeHumidityPercent,
+                'relative_humidity_limit_percent' =>
+                    $rhLimit,
+                'message' => ucfirst(
+                    implode('; ', $breaches)
+                ) . '.',
+            ];
+        }
+
+        return [
+            'applicable' => true,
+            'available' => true,
+            'status' => 'Within available reference limits',
+            'severity' => 'low',
+            'moisture_percent' => $moisturePercent,
+            'moisture_limit_percent' => $moistureLimit,
+            'relative_humidity_percent' =>
+                $relativeHumidityPercent,
+            'relative_humidity_limit_percent' =>
+                $rhLimit,
+            'message' =>
+                'Provided storage telemetry does not exceed the validated limits currently stored for this commodity.',
+        ];
     }
 
     public function supportedCommodityCount(): int
@@ -290,6 +483,8 @@ class CommodityProfileService
             'name' => 'Unknown',
             'local_name' => null,
             'category' => null,
+            'commodity_class' => null,
+            'quality_model_type' => null,
             'profile_context' => null,
             'perishability_level' => 'Unknown',
             'temperature_control_recommended' => false,
@@ -301,7 +496,13 @@ class CommodityProfileService
             'optimal_humidity_max' => null,
             'chilling_threshold_c' => null,
             'q10_factor' => null,
+            'safe_moisture_short_term_max_percent' => null,
+            'safe_moisture_long_term_max_percent' => null,
+            'safe_relative_humidity_max_percent' => null,
+            'reference_storage_max_months' => null,
+            'storage_science_note' => null,
             'storage_recommendation' => 'Verify commodity-specific storage requirements',
+            'source_references' => [],
             'source_name' => null,
             'source_url' => null,
             'notes' => 'No matching validated commodity profile is available. AgriFlow deliberately avoids inventing storage parameters.',

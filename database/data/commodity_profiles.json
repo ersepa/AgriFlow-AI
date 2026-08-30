@@ -1,8 +1,8 @@
 {
   "dataset_name": "AgriFlow Curated Commodity Knowledge Base",
-  "dataset_version": "2026.08.29-step2f",
-  "scope": "Validated MVP reference profiles for horticultural logistics and post-harvest decision support.",
-  "important_note": "Storage conditions are reference profiles, not universal guarantees. Variety, maturity, intended use, pre-harvest conditions, packaging, atmosphere, and exposure duration can change recommended handling.",
+  "dataset_version": "2026.08.30-step5.2.1-scientific-consistency",
+  "scope": "Validated fresh-produce profiles plus explicit dry-commodity storage-stability profiles for green coffee and milled rice.",
+  "important_note": "Reference data is never treated as a universal guarantee. Fresh produce uses shelf-life/temperature references only where supported. Dry commodities use moisture/RH storage-stability thresholds and do not receive fabricated fresh-produce quality curves.",
   "profiles": [
     {
       "name": "Amaranth",
@@ -29,7 +29,21 @@
       ],
       "notes": "Indonesian 'bayam' is mapped to amaranth rather than spinach. FAO Table 5 provides the storage reference used here.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Apple",
@@ -54,7 +68,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Avocado",
@@ -79,7 +107,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Banana",
@@ -106,7 +148,21 @@
       ],
       "notes": "Profile represents mature-green Cavendish banana. UC Davis describes chilling injury risk below about 13°C depending on cultivar, maturity, temperature, and exposure duration.",
       "source_name": "UC Davis Postharvest Research and Extension Center",
-      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/banana"
+      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/banana",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "UC Davis Postharvest Research and Extension Center",
+          "url": "https://postharvest.ucdavis.edu/produce-facts-sheets/banana",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Bok Choy",
@@ -133,7 +189,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Broccoli",
@@ -157,7 +227,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Cabbage",
@@ -182,7 +266,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Carrot",
@@ -207,7 +305,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Cassava",
@@ -233,7 +345,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Cauliflower",
@@ -257,7 +383,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Celery",
@@ -281,7 +421,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Chayote",
@@ -306,7 +460,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Chile Pepper",
@@ -336,7 +504,21 @@
       ],
       "notes": "UC Davis identifies about 7.5°C as a strong storage reference for maximum shelf life; chilling sensitivity varies with cultivar, maturity, temperature, and duration.",
       "source_name": "UC Davis Postharvest Research and Extension Center",
-      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/chile-pepper"
+      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/chile-pepper",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "UC Davis Postharvest Research and Extension Center",
+          "url": "https://postharvest.ucdavis.edu/produce-facts-sheets/chile-pepper",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Coconut",
@@ -360,7 +542,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Cucumber",
@@ -387,7 +583,21 @@
       ],
       "notes": "UC Davis reference used for the current cucumber profile. Chilling injury can occur below the recommended range depending on exposure duration.",
       "source_name": "UC Davis Postharvest Research and Extension Center",
-      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/cucumber"
+      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/cucumber",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "UC Davis Postharvest Research and Extension Center",
+          "url": "https://postharvest.ucdavis.edu/produce-facts-sheets/cucumber",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Dry Onion",
@@ -414,7 +624,21 @@
       ],
       "notes": "This is a cured dry-onion profile. It must not be treated as a validated shallot/bawang-merah profile.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Durian",
@@ -437,7 +661,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Eggplant",
@@ -463,7 +701,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Garlic",
@@ -487,7 +739,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Ginger",
@@ -511,7 +777,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Grape",
@@ -536,7 +816,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Green Onion",
@@ -563,7 +857,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Guava",
@@ -588,7 +896,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Jackfruit",
@@ -612,7 +934,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Kale",
@@ -635,7 +971,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Lettuce",
@@ -659,7 +1009,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Lime",
@@ -684,7 +1048,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Mango",
@@ -709,7 +1087,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Mangosteen",
@@ -733,7 +1125,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Melon",
@@ -757,7 +1163,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Okra",
@@ -782,7 +1202,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Orange",
@@ -808,7 +1242,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Papaya",
@@ -832,7 +1280,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Passionfruit",
@@ -857,7 +1319,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Pear",
@@ -882,7 +1358,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Pineapple",
@@ -906,7 +1396,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Pitaya",
@@ -932,7 +1436,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Potato",
@@ -957,7 +1475,21 @@
       ],
       "notes": "FAO Table 5 lists separate early and late potato references. This profile uses the late-storage range; intended use and maturity should be modeled explicitly in a future version.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Pumpkin",
@@ -982,7 +1514,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Rambutan",
@@ -1005,7 +1551,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Snap Bean",
@@ -1031,7 +1591,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Spinach",
@@ -1055,7 +1629,21 @@
       ],
       "notes": "This profile is kept separate from Indonesian 'bayam' (Amaranthus). Use 'Bayam' to resolve to the Amaranth profile.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Strawberry",
@@ -1080,7 +1668,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Sweet Corn",
@@ -1104,7 +1706,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Sweet Potato",
@@ -1129,7 +1745,21 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Tomato",
@@ -1155,7 +1785,21 @@
       ],
       "notes": "Current profile represents mature-green tomatoes. Recommended temperature changes with ripeness stage, so maturity should become an explicit input in a later version.",
       "source_name": "UC Davis Postharvest Research and Extension Center",
-      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/tomato"
+      "source_url": "https://postharvest.ucdavis.edu/produce-facts-sheets/tomato",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "UC Davis Postharvest Research and Extension Center",
+          "url": "https://postharvest.ucdavis.edu/produce-facts-sheets/tomato",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
     },
     {
       "name": "Watermelon",
@@ -1179,7 +1823,120 @@
       ],
       "notes": "Storage temperature, relative humidity, and storage-life range are taken from the cited source. AgriFlow perishability class is an operational classification derived from the cited storage-life range, not a source-defined grade.",
       "source_name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
-      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm"
+      "source_url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+      "commodity_class": "fresh_produce",
+      "quality_model_type": "shelf_life_quality",
+      "safe_moisture_short_term_max_percent": null,
+      "safe_moisture_long_term_max_percent": null,
+      "safe_relative_humidity_max_percent": null,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Manual for the Preparation and Sale of Fruits and Vegetables, Table 5",
+          "url": "https://www.fao.org/4/y4893e/y4893e06.htm",
+          "supports": "Existing commodity reference profile."
+        }
+      ],
+      "storage_science_note": null
+    },
+    {
+      "name": "Green Coffee",
+      "local_name": "Kopi",
+      "slug": "green-coffee",
+      "category": "Dry Commodity",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried green coffee bean storage and transport profile; not roasted coffee or fresh coffee cherry.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kopi",
+        "coffee",
+        "green coffee",
+        "green coffee bean",
+        "green coffee beans",
+        "biji kopi",
+        "biji kopi hijau"
+      ],
+      "safe_moisture_short_term_max_percent": 11.0,
+      "safe_moisture_long_term_max_percent": 11.0,
+      "safe_relative_humidity_max_percent": 65.0,
+      "reference_storage_max_months": 12,
+      "source_references": [
+        {
+          "name": "FAO — Prevention of mould formation in coffee / storage guidance",
+          "url": "https://www.fao.org/4/x6939e/x6939e05.htm",
+          "supports": "Coffee moisture for satisfactory storage should not be over 11%; storage and transport moisture management is critical."
+        },
+        {
+          "name": "FAO — Arabica coffee manual for Lao PDR",
+          "url": "https://www.fao.org/4/ae939e/ae939e08.htm",
+          "supports": "Green bean storage should remain below 65% RH where possible; hot and humid storage promotes moisture uptake and mould/musty defects; guide advises not storing longer than 12 months."
+        }
+      ],
+      "storage_science_note": "AgriFlow does not convert the FAO storage guidance into a fabricated fresh-produce shelf-life curve. Green coffee is assessed as a dry commodity whose key evidence is moisture/humidity control. Without cargo moisture or RH telemetry, storage stability remains an evidence gap rather than a synthetic quality score.",
+      "notes": "The alias 'kopi' resolves specifically to dried green coffee bean in this MVP. Roasted coffee and fresh coffee cherry require separate profiles. 'Low' perishability is retained only for legacy compatibility and is not used as a biological spoilage claim.",
+      "source_name": "FAO — Green coffee storage guidance",
+      "source_url": "https://www.fao.org/4/x6939e/x6939e05.htm"
+    },
+    {
+      "name": "Milled Rice",
+      "local_name": "Beras",
+      "slug": "milled-rice",
+      "category": "Dry Grain",
+      "commodity_class": "dry_grain",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Milled rice / beras storage profile; paddy or rough rice is intentionally not mapped to this profile.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "rice",
+        "beras",
+        "milled rice",
+        "white rice",
+        "beras putih"
+      ],
+      "safe_moisture_short_term_max_percent": 14.0,
+      "safe_moisture_long_term_max_percent": 13.0,
+      "safe_relative_humidity_max_percent": 65.0,
+      "reference_storage_max_months": 12,
+      "source_references": [
+        {
+          "name": "IRRI Rice Knowledge Bank — Measuring moisture content",
+          "url": "https://www.knowledgebank.irri.org/step-by-step-production/postharvest/milling/milling-and-quality/measuring-moisture-content-in-milling",
+          "supports": "For storage, grain should be 14% MC or less for weeks to a few months and 13% or less for 8–12 months."
+        },
+        {
+          "name": "IRRI Rice Knowledge Bank — Equilibrium moisture content",
+          "url": "https://www.knowledgebank.irri.org/step-by-step-production/postharvest/drying/drying-basics/how-to-determine-the-emc?print=1&tmpl=component",
+          "supports": "Equilibrium RH of 65% or less is generally considered safe against mould development; re-wetting in humid air is a major storage risk."
+        },
+        {
+          "name": "FAO — Quality assurance of selected commodities",
+          "url": "https://www.fao.org/4/V5380E/V5380E06.htm",
+          "supports": "Milled rice guideline moisture content is 13% for one year's storage at 27°C and 70% RH in the cited table."
+        }
+      ],
+      "storage_science_note": "AgriFlow keeps IRRI/FAO moisture thresholds as storage-condition references. It does not claim that 13% MC guarantees one universal shelf life, because storage duration depends on humidity, temperature, insects, packaging, and re-wetting.",
+      "notes": "The aliases 'rice' and 'beras' resolve to milled rice. 'Padi', 'paddy', and 'rough rice' are deliberately excluded because their safe-storage characteristics differ.",
+      "source_name": "IRRI Rice Knowledge Bank — Safe storage moisture guidance",
+      "source_url": "https://www.knowledgebank.irri.org/step-by-step-production/postharvest/milling/milling-and-quality/measuring-moisture-content-in-milling"
     }
   ]
 }
