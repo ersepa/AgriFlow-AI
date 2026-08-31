@@ -149,7 +149,7 @@
                     Mark as Operator-Preferred Scenario
                 </button>
                 <p class="text-xs text-slate-500 text-center mt-3">
-                    This records an operator preference only. It does not override the Step 6.1 decision or modify the live shipment.
+                    This records an operator preference only. It does not override the Step 6.1 decision or modify the recorded shipment.
                 </p>
             </form>
         @endunless

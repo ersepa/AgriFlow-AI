@@ -667,19 +667,21 @@
 
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800 text-center relative overflow-hidden">
 
-                    <p class="text-xs uppercase font-bold text-indigo-400 tracking-widest">Sustainability Score</p>
+                    <p class="text-xs uppercase font-bold text-indigo-400 tracking-widest">Operational Readiness</p>
 
                     <p class="text-7xl font-black text-white mt-4 drop-shadow-md">
 
-                        {{ number_format($shipment->aiAnalyses->avg('sustainability_score') ?? 0, 0) }}
+                        {{ number_format($analysis['operational_readiness_score'] ?? 0, 0) }}
 
                     </p>
 
-                    <div class="w-full bg-slate-800 h-2 rounded-full mt-8 overflow-hidden border border-slate-700">
+                    <p class="text-[10px] text-slate-500 mt-3">100 − Operational Risk Index; not an ESG or lifecycle-impact metric.</p>
+
+                    <div class="w-full bg-slate-800 h-2 rounded-full mt-6 overflow-hidden border border-slate-700">
 
                         <div class="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(6,182,212,0.5)]" 
 
-                             style="width: {{ $shipment->aiAnalyses->avg('sustainability_score') ?? 0 }}%"></div>
+                             style="width: {{ $analysis['operational_readiness_score'] ?? 0 }}%"></div>
 
                     </div>
 

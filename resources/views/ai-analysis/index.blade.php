@@ -48,7 +48,7 @@
                     <span>DEVELOPERDAY 2026 â€¢ ROAD TO APICTA</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">AI Intelligence Hub</h1>
-                <p class="text-slate-500 mt-1 font-medium text-sm">Predictive Sustainability Engine & Autonomous Logistics Risk Analytics.</p>
+                <p class="text-slate-500 mt-1 font-medium text-sm">Post-Harvest Decision Intelligence & Operational Logistics Risk Analysis.</p>
             </div>
             
             <a href="{{ route('ai-analysis.history') }}" 
@@ -71,7 +71,7 @@
                 
                 $riskLevel = session('risk_level');
                 $riskIndex = session('risk_index_value');
-                $sustainScore = session('sustainability_score');
+                $readinessScore = session('operational_readiness_score', session('sustainability_score'));
                 $shipmentData = session('shipment_data');
             @endphp
 
@@ -136,8 +136,8 @@
                         </div>
 
                         <div>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Carbon Emission</p>
-                            <p class="font-extrabold text-rose-400 text-base mt-0.5">{{ $shipmentData['carbon_emission'] ?? 'N/A' }} kg CO₂</p>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Estimated Road-Freight CO₂e</p>
+                            <p class="font-extrabold text-rose-400 text-base mt-0.5">{{ $shipmentData['carbon_emission'] ?? 'N/A' }} kg CO₂ee</p>
                         </div>
                     </div>
                 </div>
@@ -160,8 +160,9 @@
                     </div>
 
                     <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sustainability Index</p>
-                        <p class="mt-2 text-2xl font-black text-emerald-400">{{ $sustainScore }}</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Readiness</p>
+                        <p class="mt-2 text-2xl font-black text-emerald-400">{{ $readinessScore }}</p>
+                        <p class="mt-1 text-[10px] text-slate-500">100 − Operational Risk Index; not an ESG/LCA metric.</p>
                     </div>
                 </div>
 
@@ -172,7 +173,7 @@
                     <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
                         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
                             <span>ðŸ—ºï¸</span>
-                            <span>Live Route GIS Telemetry</span>
+                            <span>Shipment Route Visualization</span>
                         </h3>
                         <div id="map" class="h-[320px] rounded-xl overflow-hidden border border-slate-700"></div>
                     </div>
@@ -195,7 +196,7 @@
                             <h2 class="text-2xl font-black text-white mt-1">Why is this shipment at this risk level?</h2>
                         </div>
                         <div class="px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-widest">
-                            Step 4 Risk Engine
+                            Operational Risk Engine
                         </div>
                     </div>
 
@@ -424,7 +425,7 @@
 
             <h2 class="text-2xl font-black text-white">AI is analyzing...</h2>
             <p class="text-slate-400 mt-3 text-xs leading-relaxed">
-                AgriFlow AI is evaluating logistics risk, sustainability score, spoilage prediction, and shipment recommendations.
+                AgriFlow is evaluating operational risk, condition evidence, route context, readiness, and shipment recommendations.
             </p>
 
             <div class="mt-8">

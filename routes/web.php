@@ -11,6 +11,7 @@
     use App\Http\Controllers\AIOptimizerController;
     use App\Services\AI\DecisionEngine;
     use App\Services\EnvironmentalService;
+use App\Services\Sustainability\FreightCarbonEstimateService;
     use App\Http\Controllers\OperationalDigitalTwinController;
 
 
@@ -186,30 +187,52 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
         $mostRiskyShipment = \App\Models\Shipment::find($mostRisky->shipment_id);
     }
 
-        // 🤖 AI DATA
+        // AI DATA
         $totalAnalyses = AiAnalysis::count();
-    $avgScore = AiAnalysis::avg('sustainability_score') ?? 0;
 
         // 📊 RISK DATA (FIXED)
         $lowRisk = AiAnalysis::where('risk_level', 'Low')->count();
         $mediumRisk = AiAnalysis::where('risk_level', 'Medium')->count();
         $highRisk = AiAnalysis::where('risk_level', 'High')->count();
 
+        $engine = app(DecisionEngine::class);
+
+        $activeShipments = \App\Models\Shipment::with('harvest')
+            ->whereIn('status', ['Harvested', 'Packed', 'In Transit'])
+            ->get();
+
+        $activeShipmentAnalyses = $activeShipments
+            ->map(fn ($shipment) => $engine->analyze($shipment));
+
+        // Operational Readiness is deliberately simple and transparent:
+        // 100 - Operational Risk Index. It is not an ESG/LCA metric.
+        $avgScore = $activeShipmentAnalyses->isNotEmpty()
+            ? round($activeShipmentAnalyses->avg('operational_readiness_score'), 1)
+            : 0;
+
+        $greenImpactScore = round($avgScore, 0);
+
+        // Source-backed activity estimate across shipment mass x distance.
+        // This does not use the legacy distance-only carbon column values.
+        $freightCarbon = app(FreightCarbonEstimateService::class);
+        $currentCarbon = round(
+            \App\Models\Shipment::with('harvest')
+                ->get()
+                ->sum(fn ($shipment) =>
+                    $freightCarbon->estimateForShipment($shipment)['estimated_kg']
+                    ?? 0
+                ),
+            1
+        );
+
         $aiService = new GeminiService();
 
-    $aiInsight = $aiService->generateDashboardInsight([
-        'totalShipments' => $totalShipments,
-        'delivered' => $deliveredShipments,
-        'highRisk' => $highRisk,
-        'avgScore' => $avgScore,
-    ]);
-
-// Average sustainability score from persisted AI analyses.
-// This is a decision-support aggregate, not measured environmental impact.
-$greenImpactScore = round(
-    $avgScore,
-    0
-);
+        $aiInsight = $aiService->generateDashboardInsight([
+            'totalShipments' => $totalShipments,
+            'delivered' => $deliveredShipments,
+            'highRisk' => $highRisk,
+            'avgOperationalReadiness' => $avgScore,
+        ]);
 
 $aiInsightText =
     $aiInsight['insight']
@@ -317,7 +340,7 @@ $statusDelivered = \App\Models\Shipment::where('status','Delivered')->count();
 
 /*
 |--------------------------------------------------------------------------
-| Live Environmental Intelligence
+| Environmental Intelligence
 |--------------------------------------------------------------------------
 */
 
@@ -345,16 +368,6 @@ $highRiskShare = $totalAnalyses > 0
     )
     : 0;
 
-// Recorded shipment carbon aggregate.
-// This uses persisted shipment data;
-// it is not a projected reduction.
-$currentCarbon = round(
-    \App\Models\Shipment::sum(
-        'carbon_emission'
-    ),
-    1
-);
-
 // Observed delivery completion rate.
 $currentEfficiency = $totalShipments > 0
     ? round(
@@ -365,27 +378,7 @@ $currentEfficiency = $totalShipments > 0
     )
     : 0;
 
-// Current operational risk from active
-// shipments using the deterministic
-// DecisionEngine.
-$activeShipmentAnalyses =
-    \App\Models\Shipment::with('harvest')
-        ->whereIn(
-            'status',
-            [
-                'Harvested',
-                'Packed',
-                'In Transit',
-            ]
-        )
-        ->get()
-        ->map(
-            fn ($shipment) =>
-                $engine->analyze(
-                    $shipment
-                )
-        );
-
+// Current operational risk uses the live active-shipment analyses above.
 $averageOperationalRisk =
     $activeShipmentAnalyses->isNotEmpty()
         ? round(

@@ -38,7 +38,7 @@
                     <span>ANALYTICS AUDIT TRAIL</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Analysis History</h1>
-                <p class="text-slate-500 mt-1 font-medium text-sm">Tracking past AI predictive risk and sustainability assessments.</p>
+                <p class="text-slate-500 mt-1 font-medium text-sm">Historical decision-support snapshots. Older records may use legacy score semantics; current live analysis is authoritative.</p>
             </div>
 
             <div class="flex items-center gap-3">
@@ -109,7 +109,7 @@
                             </th>
                             <th class="px-6 py-3">Commodity</th>
                             <th class="px-6 py-3">Risk Level</th>
-                            <th class="px-6 py-3">Sustainability Score</th>
+                            <th class="px-6 py-3">Operational Readiness*</th>
                             <th class="px-6 py-3">Waste Prob.</th>
                             <th class="px-6 py-3 text-right">Actions</th>
                         </tr>

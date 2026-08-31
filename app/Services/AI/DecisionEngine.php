@@ -6,18 +6,19 @@ use App\Models\CommodityProfile;
 use App\Models\Shipment;
 use App\Services\Agriculture\CommodityProfileService;
 use App\Services\Agriculture\QualityPredictionService;
+use App\Services\Sustainability\FreightCarbonEstimateService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * AgriFlow Decision Engine - Step 4
+ * AgriFlow Decision Engine
  *
  * Single source of truth for shipment operational intelligence.
  *
- * Step 4 keeps the Step 3.2 freshness model and adds a dedicated,
- * explainable OperationalRiskService. Freshness outputs are now the dominant
+ * Orchestrates commodity condition, quality/storage stability, operational
+ * risk, source-backed freight carbon estimation, and recommendations. The
  * risk inputs rather than a post-hoc guardrail:
- * - baseline reference shelf life from the commodity knowledge base
+ * - baseline reference shelf life / storage limits from the commodity knowledge base
  * - harvest age
  * - temperature-aware effective transit aging
  * - chilling penalties for sensitive commodities
@@ -25,8 +26,9 @@ use Illuminate\Support\Collection;
  * - Quality-at-Arrival and Safe Transit Window
  *
  * IMPORTANT:
- * This is still NOT a statistical spoilage probability model and NOT ML.
- * It is a transparent deterministic decision-support model.
+ * This is NOT a statistical spoilage probability model and NOT ML.
+ * It is a transparent deterministic decision-support model. Carbon is an
+ * activity-based CO2e estimate with explicit source metadata, not a measured value.
  */
 class DecisionEngine
 {
@@ -34,7 +36,8 @@ class DecisionEngine
         private readonly CommodityProfileService $commodityProfiles,
         private readonly QualityPredictionService $qualityPrediction,
         private readonly OperationalRiskService $operationalRisk,
-        private readonly InterventionRecommendationService $interventionRecommendations
+        private readonly InterventionRecommendationService $interventionRecommendations,
+        private readonly FreightCarbonEstimateService $freightCarbon
     ) {
     }
 
@@ -111,17 +114,20 @@ class DecisionEngine
             $remainingDays
         );
 
-        $carbonKg = $this->calculateCarbonKg($shipment, $scenario);
-        $carbonImpactScore = $this->calculateCarbonImpactScore($carbonKg);
-        $sustainabilityScore = $this->calculateSustainabilityScore(
-            $riskScore,
-            $carbonImpactScore
+        // Carbon is an activity-based estimate, not a hidden distance-only
+        // constant and not a measured emissions inventory.
+        $carbonEstimate = $this->freightCarbon->estimateForShipment(
+            $shipment
         );
-        $efficiencyScore = $this->calculateEfficiencyScore(
-            $shipment,
-            $riskScore,
-            $sustainabilityScore,
-            $scenario
+        $carbonKg = $carbonEstimate['estimated_kg'];
+
+        // Credibility rule: do not combine risk and carbon with arbitrary
+        // weights and call the result "sustainability". Operational readiness
+        // is only the direct complement of the current Operational Risk Index.
+        $operationalReadinessScore = $this->clamp(
+            100 - $riskScore,
+            0,
+            100
         );
 
         // Step 4.2: deterministic multi-action intervention plan.
@@ -153,12 +159,17 @@ class DecisionEngine
             'priority_score' => $priorityScore,
             'priority_level' => $this->getPriorityLevel($priorityScore),
 
-            // Sustainability outputs
-            'carbon_score' => $carbonKg, // backwards-compatible key
+            // Environmental / readiness outputs. Legacy keys are retained
+            // only so older controllers and DB columns do not break.
+            'carbon_score' => $carbonKg, // legacy compatibility key
             'carbon_kg' => $carbonKg,
-            'carbon_impact_score' => $carbonImpactScore,
-            'sustainability_score' => $sustainabilityScore,
-            'efficiency_score' => $efficiencyScore,
+            'carbon_estimate' => $carbonEstimate,
+            'carbon_impact_score' => null,
+            'operational_readiness_score' => $operationalReadinessScore,
+            'operational_readiness_basis' =>
+                '100 minus Operational Risk Index; no carbon weighting applied',
+            'sustainability_score' => $operationalReadinessScore, // legacy DB/API alias
+            'efficiency_score' => null,
 
             // Agriculture intelligence
             'commodity_profile_found' => $commodityProfile !== null,
@@ -298,63 +309,6 @@ class DecisionEngine
             ($riskScore * 0.65)
             + ($urgencyScore * 0.25)
             + ($stageScore * 0.10)
-        ), 0, 100);
-    }
-
-    private function calculateCarbonKg(Shipment $shipment, array $scenario): float
-    {
-        $baseCarbon = (float) ($shipment->carbon_emission ?? 0);
-
-        if ($baseCarbon <= 0 && ($shipment->distance_km ?? 0) > 0) {
-            $baseCarbon = (float) $shipment->distance_km * 0.12;
-        }
-
-        $vehicle = strtolower((string) ($scenario['vehicle'] ?? 'truck'));
-
-        $vehicleFactor = match ($vehicle) {
-            'cold', 'refrigerated', 'refrigerated truck' => 1.15,
-            'ship' => 0.60,
-            'plane' => 1.50,
-            default => 1.00,
-        };
-
-        return round(max(0, $baseCarbon * $vehicleFactor), 2);
-    }
-
-    private function calculateCarbonImpactScore(float $carbonKg): int
-    {
-        return $this->clamp(
-            (int) round(($carbonKg / 120) * 100),
-            0,
-            100
-        );
-    }
-
-    private function calculateSustainabilityScore(
-        int $riskScore,
-        int $carbonImpactScore
-    ): int {
-        return $this->clamp((int) round(
-            100
-            - ($riskScore * 0.65)
-            - ($carbonImpactScore * 0.35)
-        ), 0, 100);
-    }
-
-    private function calculateEfficiencyScore(
-        Shipment $shipment,
-        int $riskScore,
-        int $sustainabilityScore,
-        array $scenario
-    ): int {
-        $duration = (float) ($shipment->duration_hours ?? 0);
-        $delay = max(0, (float) ($scenario['delay'] ?? 0));
-        $durationPenalty = min(30, ($duration + $delay) * 1.5);
-
-        return $this->clamp((int) round(
-            ($sustainabilityScore * 0.55)
-            + ((100 - $riskScore) * 0.35)
-            + ((100 - $durationPenalty) * 0.10)
         ), 0, 100);
     }
 

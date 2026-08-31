@@ -38,7 +38,7 @@
 
             <div class="space-y-6">
                 <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-center">
-                    <p class="text-[10px] uppercase font-bold text-slate-400">Sustainability Score</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Legacy Analysis Score</p>
                     <p class="text-5xl font-black text-indigo-600 mt-2">
                         {{ $shipment->aiAnalyses->avg('sustainability_score') ?? 0 }}
                     </p>

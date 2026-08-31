@@ -305,7 +305,7 @@
                         </li>
                         <li class="flex items-start gap-2.5">
                             <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Status Real-time:</strong> Pembaruan status berkala (*Harvested* hingga *Delivered*) meningkatkan transparansi ke pembeli.</span>
+                            <span><strong class="text-slate-900">Shipment Status:</strong> Pembaruan status dari *Harvested* hingga *Delivered* membantu menjaga konteks operasional shipment.</span>
                         </li>
                     </ul>
                 </div>

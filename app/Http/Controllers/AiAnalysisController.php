@@ -65,7 +65,7 @@ class AiAnalysisController extends Controller
             'distance' => $shipment->distance_km ?? 0,
             'risk_score' => $analysis['risk_score'],
             'priority_score' => $analysis['priority_score'],
-            'sustainability_score' => $analysis['sustainability_score'],
+            'operational_readiness_score' => $analysis['operational_readiness_score'],
             'recommended_action' => $analysis['recommended_action'],
             'recommendation_reason' => $analysis['recommendation_reason'],
         ]);
@@ -100,7 +100,7 @@ class AiAnalysisController extends Controller
             'risk_level' => $analysis['risk_level'],
             // Existing DB column retained for compatibility; semantic is Risk Index.
             'waste_probability' => $analysis['risk_index'] . '/100',
-            'sustainability_score' => $analysis['sustainability_score'],
+            'operational_readiness_score' => $analysis['operational_readiness_score'],
             'recommendations' => $persistedRecommendation,
         ]);
 
@@ -117,7 +117,7 @@ class AiAnalysisController extends Controller
                 'expiry_date' => $shipment->harvest?->expiry_date,
                 'duration' => $shipment->duration_hours,
                 'carbon_emission' => $analysis['carbon_kg'],
-                'route_score' => $shipment->route_score,
+                'route_score' => $routeDecision['route_score'] ?? null,
                 'origin_lat' => $shipment->origin_lat ?? 0,
                 'origin_lng' => $shipment->origin_lng ?? 0,
                 'destination_lat' => $shipment->destination_lat ?? 0,
@@ -127,6 +127,7 @@ class AiAnalysisController extends Controller
             ])
             ->with('risk_level', $analysis['risk_level'])
             ->with('risk_index_value', $analysis['risk_index'])
+            ->with('operational_readiness_score', $analysis['operational_readiness_score'])
             ->with('sustainability_score', $analysis['sustainability_score'])
             ->with('explainability', $analysis['explainability'])
             ->with('priority_score', $analysis['priority_score'])

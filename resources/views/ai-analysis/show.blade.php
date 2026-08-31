@@ -102,8 +102,8 @@
             ?? null;
 
         $sustainabilityScore =
-            $analysisRecord?->sustainability_score
-            ?? $decisionAnalysis['sustainability_score']
+            $decisionAnalysis['operational_readiness_score']
+            ?? $analysisRecord?->sustainability_score
             ?? 0;
 
         $rawRecommendations =
@@ -691,7 +691,7 @@ $explanation =
 
                                 <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-5">
                                     <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">
-                                        Sustainability
+                                        Operational Readiness
                                     </p>
 
                                     <p class="text-xl font-black text-cyan-400 mt-2">
@@ -770,7 +770,7 @@ $explanation =
 
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800 text-center relative overflow-hidden">
                     <p class="text-xs uppercase font-bold text-indigo-400 tracking-widest">
-                        Sustainability Score
+                        Operational Readiness
                     </p>
 
                     <p class="text-7xl font-black text-white mt-4 drop-shadow-md">

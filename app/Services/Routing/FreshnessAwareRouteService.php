@@ -5,12 +5,13 @@ namespace App\Services\Routing;
 use App\Models\Shipment;
 use App\Services\AI\DecisionEngine;
 use App\Services\RouteService;
+use App\Services\Sustainability\FreightCarbonEstimateService;
 
 /**
- * AgriFlow Step 5 - Freshness-Aware Routing
+ * AgriFlow Condition-Aware Routing
  *
  * Ranks route candidates by their projected effect on post-harvest condition,
- * operational risk, transit margin, duration, and carbon exposure.
+ * operational risk, transit margin, duration, and source-backed carbon exposure.
  *
  * This is deterministic decision support, not a traffic-prediction model.
  */
@@ -26,7 +27,8 @@ class FreshnessAwareRouteService
 
     public function __construct(
         private readonly DecisionEngine $engine,
-        private readonly RouteService $routes
+        private readonly RouteService $routes,
+        private readonly FreightCarbonEstimateService $freightCarbon
     ) {
     }
 
@@ -175,7 +177,7 @@ class FreshnessAwareRouteService
         unset($candidate);
 
         return [
-            'model_name' => 'Freshness-Aware Route Ranking',
+            'model_name' => 'Condition-Aware Route Ranking',
             'model_version' => '5.1',
             'deterministic' => true,
             'weights' => self::WEIGHTS,
@@ -333,35 +335,23 @@ class FreshnessAwareRouteService
         $scenario->distance_km = $distanceKm;
         $scenario->duration_hours = $durationHours;
 
-        $baseDistance = max(
-            0.01,
-            (float) ($shipment->distance_km ?? 0)
-        );
-
-        $baseCarbon = (float) (
-            $shipment->carbon_emission
-            ?? 0
-        );
-
-        if ($baseCarbon > 0) {
-            $scenario->carbon_emission = round(
-                $baseCarbon
-                * ($distanceKm / $baseDistance),
-                2
-            );
-        } else {
-            $scenario->carbon_emission = round(
-                $distanceKm * 0.12,
-                2
-            );
-        }
-
         if ($shipment->relationLoaded('harvest')) {
             $scenario->setRelation(
                 'harvest',
                 $shipment->harvest
             );
         }
+
+        // Re-estimate carbon from shipment mass x candidate distance using
+        // the explicit source-backed tonne-km factor. Do not inherit legacy
+        // distance-only values and do not apply hidden vehicle multipliers.
+        $carbonEstimate = $this->freightCarbon->estimateForShipment(
+            $scenario,
+            $distanceKm
+        );
+
+        $scenario->carbon_emission =
+            $carbonEstimate['estimated_kg'];
 
         return $scenario;
     }

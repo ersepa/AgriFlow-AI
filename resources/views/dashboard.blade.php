@@ -94,7 +94,7 @@
                     <div class="lg:col-span-7">
                         <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold tracking-wide mb-4 shadow-sm">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>System v2.0 Live • Intelligence Center</span>
+                            <span>Operational Intelligence Center</span>
                         </div>
                         <h1 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
                             Dashboard Agriculture and Logistics System <br class="hidden sm:inline" />
@@ -349,7 +349,7 @@
                                     </div>
 
                                     <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm">
-                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg Sustainability</p>
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg Readiness</p>
                                         <p class="text-2xl font-black text-emerald-600 mt-1">{{ round($avgScore) }}%</p>
                                     </div>
 
@@ -399,7 +399,7 @@
             </div>
 
 
-            {{-- LIVE ENVIRONMENTAL INTELLIGENCE --}}
+            {{-- ENVIRONMENTAL INTELLIGENCE --}}
             <div class="mb-12 animate-card delay-3">
                 <div class="agri-card p-8 lg:p-10 relative overflow-hidden border-slate-200">
                     
@@ -408,7 +408,7 @@
                         <div>
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-extrabold tracking-wide mb-2">
                                 <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                                <span>LIVE ENVIRONMENTAL INTELLIGENCE</span>
+                                <span>ENVIRONMENTAL INTELLIGENCE</span>
                             </div>
                             <h2 class="text-3xl font-black text-slate-900 tracking-tight">Weather & Route Monitoring</h2>
                             <p class="text-slate-500 text-sm mt-1">
@@ -634,28 +634,28 @@
             </div>
         </div>
 
-        {{-- 3. Recorded Carbon --}}
+        {{-- 3. Estimated Road-Freight CO₂e --}}
         <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
             <div>
                 <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                    Recorded Carbon
+                    Estimated Road-Freight CO₂e
                 </span>
 
                 <div class="mt-6">
                     <p class="text-4xl font-black text-emerald-600">
                         {{ number_format($currentCarbon, 1) }}
-                        <span class="text-sm text-slate-400">kg CO₂</span>
+                        <span class="text-sm text-slate-400">kg CO₂ee</span>
                     </p>
 
                     <p class="text-xs text-slate-500 mt-2 leading-relaxed">
-                        Aggregate carbon value currently recorded across shipment data.
+                        Activity-based estimate from shipment mass × route distance using the documented 2026 DESNZ road-freight factor.
                     </p>
                 </div>
             </div>
 
             <div class="mt-6 pt-4 border-t border-slate-100">
                 <span class="text-xs font-bold text-slate-500">
-                    Recorded metric · not projected savings
+                    Estimated metric · not measured emissions inventory
                 </span>
             </div>
         </div>
@@ -693,10 +693,10 @@
 </div>
 
 
-            {{-- MAIN CONTENT GRID: Priority Actions, Sustainability & Analytics Charts --}}
+            {{-- MAIN CONTENT GRID: Priority Actions, Readiness & Analytics Charts --}}
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                {{-- Left Column (8 cols): Priority Actions & Sustainability --}}
+                {{-- Left Column (8 cols): Priority Actions & Readiness --}}
                 <div class="lg:col-span-8 space-y-8">
                     
                     {{-- Priority Actions Panel --}}
@@ -728,12 +728,12 @@
                         </div>
                     </div>
 
-                    {{-- Sustainability Impact & Green Score --}}
+                    {{-- Operational Readiness & Carbon Estimate --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-6 rounded-3xl shadow-lg shadow-emerald-600/15 flex flex-col justify-between">
                             <div>
                                 <p class="text-xs font-extrabold opacity-80 uppercase tracking-wider">
-    Average Sustainability Score
+    Average Operational Readiness
 </p>
                                 <p class="text-5xl font-black mt-3">
     {{ $greenImpactScore }}
@@ -741,13 +741,13 @@
 </p>
                             </div>
                             <p class="text-xs text-emerald-100 mt-4 leading-relaxed">
-    Average sustainability score from persisted AgriFlow analyses. This is a decision-support indicator, not measured environmental impact.
+    Average current readiness across active shipments, defined transparently as 100 minus the Operational Risk Index. It is not an ESG or lifecycle-impact metric.
 </p>
                         </div>
 <div class="agri-card p-6 flex flex-col justify-between">
     <div>
         <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
-            Recorded Carbon
+            Estimated Road-Freight CO₂e
         </p>
 
         <p class="text-3xl font-black text-slate-900 mt-2">
@@ -760,7 +760,7 @@
 
     <div class="mt-4">
         <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
-            <span>Average Sustainability Score</span>
+            <span>Average Operational Readiness</span>
             <span>{{ $greenImpactScore }}/100</span>
         </div>
 
@@ -772,12 +772,12 @@
         </div>
 
         <p class="text-[10px] text-slate-400 mt-2">
-            Recorded carbon aggregate; no projected savings implied.
+            Source-backed road-freight CO₂e estimate; not measured fuel consumption or projected savings.
         </p>
     </div>
 </div>
 
-{{-- Close Sustainability 2-column grid --}}
+{{-- Close Readiness 2-column grid --}}
 </div>
 
 {{-- System Wawasan Insight --}}
@@ -815,9 +815,9 @@
                             <p class="text-xs text-emerald-800 font-extrabold uppercase tracking-wider mb-1">AI Verdict</p>
                             <p class="text-xs text-slate-700 leading-relaxed">
                                 @if($criticalOperationalCount >= 5)
-                                    Several shipments require immediate operational attention. Prioritize dispatch scheduling to minimize spoilage and improve logistics efficiency.
+                                    Several shipments require immediate operational attention. Prioritize dispatch scheduling to reduce post-harvest loss exposure and improve logistics efficiency.
                                 @elseif($criticalOperationalCount >= 2)
-                                    The logistics network remains stable, but several shipments should be monitored to maintain sustainability performance.
+                                    The logistics network remains stable, but several shipments should be monitored to maintain operational performance.
                                 @else
                                     Current logistics performance is healthy. Continue monitoring shipment quality and optimize routes where possible.
                                 @endif
@@ -840,7 +840,7 @@
                     <div class="agri-card p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Shipment Status</h3>
-                            <span class="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">LIVE</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">CURRENT</span>
                         </div>
                         <div class="h-56"><canvas id="shipmentStatusChart"></canvas></div>
                     </div>

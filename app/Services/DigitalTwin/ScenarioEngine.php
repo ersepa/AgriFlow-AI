@@ -5,6 +5,7 @@ namespace App\Services\DigitalTwin;
 use App\Models\Shipment;
 use App\Services\AI\DecisionEngine;
 use App\Services\Routing\FreshnessAwareRouteService;
+use App\Services\Sustainability\FreightCarbonEstimateService;
 use Carbon\Carbon;
 
 class ScenarioEngine
@@ -15,7 +16,8 @@ class ScenarioEngine
     public function __construct(
         private readonly DecisionEngine $decisionEngine,
         private readonly FreshnessAwareRouteService $freshnessRoutes,
-        private readonly ScenarioComparisonService $comparison
+        private readonly ScenarioComparisonService $comparison,
+        private readonly FreightCarbonEstimateService $freightCarbon
     ) {
     }
 
@@ -120,7 +122,7 @@ class ScenarioEngine
         /*
          * Vehicle is intentionally NOT passed to DecisionEngine.
          * Step 6 does not allow a vehicle label to directly change
-         * risk, quality, sustainability, or carbon.
+         * risk, quality, operational readiness, or carbon.
          */
         $analysis =
             $this->decisionEngine->analyze(
@@ -553,66 +555,16 @@ class ScenarioEngine
         float $scenarioDistanceKm,
         array $analysis
     ): array {
-        $baselineDistance =
-            (float) (
-                $originalShipment->distance_km
-                ?? 0
-            );
+        $estimate = $this->freightCarbon->estimateForShipment(
+            $originalShipment,
+            max(0, $scenarioDistanceKm)
+        );
 
-        $baselineCarbon =
-            (float) (
-                $originalShipment->carbon_emission
-                ?? $analysis['carbon_kg']
-                ?? 0
-            );
+        $estimate['vehicle_factor_applied'] = false;
+        $estimate['scenario_note'] =
+            'Digital Twin uses the same explicit tonne-km freight factor for baseline and scenarios. Vehicle labels do not change carbon without a validated vehicle/fuel-specific factor.';
 
-        if (
-            $baselineDistance > 0
-            && $baselineCarbon >= 0
-        ) {
-            $estimated =
-                $baselineCarbon
-                * (
-                    max(
-                        0,
-                        $scenarioDistanceKm
-                    )
-                    / $baselineDistance
-                );
-
-            return [
-                'estimated_kg' =>
-                    round(
-                        $estimated,
-                        2
-                    ),
-                'basis' =>
-                    'distance_scaled_from_recorded_baseline',
-                'source_value_kg' =>
-                    round(
-                        $baselineCarbon,
-                        2
-                    ),
-                'source_distance_km' =>
-                    round(
-                        $baselineDistance,
-                        2
-                    ),
-                'vehicle_factor_applied' =>
-                    false,
-                'note' =>
-                    'Step 6 scales the shipment recorded/baseline carbon by route distance only. Vehicle labels do not change carbon until a validated vehicle emission-factor dataset is configured.',
-            ];
-        }
-
-        return [
-            'estimated_kg' => null,
-            'basis' => 'unavailable',
-            'vehicle_factor_applied' =>
-                false,
-            'note' =>
-                'Carbon could not be estimated because no usable recorded baseline was available.',
-        ];
+        return $estimate;
     }
 
     private function evidenceCoverage(
@@ -730,7 +682,7 @@ class ScenarioEngine
         $notes = [
             'Scenario calculations are deterministic. This is not Monte Carlo simulation and not a statistical probability forecast.',
             'LLM output is not used to calculate risk, condition, route feasibility, transit margin, or carbon.',
-            'Vehicle selection is planning metadata only in Step 6 v1; it does not apply hidden risk, sustainability, or carbon bonuses.',
+            'Vehicle selection is planning metadata only; it does not apply hidden risk, readiness, or carbon bonuses.',
         ];
 
         $modelType =

@@ -419,7 +419,7 @@ public function comparisonHistory(): View
 
         return back()->with(
             'success',
-            'Scenario marked as preferred. This does not modify the live shipment plan.'
+            'Scenario marked as preferred. This does not modify the recorded shipment plan.'
         );
     }
 

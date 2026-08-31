@@ -193,7 +193,7 @@ Input dapat mencakup:
 - Remaining Shelf Life
 - Operational Risk Index
 - Priority Score
-- Sustainability Score
+- Operational Readiness Index
 - Shipment Status
 - Distance
 - Carbon value
@@ -261,11 +261,11 @@ Ini bukan physical digital twin yang tersinkronisasi penuh secara real-time dan 
 
 10. Sustainability
 
-Sustainability Score adalah decision-support indicator berdasarkan data dan aturan sistem.
+Operational Readiness Index adalah decision-support indicator berdasarkan data dan aturan sistem.
 
-Jangan menyebut Sustainability Score sebagai dampak lingkungan yang telah terukur secara nyata.
+Jangan menyebut Operational Readiness Index sebagai dampak lingkungan, ESG, atau lifecycle assessment yang telah terukur.
 
-Recorded Carbon adalah nilai carbon yang tercatat pada shipment.
+Estimated Road-Freight CO2e adalah estimasi aktivitas berbasis berat shipment × jarak × faktor emisi yang terdokumentasi; bukan pengukuran emisi aktual.
 
 Jangan mengklaim carbon savings kecuali data perbandingan yang valid memang tersedia.
 

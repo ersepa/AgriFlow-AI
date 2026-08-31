@@ -30,12 +30,12 @@
 
         <div class="relative z-10 max-w-md p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl">
             <h3 class="text-3xl font-black text-white mb-2">Join the Future</h3>
-            <p class="text-indigo-200 mb-6 font-medium leading-relaxed">Start tracking your agriculture shipments with the power of Artificial Intelligence today.</p>
+            <p class="text-indigo-200 mb-6 font-medium leading-relaxed">Start managing agricultural shipments with transparent decision support today.</p>
             
             <ul class="space-y-4">
                 <li class="flex items-center gap-3 text-sm font-medium text-white">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Real-time risk distribution analysis
+                    Operational risk distribution analysis
                 </li>
                 <li class="flex items-center gap-3 text-sm font-medium text-white">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

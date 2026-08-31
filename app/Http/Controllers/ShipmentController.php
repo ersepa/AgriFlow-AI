@@ -9,6 +9,7 @@ use App\Services\Agriculture\CommodityProfileService;
 use App\Services\AI\DecisionEngine;
 use App\Services\RouteService;
 use App\Services\Routing\FreshnessAwareRouteService;
+use App\Services\Sustainability\FreightCarbonEstimateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -119,7 +120,8 @@ class ShipmentController extends Controller
     public function store(
         Request $request,
         RouteService $routeService,
-        DecisionEngine $engine
+        DecisionEngine $engine,
+        FreightCarbonEstimateService $freightCarbon
     ) {
         $validated = $request->validate(array_merge(
             [
@@ -181,25 +183,25 @@ class ShipmentController extends Controller
             $durationHours = round($summary['duration'] / 3600, 1);
         }
 
-        $carbonEmission = $distanceKm !== null
-            ? round($distanceKm * 0.12, 2)
-            : null;
+        $harvest = Harvest::findOrFail(
+            $validated['harvest_id']
+        );
 
+        $carbonEstimate = $freightCarbon->estimate(
+            $harvest->weight !== null
+                ? (float) $harvest->weight
+                : null,
+            $distanceKm
+        );
+
+        // Legacy DB column retained, but new values are source-backed
+        // activity estimates in kg CO2e rather than distance x 0.12.
+        $carbonEmission = $carbonEstimate['estimated_kg'];
+
+        // The old distance/duration-only route score was an unsupported
+        // heuristic. Current route ranking is produced by
+        // FreshnessAwareRouteService using available decision evidence.
         $routeScore = null;
-
-        if ($distanceKm !== null && $durationHours !== null) {
-            $routeScore = max(
-                0,
-                min(
-                    100,
-                    round(
-                        100
-                        - ($distanceKm / 100)
-                        - ($durationHours * 1.2)
-                    )
-                )
-            );
-        }
 
         $shipment = Shipment::create(array_merge(
             [

@@ -85,7 +85,7 @@
                 </span>
             </div>
             <h1 class="text-3xl md:text-5xl font-black tracking-tight leading-none text-slate-900">
-                Freshness-Aware <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-teal-500">Route Optimizer</span>
+                Condition-Aware <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-teal-500">Route Optimizer</span>
             </h1>
             <p class="mt-3 text-slate-600 text-sm md:text-base max-w-xl font-medium leading-relaxed">
                 Rank planned routes by projected arrival quality, operational risk, transit margin, duration, and carbon exposure. AgriFlow does not invent route alternatives when the routing provider cannot supply them.
@@ -124,11 +124,11 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xl">🗺️</span>
                             <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                                Live Shipment Route
+                                Shipment Route
                             </h2>
                         </div>
                         <p class="text-slate-500 font-medium text-xs sm:text-sm mt-0.5">
-                            AI Autonomous Navigation & Interactive GIS Logistics Telemetry
+                            Route Decision Support & Interactive GIS Logistics Visualization
                         </p>
                     </div>
 
@@ -139,7 +139,7 @@
 
                         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-sm">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>GIS LIVE</span>
+                            <span>ROUTE DATA</span>
                         </span>
                     </div>
                 </div>
@@ -303,7 +303,7 @@
 
                         <div class="rounded-2xl bg-indigo-50/70 border border-indigo-200/80 p-5 text-slate-800">
                             <h3 class="font-black text-xs uppercase tracking-wider text-indigo-900 mb-3">
-                                Freshness-Aware Optimization
+                                Condition-Aware Optimization
                             </h3>
 
                             <p class="text-xs text-slate-600 leading-relaxed font-medium">
@@ -390,7 +390,7 @@
             <div class="flex justify-between items-start gap-4 mb-6 border-b border-slate-800 pb-5">
                 <div>
                     <p class="text-[10px] uppercase font-black tracking-[0.24em] text-cyan-400">
-                        Freshness-Aware Routing · Step 5.1
+                        Condition-Aware Route Ranking
                     </p>
                     <h2 id="freshnessDecisionHeading" class="text-2xl font-black text-white mt-1">
                         Route Candidate Comparison
@@ -862,7 +862,7 @@ async function showFreshnessRoutes(id) {
 
                 <div class="mt-4 pt-4 border-t border-slate-700 flex items-center justify-between gap-3">
                     <p class="text-[10px] text-slate-500">
-                        Carbon: ${candidate.carbon_kg} kg CO₂
+                        Carbon: ${candidate.carbon_kg} kg CO₂e
                     </p>
 
                     ${

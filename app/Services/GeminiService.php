@@ -9,7 +9,7 @@ class GeminiService
 {
     /**
      * LLM explanation layer only.
-     * Numerical risk/priority/sustainability values MUST come from DecisionEngine.
+     * Numerical risk/priority/readiness values MUST come from DecisionEngine.
      */
     public function generateShipmentExplanation(array $data): array
     {
@@ -20,6 +20,11 @@ class GeminiService
         $fallbackReason =
             $data['recommendation_reason']
             ?? 'The recommendation is based on the current operational risk and shipment condition.';
+
+        $operationalReadiness =
+            $data['operational_readiness_score']
+            ?? $data['sustainability_score']
+            ?? 0;
 
         $prompt = <<<PROMPT
 You are the explanation layer for AgriFlow, an agricultural logistics decision-support system.
@@ -38,7 +43,7 @@ Remaining recorded shelf life: {$data['remaining_days']} days
 Distance: {$data['distance']} km
 Risk Index: {$data['risk_score']}/100
 Priority Score: {$data['priority_score']}/100
-Sustainability Score: {$data['sustainability_score']}/100
+Operational Readiness Index: {$operationalReadiness}/100
 Engine Recommendation: {$recommendedAction}
 Engine Reason: {$fallbackReason}
 
@@ -190,8 +195,9 @@ PROMPT;
                 $data['priority_score']
                 ?? 0,
 
-            'sustainability_score' =>
-                $data['sustainability_score']
+            'operational_readiness_score' =>
+                $data['operational_readiness_score']
+                ?? $data['sustainability_score']
                 ?? 0,
 
             'recommended_action' =>
@@ -219,6 +225,11 @@ PROMPT;
 
     public function generateDashboardInsight(array $data): array
     {
+        $averageOperationalReadiness =
+            $data['avgOperationalReadiness']
+            ?? $data['avgScore']
+            ?? 0;
+
         $prompt = <<<PROMPT
 You are the explanation layer for AgriFlow's dashboard.
 
@@ -236,11 +247,11 @@ Current system data:
 Total Shipments: {$data['totalShipments']}
 Delivered Shipments: {$data['delivered']}
 High-Risk Analyses: {$data['highRisk']}
-Average Sustainability Score: {$data['avgScore']}/100
+Average Operational Readiness: {$averageOperationalReadiness}/100
 
 Rules:
 - Do not claim food-waste reduction, carbon savings, or efficiency improvement unless explicitly provided.
-- Do not call the sustainability score measured environmental impact.
+- Do not call Operational Readiness an environmental, ESG, or lifecycle-impact metric.
 - Do not output confidence or probability.
 - Do not claim machine-learning accuracy.
 - Do not claim real-time sensor or GPS data.
