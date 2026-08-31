@@ -705,6 +705,37 @@ $explanation =
 
             {{-- Right Rail --}}
             <div class="space-y-8">
+                {{-- OPTION 1: QUICK ACTION CENTER --}}
+<div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800 space-y-3">
+    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Quick Actions</h3>
+    
+    <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
+        <span>📄</span> Print Safety Manifest
+    </button>
+
+    <a href="{{ route('ai-analysis.history') }}" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 px-4 rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center justify-center gap-2">
+        <span>📊</span> View All AI History
+    </a>
+</div>
+
+{{-- OPTION 2: COMMODITY STORAGE GUIDANCE CARD --}}
+<div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800 relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+    <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">💡</span>
+        <h3 class="text-xs font-black text-cyan-400 uppercase tracking-widest">Storage Protocol</h3>
+    </div>
+
+    <p class="text-xs text-slate-300 leading-relaxed">
+        Untuk menjaga <strong class="text-white">{{ $shipment->harvest->commodity }}</strong> tetap segar hingga tujuan, pastikan kontainer pendingin diatur pada suhu optimal <strong class="text-cyan-400">7.5°C</strong> dan kelembapan berkisar <strong class="text-cyan-400">95–100% RH</strong>.
+    </p>
+
+    <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-semibold">
+        <span>Chilling Risk Threshold:</span>
+        <span class="text-rose-400 font-extrabold">&lt; 5.0°C</span>
+    </div>
+</div>
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800 text-center relative overflow-hidden">
                     <p class="text-xs uppercase font-bold text-indigo-400 tracking-widest">
                         Sustainability Score
