@@ -369,14 +369,40 @@ class ShipmentController extends Controller
         Shipment $shipment,
         array $analysis
     ): void {
+        $actionLines = collect(
+            $analysis['recommended_actions'] ?? []
+        )
+            ->map(
+                static fn (array $action): string =>
+                    '- ' . ($action['action'] ?? 'Review shipment')
+            )
+            ->filter()
+            ->implode("\n");
+
+        if ($actionLines === '') {
+            $actionLines =
+                '- ' . ($analysis['recommended_action'] ?? 'Review shipment');
+        }
+
+        $decisionReason =
+            $analysis['recommendation_reason']
+            ?? 'Continue monitoring the shipment against its current operational constraints.';
+
+        $expectedOutcome =
+            $analysis['expected_outcome']
+            ?? 'Preserve the current operational window and reassess when recorded conditions change.';
+
+        $snapshotText =
+            "Recommendations:\n{$actionLines}\n\n"
+            . "Explanation:\n{$decisionReason}\n\n"
+            . "Conclusion:\n{$expectedOutcome}";
+
         AiAnalysis::create([
             'shipment_id' => $shipment->id,
             'risk_level' => $analysis['risk_level'],
             'waste_probability' => $analysis['risk_index'] . '/100',
             'sustainability_score' => $analysis['sustainability_score'],
-            'recommendations' => $analysis['recommended_action']
-                . ' — '
-                . $analysis['recommendation_reason'],
+            'recommendations' => $snapshotText,
         ]);
     }
 }

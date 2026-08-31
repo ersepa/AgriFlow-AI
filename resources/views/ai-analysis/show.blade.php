@@ -88,6 +88,10 @@
             $decisionAnalysis['commodity_profile']
             ?? [];
 
+        $isStorageStability =
+            ($commodityProfile['quality_model_type'] ?? null) === 'storage_stability'
+            || !empty($qualityPrediction['storage_stability_reference_available']);
+
         $riskLevel =
             $analysisRecord?->risk_level
             ?? $decisionAnalysis['risk_level']
@@ -147,21 +151,38 @@ $explanation =
         ? trim($parts[1])
         : '';
 
+        $conclusion = '';
+
+        if ($explanation !== '' && str_contains($explanation, 'Conclusion:')) {
+            [$explanationText, $conclusionText] = array_pad(
+                explode('Conclusion:', $explanation, 2),
+                2,
+                ''
+            );
+            $explanation = trim($explanationText);
+            $conclusion = trim($conclusionText);
+        }
+
         /*
-         * Step 1 stores recommendation as:
-         * "Action — reason"
-         * rather than the older "Recommendations: ... Explanation: ..."
-         * format. If parsing produced no list, present the whole persisted
-         * recommendation as one item.
+         * Compatibility for older compact snapshots stored as
+         * "Action — reason". Keep the action and explanation separate so
+         * historical records remain readable without rewriting the database.
          */
         if (
             empty($recommendationsList)
-            &&
-            filled($rawRecommendations)
+            && filled($rawRecommendations)
         ) {
-            $recommendationsList = [
-                $rawRecommendations,
-            ];
+            if (str_contains($rawRecommendations, ' — ')) {
+                [$legacyAction, $legacyReason] = array_pad(
+                    explode(' — ', $rawRecommendations, 2),
+                    2,
+                    ''
+                );
+                $recommendationsList = [trim($legacyAction)];
+                $explanation = trim($legacyReason);
+            } else {
+                $recommendationsList = [$rawRecommendations];
+            }
         }
 
         $qualityTone =
@@ -287,17 +308,22 @@ $explanation =
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 border-b border-slate-800 pb-6">
                             <div>
                                 <p class="text-[10px] uppercase font-black text-cyan-400 tracking-[0.24em]">
-                                    Freshness Intelligence
+                                    {{ $isStorageStability ? 'Storage-Stability Intelligence' : 'Freshness Intelligence' }}
                                 </p>
 
                                 <h2 class="text-xl font-black text-white mt-2">
-                                    Predicted Arrival Quality
+                                    {{ $isStorageStability ? 'Storage Condition at Arrival' : 'Predicted Arrival Quality' }}
                                 </h2>
 
                                 <p class="text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
-                                    Estimated from commodity reference data,
-                                    harvest age, transit duration, and available
-                                    temperature conditions.
+                                    @if($isStorageStability)
+                                        Evaluates recorded cargo moisture, relative humidity, the recorded operational deadline,
+                                        and transit context against commodity-specific storage references. A fresh-produce
+                                        Quality-at-Arrival score is intentionally not generated.
+                                    @else
+                                        Estimated from commodity reference data, harvest age, transit duration, and available
+                                        recorded or scenario temperature conditions.
+                                    @endif
                                 </p>
                             </div>
 
@@ -324,7 +350,7 @@ $explanation =
                                 </div>
                             @else
                                 <span class="inline-flex px-3 py-2 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-black uppercase tracking-widest">
-                                    Prediction unavailable
+                                    {{ $isStorageStability ? 'Quality score not applicable' : 'Prediction unavailable' }}
                                 </span>
                             @endif
                         </div>
@@ -568,14 +594,24 @@ $explanation =
                             </details>
                         @else
                             <div class="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
-                                <p class="text-sm font-bold text-amber-300">
-                                    Freshness prediction is unavailable for this shipment.
-                                </p>
-
-                                <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                                    AgriFlow requires a validated commodity profile and usable
-                                    harvest data before calculating arrival quality.
-                                </p>
+                                @if($isStorageStability)
+                                    <p class="text-sm font-bold text-amber-300">
+                                        Fresh-produce arrival quality is not estimated for this commodity model.
+                                    </p>
+                                    <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                                        This dry-commodity profile uses storage-stability intelligence instead. AgriFlow evaluates
+                                        recorded cargo moisture, relative humidity, transit context, and the recorded operational
+                                        deadline without fabricating a fresh-produce quality curve.
+                                    </p>
+                                @else
+                                    <p class="text-sm font-bold text-amber-300">
+                                        Freshness prediction is unavailable for this shipment.
+                                    </p>
+                                    <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                                        AgriFlow requires a validated fresh-produce commodity profile and usable harvest data
+                                        before calculating arrival quality.
+                                    </p>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -689,6 +725,18 @@ $explanation =
 
                                     <p class="text-slate-300 text-sm leading-relaxed">
                                         {{ $explanation }}
+                                    </p>
+                                </div>
+                            @endif
+
+                            @if($conclusion)
+                                <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6">
+                                    <h4 class="text-xs font-black uppercase text-emerald-400 tracking-wider mb-3">
+                                        Expected Operational Outcome
+                                    </h4>
+
+                                    <p class="text-slate-300 text-sm leading-relaxed">
+                                        {{ $conclusion }}
                                     </p>
                                 </div>
                             @endif

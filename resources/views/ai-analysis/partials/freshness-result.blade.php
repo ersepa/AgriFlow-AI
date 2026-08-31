@@ -1,6 +1,7 @@
 @php
     $qualityPrediction = session('quality_prediction', []);
     $predictionAvailable = $qualityPrediction['prediction_available'] ?? false;
+    $isStorageStability = !empty($qualityPrediction['storage_stability_reference_available']);
 
     $qualityAtDeparture = session('quality_at_departure');
     $qualityAtArrival = session('quality_at_arrival');
@@ -43,14 +44,19 @@
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 mb-6 pb-5 border-b border-slate-700">
                 <div>
                     <p class="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
-                        Freshness Intelligence · Step 3.2
+                        {{ $isStorageStability ? 'Storage-Stability Intelligence' : 'Freshness Intelligence' }}
                     </p>
                     <h2 class="text-2xl font-black text-white mt-1">
-                        Operational Condition at Arrival
+                        {{ $isStorageStability ? 'Storage Condition at Arrival' : 'Operational Condition at Arrival' }}
                     </h2>
                     <p class="text-slate-400 text-xs mt-2 max-w-2xl leading-relaxed">
-                        Conservative result combining commodity reference life, recorded expiry,
-                        harvest age, planned transit, and available temperature conditions.
+                        @if($isStorageStability)
+                            Dry-commodity assessment based on recorded cargo moisture, relative humidity, transit context,
+                            and the recorded operational deadline. Fresh-produce Quality-at-Arrival is intentionally not generated.
+                        @else
+                            Conservative result combining commodity reference life, recorded expiry, harvest age, planned
+                            transit, and available recorded or scenario temperature conditions.
+                        @endif
                     </p>
                 </div>
 
@@ -71,6 +77,10 @@
                             {{ $qualityStatus }}
                         </span>
                     </div>
+                @else
+                    <span class="inline-flex px-3 py-2 rounded-lg bg-slate-900/60 text-slate-400 border border-slate-700 text-[10px] font-black uppercase tracking-widest">
+                        {{ $isStorageStability ? 'Quality score not applicable' : 'Prediction unavailable' }}
+                    </span>
                 @endif
             </div>
 
@@ -215,6 +225,26 @@
                         </div>
                     </div>
                 </details>
+            @else
+                <div class="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
+                    @if($isStorageStability)
+                        <p class="text-sm font-bold text-amber-300">
+                            Fresh-produce arrival quality is not applicable to this storage-stability model.
+                        </p>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            Use the dry-commodity Condition Intelligence assessment for cargo moisture and relative humidity.
+                            Missing values remain an explicit evidence gap; AgriFlow does not invent a quality score.
+                        </p>
+                    @else
+                        <p class="text-sm font-bold text-amber-300">
+                            Freshness prediction is unavailable for this shipment.
+                        </p>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            A validated fresh-produce commodity profile and usable harvest data are required before AgriFlow
+                            calculates arrival quality.
+                        </p>
+                    @endif
+                </div>
             @endif
         </div>
     </div>

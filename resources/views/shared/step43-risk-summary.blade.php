@@ -13,7 +13,7 @@
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 border-b border-slate-800 pb-5 mb-6">
             <div>
                 <p class="text-[10px] uppercase font-black text-indigo-400 tracking-[0.22em]">
-                    Operational Risk Engine · Step 4
+                    Operational Risk Engine
                 </p>
                 <h2 class="text-xl font-black text-white mt-2">Post-Harvest Loss Risk Assessment</h2>
                 <p class="text-xs text-slate-400 mt-2 max-w-2xl leading-relaxed">

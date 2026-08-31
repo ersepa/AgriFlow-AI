@@ -7,7 +7,7 @@
     <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
             <div>
-                <p class="text-[10px] uppercase font-black text-indigo-400 tracking-[0.22em]">Intervention Recommendation Engine · Step 4.3</p>
+                <p class="text-[10px] uppercase font-black text-indigo-400 tracking-[0.22em]">Intervention Recommendation Engine</p>
                 <h2 class="text-xl font-black text-white mt-2">Recommended Operational Actions</h2>
             </div>
             <div class="sm:text-right">

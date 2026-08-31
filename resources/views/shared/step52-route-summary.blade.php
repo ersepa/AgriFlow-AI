@@ -3,6 +3,19 @@
         $routeDecision
         ?? $decisionAnalysis['route_decision']
         ?? null;
+
+    $isStorageRoute =
+        $isStorageStability
+        ?? (
+            (
+                $routeDecision['analysis']['commodity_profile']['quality_model_type']
+                ?? null
+            ) === 'storage_stability'
+            || !empty(
+                $routeDecision['analysis']['quality_prediction']['storage_stability_reference_available']
+                ?? false
+            )
+        );
 @endphp
 
 @if($routeDecision)
@@ -40,19 +53,54 @@
             $routeDecision[
                 'recommendation_reason'
             ] ?? null;
+
+            $routeDecisionLabel =
+    $isStorageRoute
+        ? 'Storage-Aware Route Decision'
+        : 'Freshness-Aware Route Decision';
+
+$routeDecisionDescription =
+    $isStorageRoute
+        ? "Evaluates whether the planned route remains compatible with the shipment's operational storage window."
+        : "Evaluates whether the planned route preserves the shipment's operational freshness window.";
+
+$safeRouteAction =
+    $isStorageRoute
+        ? 'Maintain current route and monitor storage-condition margin.'
+        : 'Maintain current route and monitor freshness margin.';
+
+$displayReason = $reason;
+
+if ($isStorageRoute && $displayReason) {
+    $displayReason = str_ireplace(
+        [
+            'freshness feasibility',
+            'freshness-safe route',
+            'operational freshness window',
+            'freshness window',
+        ],
+        [
+            'storage-condition feasibility',
+            'storage-compatible route',
+            'operational storage window',
+            'storage-condition window',
+        ],
+        $displayReason
+    );
+}
     @endphp
 
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 pb-5 border-b border-slate-800">
             <div>
                 <p class="text-[10px] uppercase font-black tracking-[0.22em] text-teal-400">
-                    Freshness-Aware Route Decision
+                    {{ $routeDecisionLabel }}
                 </p>
                 <h3 class="text-xl font-black text-white mt-2">
                     Current Route Assessment
                 </h3>
                 <p class="text-xs text-slate-400 mt-2 max-w-xl leading-relaxed">
-                    Evaluates whether the planned route preserves the shipment's operational freshness window.
+                    {{ $routeDecisionDescription }}
                 </p>
             </div>
 
@@ -136,7 +184,7 @@
                     {{ $feasibility === 'Breach' ? 'text-rose-400' : '' }}
                 ">
                     @if($feasibility === 'Safe')
-                        Maintain current route and monitor freshness margin.
+                        {{ $safeRouteAction }}
                     @elseif($feasibility === 'Tight')
                         Prioritize dispatch and avoid additional delay.
                     @elseif($feasibility === 'Breach')
@@ -148,10 +196,10 @@
             </div>
         </div>
 
-        @if($reason)
-            <p class="text-xs text-slate-400 leading-relaxed mt-5 pt-5 border-t border-slate-800">
-                {{ $reason }}
-            </p>
-        @endif
+@if($displayReason)
+    <p class="text-xs text-slate-400 leading-relaxed mt-5 pt-5 border-t border-slate-800">
+        {{ $displayReason }}
+    </p>
+@endif
     </div>
 @endif

@@ -100,6 +100,9 @@
                     $temperatureBasis = $qualityPrediction['temperature_basis'] ?? 'unknown';
                     $dataConfidence = $analysis['data_confidence'] ?? 0;
                     $commodityProfile = $analysis['commodity_profile'] ?? [];
+                    $isStorageStability =
+                        ($commodityProfile['quality_model_type'] ?? null) === 'storage_stability'
+                        || !empty($qualityPrediction['storage_stability_reference_available']);
                     $predictionAvailable = $qualityPrediction['prediction_available'] ?? false;
                     $expiryConstraintApplied = $qualityPrediction['expiry_constraint_applied'] ?? false;
                     $reconciliationStatus = $qualityPrediction['shelf_life_reconciliation_status'] ?? null;
@@ -121,17 +124,22 @@
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 border-b border-slate-800 pb-6">
                             <div>
                                 <p class="text-[10px] uppercase font-black text-cyan-400 tracking-[0.24em]">
-                                    Freshness Intelligence
+                                    {{ $isStorageStability ? 'Storage-Stability Intelligence' : 'Freshness Intelligence' }}
                                 </p>
 
                                 <h2 class="text-xl font-black text-white mt-2">
-                                    Predicted Arrival Quality
+                                    {{ $isStorageStability ? 'Storage Condition at Arrival' : 'Predicted Arrival Quality' }}
                                 </h2>
 
                                 <p class="text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
-                                    Estimated from the commodity reference profile,
-                                    harvest age, planned transit time, and available
-                                    temperature conditions.
+                                    @if($isStorageStability)
+                                        Evaluates recorded cargo moisture, relative humidity, the recorded operational deadline,
+                                        and transit context against commodity-specific storage references. A fresh-produce
+                                        Quality-at-Arrival score is intentionally not generated.
+                                    @else
+                                        Estimated from the commodity reference profile, harvest age, planned transit time,
+                                        and available recorded or scenario temperature conditions.
+                                    @endif
                                 </p>
                             </div>
 
@@ -159,7 +167,7 @@
                             @else
                                 <div class="sm:text-right">
                                     <span class="inline-flex px-3 py-2 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-black uppercase tracking-widest">
-                                        Prediction unavailable
+                                        {{ $isStorageStability ? 'Quality score not applicable' : 'Prediction unavailable' }}
                                     </span>
                                 </div>
                             @endif
@@ -413,13 +421,24 @@
                             </details>
                         @else
                             <div class="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
-                                <p class="text-sm font-bold text-amber-300">
-                                    Freshness prediction is unavailable for this shipment.
-                                </p>
-
-                                <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                                    A validated commodity profile and usable harvest data are required before AgriFlow calculates arrival quality.
-                                </p>
+                                @if($isStorageStability)
+                                    <p class="text-sm font-bold text-amber-300">
+                                        Fresh-produce arrival quality is not estimated for this commodity model.
+                                    </p>
+                                    <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                                        This dry-commodity profile uses storage-stability intelligence instead. AgriFlow evaluates
+                                        recorded cargo moisture, relative humidity, transit context, and the recorded operational
+                                        deadline without fabricating a fresh-produce quality curve.
+                                    </p>
+                                @else
+                                    <p class="text-sm font-bold text-amber-300">
+                                        Freshness prediction is unavailable for this shipment.
+                                    </p>
+                                    <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                                        A validated fresh-produce commodity profile and usable harvest data are required before
+                                        AgriFlow calculates arrival quality.
+                                    </p>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -453,7 +472,13 @@
 
                         </div>
 
-                        <h3 class="text-base font-black text-white uppercase tracking-widest">AI Safety Logs</h3>
+                        <div>
+                            <h3 class="text-base font-black text-white uppercase tracking-widest">Analysis History</h3>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed max-w-2xl">
+                                Historical snapshots preserve the assessment generated at that time. Older records may reflect
+                                earlier decision logic; use the live assessment above for the current shipment state.
+                            </p>
+                        </div>
 
                     </div>
 
@@ -492,19 +517,58 @@
         </div>
 
         @php
+            $rawText = trim((string) $historyAnalysis->recommendations);
+            $recommendationsList = [];
+            $explanation = '';
+            $conclusion = '';
 
-            // Pisahkan antara bagian Rekomendasi dan Eksplanasi
+            if ($rawText !== '') {
+                if (str_contains($rawText, 'Recommendations:')) {
+                    $afterRecommendations = trim(
+                        preg_replace('/^.*?Recommendations:\s*/s', '', $rawText, 1)
+                    );
 
-            $rawText = $historyAnalysis->recommendations;
+                    $explanationParts = preg_split(
+                        '/\R*Explanation:\s*/',
+                        $afterRecommendations,
+                        2
+                    ) ?: [];
 
-            $parts = explode('Explanation:', $rawText);
+                    $recommendationText = trim($explanationParts[0] ?? '');
+                    $explanationAndConclusion = trim($explanationParts[1] ?? '');
 
-            // Ambil rekomendasi lalu pecah berdasarkan tanda strip (-) jadi array
+                    $conclusionParts = preg_split(
+                        '/\R*Conclusion:\s*/',
+                        $explanationAndConclusion,
+                        2
+                    ) ?: [];
 
-            $recommendationsList = isset($parts[0]) ? array_filter(array_map('trim', explode('-', str_replace('Recommendations:', '', $parts[0])))) : [];
+                    $explanation = trim($conclusionParts[0] ?? '');
+                    $conclusion = trim($conclusionParts[1] ?? '');
 
-            $explanation = isset($parts[1]) ? trim($parts[1]) : '';
+                    $recommendationsList = array_values(
+                        array_filter(
+                            array_map(
+                                static fn (string $line): string => trim(
+                                    preg_replace('/^\s*-\s*/', '', $line)
+                                ),
+                                preg_split('/\R+/', $recommendationText) ?: []
+                            )
+                        )
+                    );
+                } elseif (str_contains($rawText, ' — ')) {
+                    [$action, $reason] = array_pad(
+                        explode(' — ', $rawText, 2),
+                        2,
+                        ''
+                    );
 
+                    $recommendationsList = [trim($action)];
+                    $explanation = trim($reason);
+                } else {
+                    $recommendationsList = [$rawText];
+                }
+            }
         @endphp
 
         @if(!empty($recommendationsList))
@@ -542,6 +606,22 @@
             <p class="text-slate-400 text-sm leading-relaxed italic">
 
                 {{ $explanation }}
+
+            </p>
+
+        </div>
+
+        @endif
+
+        @if($conclusion)
+
+        <div class="pt-2 border-t border-slate-700/30">
+
+            <h4 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-1">Expected Outcome:</h4>
+
+            <p class="text-slate-400 text-sm leading-relaxed">
+
+                {{ $conclusion }}
 
             </p>
 

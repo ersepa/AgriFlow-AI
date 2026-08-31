@@ -8,14 +8,14 @@
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
             <div>
                 <p class="text-[10px] font-black text-indigo-300 uppercase tracking-[0.22em]">
-                    Intervention Recommendation Engine · Step 4.3
+                    Intervention Recommendation Engine
                 </p>
                 <h3 class="text-xl font-black text-white mt-1">
                     Recommended Operational Actions
                 </h3>
                 <p class="text-xs text-slate-400 mt-2 max-w-2xl leading-relaxed">
-                    Deterministic actions generated from freshness condition, operational risk,
-                    urgency, transit margin, and available commodity reference guidance.
+                    Deterministic actions generated from shipment condition, operational risk, urgency,
+                    transit margin, and available commodity reference guidance.
                 </p>
             </div>
 

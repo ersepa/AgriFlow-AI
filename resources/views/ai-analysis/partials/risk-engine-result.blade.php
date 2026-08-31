@@ -7,7 +7,7 @@
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 pb-5 border-b border-slate-700">
             <div>
                 <p class="text-[10px] uppercase tracking-[0.25em] text-indigo-400 font-black">
-                    Operational Risk Engine · Step 4
+                    Operational Risk Engine
                 </p>
 
                 <h2 class="text-2xl font-black text-white mt-1">
@@ -15,8 +15,8 @@
                 </h2>
 
                 <p class="text-slate-400 text-xs mt-2 max-w-2xl leading-relaxed">
-                    Deterministic operational risk index driven primarily by arrival quality,
-                    remaining shelf life, transit margin, and temperature exposure. This is
+                    Deterministic operational risk index driven by the applicable arrival or storage condition,
+                    remaining operational life, transit margin, and recorded condition evidence. This is
                     not a statistical spoilage probability.
                 </p>
             </div>
