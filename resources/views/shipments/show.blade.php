@@ -459,7 +459,7 @@
 
                     <div class="space-y-4">
 
-@forelse($shipment->aiAnalyses as $analysis)
+@forelse($shipment->aiAnalyses as $historyAnalysis)
 
 <div class="bg-slate-800/90 p-6 rounded-2xl border border-slate-700 flex gap-5 hover:border-indigo-500 transition-all duration-300">
 
@@ -467,7 +467,7 @@
 
         <div class="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] 
 
-            {{ $analysis->risk_level == 'High' ? 'bg-rose-500 text-rose-500' : ($analysis->risk_level == 'Medium' ? 'bg-amber-400 text-amber-400' : 'bg-emerald-400 text-emerald-400') }}">
+            {{ $historyAnalysis->risk_level == 'High' ? 'bg-rose-500 text-rose-500' : ($historyAnalysis->risk_level == 'Medium' ? 'bg-amber-400 text-amber-400' : 'bg-emerald-400 text-emerald-400') }}">
 
         </div>
 
@@ -477,15 +477,15 @@
 
         <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
 
-            <span class="font-black text-sm uppercase tracking-wider {{ $analysis->risk_level == 'High' ? 'text-rose-400' : ($analysis->risk_level == 'Medium' ? 'text-amber-400' : 'text-emerald-400') }}">
+            <span class="font-black text-sm uppercase tracking-wider {{ $historyAnalysis->risk_level == 'High' ? 'text-rose-400' : ($historyAnalysis->risk_level == 'Medium' ? 'text-amber-400' : 'text-emerald-400') }}">
 
-                {{ $analysis->risk_level }} Risk
+                {{ $historyAnalysis->risk_level }} Risk
 
             </span>
 
             <span class="text-xs text-slate-400 font-bold uppercase tracking-widest">
 
-                {{ $analysis->created_at->diffForHumans() }}
+                {{ $historyAnalysis->created_at->diffForHumans() }}
 
             </span>
 
@@ -495,7 +495,7 @@
 
             // Pisahkan antara bagian Rekomendasi dan Eksplanasi
 
-            $rawText = $analysis->recommendations;
+            $rawText = $historyAnalysis->recommendations;
 
             $parts = explode('Explanation:', $rawText);
 
@@ -583,7 +583,7 @@
     </a>
 </div>
 
-@include('shared.step9-condition-intelligence', ['showConditionUpdateForm' => true])
+@include('shared.step9-condition-intelligence', ['showConditionUpdateForm' => true, 'decisionAnalysis' => $analysis])
 
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800 text-center relative overflow-hidden">
 

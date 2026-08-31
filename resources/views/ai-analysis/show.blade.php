@@ -718,7 +718,7 @@ $explanation =
     </a>
 </div>
 
-@include('shared.step9-condition-intelligence', ['showConditionUpdateForm' => false])
+@include('shared.step9-condition-intelligence', ['showConditionUpdateForm' => false, 'decisionAnalysis' => $decisionAnalysis])
 
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800 text-center relative overflow-hidden">
                     <p class="text-xs uppercase font-bold text-indigo-400 tracking-widest">

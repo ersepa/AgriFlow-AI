@@ -1,8 +1,8 @@
 {
   "dataset_name": "AgriFlow Curated Commodity Knowledge Base",
-  "dataset_version": "2026.08.30-step5.2.1-scientific-consistency",
-  "scope": "Validated fresh-produce profiles plus explicit dry-commodity storage-stability profiles for green coffee and milled rice.",
-  "important_note": "Reference data is never treated as a universal guarantee. Fresh produce uses shelf-life/temperature references only where supported. Dry commodities use moisture/RH storage-stability thresholds and do not receive fabricated fresh-produce quality curves.",
+  "dataset_version": "2026.08.31-step9.1-dry-commodity-expansion",
+  "scope": "Validated fresh-produce profiles plus source-backed storage-stability profiles for common Indonesian dry agricultural commodities.",
+  "important_note": "Reference values are operational storage references, not universal guarantees or spoilage probabilities. Dry commodities use moisture/RH storage-stability thresholds and do not receive fabricated fresh-produce Quality-at-Arrival curves.",
   "profiles": [
     {
       "name": "Amaranth",
@@ -1872,17 +1872,22 @@
       "reference_storage_max_months": 12,
       "source_references": [
         {
-          "name": "FAO — Prevention of mould formation in coffee / storage guidance",
+          "name": "FAO — Coffee quality and storage guidance",
           "url": "https://www.fao.org/4/x6939e/x6939e05.htm",
-          "supports": "Coffee moisture for satisfactory storage should not be over 11%; storage and transport moisture management is critical."
+          "supports": "FAO states green coffee moisture for satisfactory storage should not be over 11%; this is used as the conservative AgriFlow storage limit."
         },
         {
-          "name": "FAO — Arabica coffee manual for Lao PDR",
+          "name": "FAO — Arabica coffee manual",
           "url": "https://www.fao.org/4/ae939e/ae939e08.htm",
-          "supports": "Green bean storage should remain below 65% RH where possible; hot and humid storage promotes moisture uptake and mould/musty defects; guide advises not storing longer than 12 months."
+          "supports": "Green coffee storage guidance recommends a well-ventilated area below 65% RH and advises against storage longer than 12 months."
+        },
+        {
+          "name": "International Coffee Organization — Resolution 420",
+          "url": "https://dev.ico.org/documents/iccres420e.pdf",
+          "supports": "ICO export quality standard specifies 8–12.5% moisture for Arabica and Robusta. AgriFlow does not treat this wider export-quality band as a universal safe-storage guarantee."
         }
       ],
-      "storage_science_note": "AgriFlow does not convert the FAO storage guidance into a fabricated fresh-produce shelf-life curve. Green coffee is assessed as a dry commodity whose key evidence is moisture/humidity control. Without cargo moisture or RH telemetry, storage stability remains an evidence gap rather than a synthetic quality score.",
+      "storage_science_note": "AgriFlow uses the stricter FAO 11% storage moisture guidance for the operational storage threshold, while exposing the ICO 8–12.5% export-quality standard as supporting context. RH below 65% and a 12-month maximum reference come from the FAO Arabica manual.",
       "notes": "The alias 'kopi' resolves specifically to dried green coffee bean in this MVP. Roasted coffee and fresh coffee cherry require separate profiles. 'Low' perishability is retained only for legacy compatibility and is not used as a biological spoilage claim.",
       "source_name": "FAO — Green coffee storage guidance",
       "source_url": "https://www.fao.org/4/x6939e/x6939e05.htm"
@@ -1914,29 +1919,488 @@
       ],
       "safe_moisture_short_term_max_percent": 14.0,
       "safe_moisture_long_term_max_percent": 13.0,
-      "safe_relative_humidity_max_percent": 65.0,
+      "safe_relative_humidity_max_percent": 70.0,
       "reference_storage_max_months": 12,
       "source_references": [
         {
-          "name": "IRRI Rice Knowledge Bank — Measuring moisture content",
-          "url": "https://www.knowledgebank.irri.org/step-by-step-production/postharvest/milling/milling-and-quality/measuring-moisture-content-in-milling",
-          "supports": "For storage, grain should be 14% MC or less for weeks to a few months and 13% or less for 8–12 months."
+          "name": "FAO — Quality assurance of selected commodities",
+          "url": "https://www.fao.org/4/V5380E/V5380E06.htm",
+          "supports": "FAO gives 13% maximum moisture for one year of milled-rice storage at 27°C and 70% RH."
         },
         {
-          "name": "IRRI Rice Knowledge Bank — Equilibrium moisture content",
-          "url": "https://www.knowledgebank.irri.org/step-by-step-production/postharvest/drying/drying-basics/how-to-determine-the-emc?print=1&tmpl=component",
-          "supports": "Equilibrium RH of 65% or less is generally considered safe against mould development; re-wetting in humid air is a major storage risk."
-        },
+          "name": "FAO — Rice in human nutrition",
+          "url": "https://www.fao.org/4/t0567e/T0567E0h.htm",
+          "supports": "FAO notes 14% as a generally accepted safe-storage moisture level in the tropics and says milled rice may need redrying to 14%."
+        }
+      ],
+      "storage_science_note": "AgriFlow distinguishes a general short-term/tropical 14% storage reference from the stricter 13% one-year FAO guideline at 27°C and 70% RH.",
+      "notes": "The aliases 'rice' and 'beras' resolve to milled rice. 'Padi', 'paddy', and 'rough rice' are deliberately excluded because their safe-storage characteristics differ.",
+      "source_name": "FAO — Milled rice safe-storage guidance",
+      "source_url": "https://www.fao.org/4/V5380E/V5380E06.htm"
+    },
+    {
+      "name": "Paddy Rice",
+      "local_name": "Gabah Kering",
+      "slug": "paddy-rice",
+      "category": "Dry Grain",
+      "commodity_class": "dry_grain",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried paddy/rough rice storage profile; not milled rice.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "gabah",
+        "gabah kering",
+        "padi kering",
+        "paddy",
+        "paddy rice",
+        "rough rice"
+      ],
+      "safe_moisture_short_term_max_percent": 15.0,
+      "safe_moisture_long_term_max_percent": 14.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": 12,
+      "source_references": [
         {
           "name": "FAO — Quality assurance of selected commodities",
           "url": "https://www.fao.org/4/V5380E/V5380E06.htm",
-          "supports": "Milled rice guideline moisture content is 13% for one year's storage at 27°C and 70% RH in the cited table."
+          "supports": "FAO guideline table gives 15% maximum moisture for one year of paddy storage at 27°C and 70% RH."
+        },
+        {
+          "name": "FAO — Prevention of post-harvest food losses",
+          "url": "https://www.fao.org/4/x0039e/x0039e01.htm",
+          "supports": "FAO equilibrium table lists paddy at 14% moisture at 70% RH and 27°C."
         }
       ],
-      "storage_science_note": "AgriFlow keeps IRRI/FAO moisture thresholds as storage-condition references. It does not claim that 13% MC guarantees one universal shelf life, because storage duration depends on humidity, temperature, insects, packaging, and re-wetting.",
-      "notes": "The aliases 'rice' and 'beras' resolve to milled rice. 'Padi', 'paddy', and 'rough rice' are deliberately excluded because their safe-storage characteristics differ.",
-      "source_name": "IRRI Rice Knowledge Bank — Safe storage moisture guidance",
-      "source_url": "https://www.knowledgebank.irri.org/step-by-step-production/postharvest/milling/milling-and-quality/measuring-moisture-content-in-milling"
+      "storage_science_note": "The dataset stores 15% as the short/reference ceiling from the one-year grain table and 14% as the more conservative long-term/equilibrium reference.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Paddy storage moisture guidance",
+      "source_url": "https://www.fao.org/4/V5380E/V5380E06.htm"
+    },
+    {
+      "name": "Dried Maize Kernels",
+      "local_name": "Jagung Pipilan Kering",
+      "slug": "dried-maize",
+      "category": "Dry Grain",
+      "commodity_class": "dry_grain",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Shelled, dried maize grain storage profile; not fresh sweet corn.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "jagung pipilan kering",
+        "jagung kering",
+        "dried maize",
+        "maize grain",
+        "dried corn kernels",
+        "corn grain"
+      ],
+      "safe_moisture_short_term_max_percent": 13.5,
+      "safe_moisture_long_term_max_percent": 13.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": 12,
+      "source_references": [
+        {
+          "name": "FAO — Quality assurance of selected commodities",
+          "url": "https://www.fao.org/4/V5380E/V5380E06.htm",
+          "supports": "FAO gives 13.5% maximum moisture for one year of maize storage at 27°C and 70% RH."
+        },
+        {
+          "name": "FAO — Maize marketing guide",
+          "url": "https://www.fao.org/4/x0530e/X0530E05.htm",
+          "supports": "FAO states ideal moisture for storing maize is below 13% and highlights faster deterioration as moisture rises."
+        }
+      ],
+      "storage_science_note": "AgriFlow uses 13.5% as the cited one-year guideline and 13% as the more conservative long-term operational threshold.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Maize safe-storage guidance",
+      "source_url": "https://www.fao.org/4/V5380E/V5380E06.htm"
+    },
+    {
+      "name": "Soybeans",
+      "local_name": "Kedelai",
+      "slug": "soybeans",
+      "category": "Dry Legume",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dry soybean seed/grain storage profile.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kedelai",
+        "soybean",
+        "soybeans",
+        "biji kedelai",
+        "kedelai kering"
+      ],
+      "safe_moisture_short_term_max_percent": 13.0,
+      "safe_moisture_long_term_max_percent": 12.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Technology of production of edible flours and protein products from soybeans",
+          "url": "https://www.fao.org/4/t0532e/t0532e02.htm",
+          "supports": "FAO says soybeans should be about 12–13% moisture for good storage stability and viability; above this mould risk becomes serious, especially in hot weather."
+        },
+        {
+          "name": "FAO — Soybean Post-Harvest Compendium",
+          "url": "https://www.fao.org/fileadmin/user_upload/inpho/docs/Post_Harvest_Compendium_-_SOYBEAN.pdf",
+          "supports": "FAO table reports soybean equilibrium moisture around 11–12% at 65–70% RH and 25°C."
+        }
+      ],
+      "storage_science_note": "The short-term ceiling is 13%; the long-term conservative reference is 12%. RH 70% is treated as an upper reference boundary, not a universal guarantee.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Soybean storage stability guidance",
+      "source_url": "https://www.fao.org/4/t0532e/t0532e02.htm"
+    },
+    {
+      "name": "Cocoa Beans",
+      "local_name": "Biji Kakao Kering",
+      "slug": "cocoa-beans",
+      "category": "Dry Commodity",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried cocoa bean storage profile.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kakao kering",
+        "biji kakao",
+        "biji kakao kering",
+        "cocoa beans",
+        "cacao beans",
+        "dried cocoa beans"
+      ],
+      "safe_moisture_short_term_max_percent": 8.0,
+      "safe_moisture_long_term_max_percent": 7.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO/Codex — Cocoa storage provisions",
+          "url": "https://www.fao.org/input/download/report/256/al68_10e.pdf",
+          "supports": "Codex/FAO text states cocoa storage should keep bean moisture as low as possible and in any case not above 8.0%."
+        },
+        {
+          "name": "FAO — Prevention of post-harvest food losses",
+          "url": "https://www.fao.org/4/x0039e/x0039e01.htm",
+          "supports": "FAO equilibrium table lists cocoa beans at 7% moisture at 70% RH and 27°C."
+        }
+      ],
+      "storage_science_note": "AgriFlow uses 8% as the upper short-term/storage provision and 7% as the more conservative equilibrium/long-term reference.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO/Codex — Cocoa storage guidance",
+      "source_url": "https://www.fao.org/input/download/report/256/al68_10e.pdf"
+    },
+    {
+      "name": "Shelled Groundnuts",
+      "local_name": "Kacang Tanah Kupas Kering",
+      "slug": "shelled-groundnuts",
+      "category": "Dry Legume",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Shelled dried groundnut/peanut kernel storage profile; pods require separate handling assumptions.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kacang tanah kering",
+        "kacang tanah kupas",
+        "groundnut",
+        "groundnuts",
+        "shelled groundnuts",
+        "peanut kernels",
+        "kacang tanah"
+      ],
+      "safe_moisture_short_term_max_percent": 7.0,
+      "safe_moisture_long_term_max_percent": 7.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Prevention of post-harvest food losses",
+          "url": "https://www.fao.org/4/x0039e/x0039e01.htm",
+          "supports": "FAO equilibrium table lists shelled groundnuts at 7% moisture at 70% RH and 27°C."
+        },
+        {
+          "name": "FAO — Grain crop drying, handling and storage",
+          "url": "https://www.fao.org/4/i2433e/i2433e.pdf",
+          "supports": "FAO table lists groundnuts (shelled) at 7% equilibrium moisture content at 27°C and 70% RH."
+        }
+      ],
+      "storage_science_note": "This profile is for shelled dried kernels; unshelled pods should not be assumed equivalent.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Shelled groundnut storage guidance",
+      "source_url": "https://www.fao.org/4/i2433e/i2433e.pdf"
+    },
+    {
+      "name": "Common Dry Beans",
+      "local_name": "Kacang Kering",
+      "slug": "common-dry-beans",
+      "category": "Dry Legume",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dry common bean/pulse storage profile; not fresh snap beans/buncis.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kacang kering",
+        "kacang merah kering",
+        "dry beans",
+        "dried beans",
+        "common dry beans",
+        "common beans"
+      ],
+      "safe_moisture_short_term_max_percent": 15.0,
+      "safe_moisture_long_term_max_percent": 15.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Agriculture food and nutrition for Africa",
+          "url": "https://www.fao.org/4/W0078e/w0078e07.htm",
+          "supports": "FAO table lists beans at 15% maximum moisture for safe storage."
+        },
+        {
+          "name": "FAO — Prevention of post-harvest food losses",
+          "url": "https://www.fao.org/4/x0039e/x0039e01.htm",
+          "supports": "FAO equilibrium table lists beans at 15% moisture at 70% RH and 27°C."
+        }
+      ],
+      "storage_science_note": "The profile intentionally excludes fresh green/snap beans, which remain a fresh-produce model.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Dry bean safe-storage guidance",
+      "source_url": "https://www.fao.org/4/W0078e/W0078E07.htm"
+    },
+    {
+      "name": "Cowpeas",
+      "local_name": "Kacang Tunggak Kering",
+      "slug": "cowpeas",
+      "category": "Dry Legume",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried cowpea storage profile.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kacang tunggak",
+        "kacang tunggak kering",
+        "cowpea",
+        "cowpeas"
+      ],
+      "safe_moisture_short_term_max_percent": 15.0,
+      "safe_moisture_long_term_max_percent": 13.5,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Grain crop drying, handling and storage",
+          "url": "https://www.fao.org/4/i2433e/i2433e.pdf",
+          "supports": "FAO table lists cowpeas at 15% equilibrium moisture content at 27°C and 70% RH."
+        },
+        {
+          "name": "FAO — Prevention of post-harvest food losses",
+          "url": "https://www.fao.org/4/x0039e/x0039e01.htm",
+          "supports": "FAO table lists cowpeas at 13.5% moisture equilibrium at 70% RH and 27°C in a separate reference table."
+        }
+      ],
+      "storage_science_note": "Because FAO tables differ by reference context, AgriFlow exposes 15% as the short-term/reference ceiling and 13.5% as the conservative long-term threshold.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Cowpea storage guidance",
+      "source_url": "https://www.fao.org/4/i2433e/i2433e.pdf"
+    },
+    {
+      "name": "Sorghum Grain",
+      "local_name": "Biji Sorgum Kering",
+      "slug": "sorghum-grain",
+      "category": "Dry Grain",
+      "commodity_class": "dry_grain",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried sorghum grain storage profile.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "sorgum",
+        "sorgum kering",
+        "biji sorgum",
+        "sorghum",
+        "sorghum grain"
+      ],
+      "safe_moisture_short_term_max_percent": 13.5,
+      "safe_moisture_long_term_max_percent": 12.5,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": 12,
+      "source_references": [
+        {
+          "name": "FAO — Quality assurance of selected commodities",
+          "url": "https://www.fao.org/4/V5380E/V5380E06.htm",
+          "supports": "FAO guideline table gives 13.5% maximum moisture for one year of sorghum storage at 27°C and 70% RH."
+        },
+        {
+          "name": "FAO — Agricultural engineering in development: Storage",
+          "url": "https://www.fao.org/4/t0522e/T0522E09.htm",
+          "supports": "FAO long-term hot-region storage table lists sorghum at 12.5% moisture."
+        }
+      ],
+      "storage_science_note": "The profile keeps both cited values: 13.5% for the one-year guideline and 12.5% for conservative long-term hot-region storage.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Sorghum storage guidance",
+      "source_url": "https://www.fao.org/4/V5380E/V5380E06.htm"
+    },
+    {
+      "name": "Copra",
+      "local_name": "Kopra",
+      "slug": "copra",
+      "category": "Dry Commodity",
+      "commodity_class": "dry_commodity",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried coconut kernel (copra) storage profile; not fresh whole coconut.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "kopra",
+        "copra",
+        "kelapa kering",
+        "dried coconut kernel",
+        "dried coconut meat"
+      ],
+      "safe_moisture_short_term_max_percent": 7.0,
+      "safe_moisture_long_term_max_percent": 7.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": null,
+      "source_references": [
+        {
+          "name": "FAO — Agricultural engineering in development: Storage",
+          "url": "https://www.fao.org/4/t0522e/T0522E09.htm",
+          "supports": "FAO long-term hot-region storage table lists copra at 7% moisture."
+        },
+        {
+          "name": "FAO — Grain crop drying, handling and storage",
+          "url": "https://www.fao.org/4/i2433e/i2433e.pdf",
+          "supports": "FAO table lists copra at 7% equilibrium moisture content at 27°C and 70% RH."
+        }
+      ],
+      "storage_science_note": "This profile represents dried copra only and must not be used as the fresh-coconut profile.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Copra storage guidance",
+      "source_url": "https://www.fao.org/4/t0522e/T0522E09.htm"
+    },
+    {
+      "name": "Millet Grain",
+      "local_name": "Jewawut Kering",
+      "slug": "millet-grain",
+      "category": "Dry Grain",
+      "commodity_class": "dry_grain",
+      "quality_model_type": "storage_stability",
+      "profile_context": "Dried millet/jewawut grain storage profile; included as a regional Indonesian dry-grain commodity.",
+      "storage_life_min_days": null,
+      "storage_life_max_days": null,
+      "optimal_temp_min": null,
+      "optimal_temp_max": null,
+      "optimal_humidity_min": null,
+      "optimal_humidity_max": null,
+      "chilling_threshold_c": null,
+      "q10_factor": null,
+      "perishability_level": "Low",
+      "temperature_control_recommended": false,
+      "aliases": [
+        "jewawut",
+        "jewawut kering",
+        "millet",
+        "millet grain"
+      ],
+      "safe_moisture_short_term_max_percent": 16.0,
+      "safe_moisture_long_term_max_percent": 16.0,
+      "safe_relative_humidity_max_percent": 70.0,
+      "reference_storage_max_months": 12,
+      "source_references": [
+        {
+          "name": "FAO — Quality assurance of selected commodities",
+          "url": "https://www.fao.org/4/V5380E/V5380E06.htm",
+          "supports": "FAO guideline table gives millet 16% maximum moisture for one year of storage at 27°C and 70% RH."
+        },
+        {
+          "name": "FAO — Grain crop drying, handling and storage",
+          "url": "https://www.fao.org/4/i2433e/i2433e.pdf",
+          "supports": "FAO table lists millet at 16% equilibrium moisture content at 27°C and 70% RH."
+        }
+      ],
+      "storage_science_note": "The 16% value is retained only as the cited FAO storage reference and not as a universal spoilage threshold.",
+      "notes": "This profile represents the named dried/storage form only. Fresh, wet, processed, roasted, or otherwise different forms require separate profiles.",
+      "source_name": "FAO — Millet storage guidance",
+      "source_url": "https://www.fao.org/4/V5380E/V5380E06.htm"
     }
   ]
 }

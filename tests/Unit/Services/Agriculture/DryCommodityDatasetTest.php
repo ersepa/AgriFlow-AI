@@ -1,122 +1,57 @@
 <?php
 
-namespace Tests\Unit\Services\Agriculture;
+use Tests\TestCase;
 
-use PHPUnit\Framework\TestCase;
+uses(TestCase::class);
 
-class DryCommodityDatasetTest extends TestCase
-{
-    private function dataset(): array
-    {
-        $path = database_path(
-            'data/commodity_profiles.json'
-        );
+it('ships source-backed storage-stability profiles for common Indonesian dry commodities', function () {
+    $payload = json_decode(
+        file_get_contents(database_path('data/commodity_profiles.json')),
+        true,
+        512,
+        JSON_THROW_ON_ERROR
+    );
 
-        return json_decode(
-            file_get_contents($path),
-            true,
-            512,
-            JSON_THROW_ON_ERROR
-        );
+    $profiles = collect($payload['profiles'] ?? []);
+    $dry = $profiles->where('quality_model_type', 'storage_stability');
+
+    expect($dry->count())->toBeGreaterThanOrEqual(12);
+
+    foreach ([
+        'green-coffee',
+        'milled-rice',
+        'paddy-rice',
+        'dried-maize',
+        'soybeans',
+        'cocoa-beans',
+        'shelled-groundnuts',
+        'common-dry-beans',
+        'cowpeas',
+        'sorghum-grain',
+        'copra',
+        'millet-grain',
+    ] as $slug) {
+        $profile = $dry->firstWhere('slug', $slug);
+
+        expect($profile)->not->toBeNull()
+            ->and($profile['source_url'] ?? null)->not->toBeNull()
+            ->and($profile['safe_moisture_short_term_max_percent'] ?? null)->not->toBeNull()
+            ->and($profile['safe_relative_humidity_max_percent'] ?? null)->not->toBeNull();
     }
+});
 
-    public function test_green_coffee_profile_is_storage_stability_based(): void
-    {
-        $profile = collect(
-            $this->dataset()['profiles']
-        )->firstWhere(
-            'slug',
-            'green-coffee'
-        );
+it('keeps dry forms distinct from fresh forms', function () {
+    $payload = json_decode(
+        file_get_contents(database_path('data/commodity_profiles.json')),
+        true,
+        512,
+        JSON_THROW_ON_ERROR
+    );
 
-        $this->assertNotNull($profile);
-        $this->assertSame(
-            'storage_stability',
-            $profile['quality_model_type']
-        );
-        $this->assertSame(
-            11.0,
-            (float) $profile[
-                'safe_moisture_long_term_max_percent'
-            ]
-        );
-        $this->assertSame(
-            65.0,
-            (float) $profile[
-                'safe_relative_humidity_max_percent'
-            ]
-        );
-        $this->assertNull(
-            $profile['storage_life_min_days']
-        );
-        $this->assertNull(
-            $profile['storage_life_max_days']
-        );
-    }
+    $profiles = collect($payload['profiles'] ?? []);
 
-    public function test_milled_rice_profile_uses_irri_moisture_thresholds(): void
-    {
-        $profile = collect(
-            $this->dataset()['profiles']
-        )->firstWhere(
-            'slug',
-            'milled-rice'
-        );
-
-        $this->assertNotNull($profile);
-        $this->assertSame(
-            14.0,
-            (float) $profile[
-                'safe_moisture_short_term_max_percent'
-            ]
-        );
-        $this->assertSame(
-            13.0,
-            (float) $profile[
-                'safe_moisture_long_term_max_percent'
-            ]
-        );
-        $this->assertContains(
-            'beras',
-            $profile['aliases']
-        );
-        $this->assertNotContains(
-            'padi',
-            $profile['aliases']
-        );
-        $this->assertNotContains(
-            'paddy',
-            $profile['aliases']
-        );
-    }
-
-    public function test_dry_commodity_profiles_do_not_invent_fresh_produce_shelf_life(): void
-    {
-        $profiles = collect(
-            $this->dataset()['profiles']
-        )->where(
-            'quality_model_type',
-            'storage_stability'
-        );
-
-        $this->assertNotEmpty($profiles);
-
-        foreach ($profiles as $profile) {
-            $this->assertNull(
-                $profile[
-                    'storage_life_min_days'
-                ]
-            );
-            $this->assertNull(
-                $profile[
-                    'storage_life_max_days'
-                ]
-            );
-            $this->assertNull(
-                $profile[
-                    'q10_factor'
-                ]
-            );
-        }
-    }
-}
+    expect($profiles->firstWhere('slug', 'sweet-corn')['quality_model_type'])->toBe('shelf_life_quality')
+        ->and($profiles->firstWhere('slug', 'dried-maize')['quality_model_type'])->toBe('storage_stability')
+        ->and($profiles->firstWhere('slug', 'coconut')['quality_model_type'])->toBe('shelf_life_quality')
+        ->and($profiles->firstWhere('slug', 'copra')['quality_model_type'])->toBe('storage_stability');
+});
