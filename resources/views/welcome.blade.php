@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AgriFlow AI - Smart Agriculture Intelligence</title>
+    <title>AgriFlow AI - Predictive Post-Harvest Intelligence</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
@@ -97,18 +97,18 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
-                    System v2.0 is Live
+                    Post-Harvest Decision Intelligence
                 </div>
 
-                <h1 class="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight animate-fade-in-up delay-100">
-                    Farming Meets <br/>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-indigo-600">
-                        Artificial Intelligence
-                    </span>
-                </h1>
+<h1 class="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight animate-fade-in-up delay-100">
+    Know the Condition <br/>
+    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-indigo-600">
+        Before It Arrives
+    </span>
+</h1>
 
                 <p class="text-lg text-slate-600 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed animate-fade-in-up delay-200 font-medium">
-                    Optimize your harvest, predict risks with pinpoint accuracy, and manage shipments seamlessly using our real-time AI analytics engine.
+                    AgriFlow evaluates post-harvest shipment conditions, operational risk, freshness constraints, and route feasibility to help operators decide how agricultural products should be transported before quality is lost.
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start animate-fade-in-up delay-300">
@@ -129,8 +129,8 @@
                 <div class="relative bg-white/80 backdrop-blur-2xl border border-slate-100 p-6 rounded-3xl shadow-2xl animate-float z-20">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <p class="text-sm font-bold text-slate-500">AI Risk Analysis</p>
-                            <p class="text-2xl font-black text-slate-800">Stable</p>
+                            <p class="text-sm font-bold text-slate-500">Operational Assessment</p>
+                            <p class="text-2xl font-black text-slate-800">Shipment Feasible</p>
                         </div>
                         <div class="p-3 bg-indigo-50 rounded-2xl">
                             <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -155,15 +155,20 @@
                             <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-slate-500 uppercase">Total Harvest</p>
-                            <p class="text-xl font-black text-slate-800">2,450 kg</p>
+<p class="text-xs font-bold text-slate-500 uppercase">Decision Context</p>
+<p class="text-xl font-black text-slate-800">Post-Harvest</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="absolute -top-10 -right-8 bg-gradient-to-br from-indigo-500 to-blue-600 p-5 rounded-3xl shadow-xl shadow-indigo-500/20 animate-float z-10">
-                    <p class="text-xs font-bold text-indigo-100 uppercase mb-1">Insight Score</p>
-                    <p class="text-3xl font-black text-white">98.5</p>
+<p class="text-xs font-bold text-indigo-100 uppercase mb-1">
+    Decision Engine
+</p>
+
+<p class="text-xl font-black text-white">
+    Deterministic
+</p>
                 </div>
                 
                 <div class="absolute inset-0 bg-gradient-to-tr from-emerald-100 to-indigo-50 rounded-[3rem] transform rotate-3 scale-105 -z-10 transition-transform hover:rotate-6 duration-500"></div>
@@ -173,25 +178,25 @@
         <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-6 lg:px-12">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-black text-slate-900 mb-4">Solusi End-to-End untuk Pertanian Modern</h2>
-            <p class="text-slate-600 max-w-2xl mx-auto">Kami membantu rantai pasok pertanian Indonesia menjadi lebih transparan, efisien, dan minim risiko.</p>
+            <h2 class="text-4xl font-black text-slate-900 mb-4">From Harvest Data to Logistics Decisions</h2>
+            <p class="text-slate-600 max-w-2xl mx-auto">AgriFlow menghubungkan data panen, kondisi pengiriman, referensi komoditas, dan informasi rute menjadi keputusan operasional pascapanen yang dapat ditelusuri.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-emerald-200 transition-all group">
                 <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-6">📦</div>
                 <h3 class="text-xl font-bold mb-3">Manajemen Panen</h3>
-                <p class="text-slate-600 text-sm leading-relaxed">Catat setiap siklus panen dengan presisi. Integrasikan data berat, kualitas, dan varietas secara digital.</p>
+                <p class="text-slate-600 text-sm leading-relaxed">Kelola data komoditas, berat panen, tanggal panen, dan batas waktu operasional sebagai dasar analisis pengiriman.</p>
             </div>
             <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-all group">
                 <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-6">📊</div>
-                <h3 class="text-xl font-bold mb-3">Analisis Kualitas</h3>
-                <p class="text-slate-600 text-sm leading-relaxed">Dapatkan insight berbasis AI tentang potensi pasar dan tingkat kesegaran komoditas Anda sebelum didistribusikan.</p>
+                <h3 class="text-xl font-bold mb-3">Quality-at-Arrival Intelligence</h3>
+                <p class="text-slate-600 text-sm leading-relaxed">Estimasi kondisi komoditas saat tiba, remaining shelf life, safe transit window, dan batas operasional berdasarkan profil komoditas dan kondisi shipment.</p>
             </div>
             <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-cyan-200 transition-all group">
                 <div class="w-12 h-12 bg-cyan-100 text-cyan-600 rounded-xl flex items-center justify-center mb-6">🚚</div>
-                <h3 class="text-xl font-bold mb-3">Logistik Real-Time</h3>
-                <p class="text-slate-600 text-sm leading-relaxed">Pantau rute pengantaran dan prediksi risiko kerusakan selama transit menggunakan sistem AI monitoring kami.</p>
+                <h3 class="text-xl font-bold mb-3">Freshness-Aware Logistics</h3>
+                <p class="text-slate-600 text-sm leading-relaxed">Nilai kelayakan rute, margin waktu transit, dan risiko operasional untuk membantu menentukan apakah shipment aman dilanjutkan atau perlu intervensi.</p>
             </div>
         </div>
     </div>
@@ -201,25 +206,25 @@
     <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col lg:flex-row gap-12 items-center">
         <div class="flex-1">
             <span class="text-emerald-400 font-bold tracking-widest uppercase text-xs">Konteks Indonesia</span>
-            <h2 class="text-4xl font-black mt-3 mb-6">Mengatasi Masalah Klasik Rantai Pasok Nasional</h2>
+            <h2 class="text-4xl font-black mt-3 mb-6">Why Post-Harvest Decisions Matter</h2>
             <ul class="space-y-4">
                 <li class="flex gap-4">
                     <span class="text-emerald-400">✔</span>
-                    <p class="text-slate-300"><strong class="text-white">Waste Tinggi:</strong> Tingginya angka kehilangan hasil panen (post-harvest loss) akibat buruknya manajemen logistik di Indonesia.</p>
+                    <p class="text-slate-300"><strong class="text-white">Post-Harvest Loss:</strong> Produk pertanian memiliki jendela kualitas yang terbatas, sementara keterlambatan penanganan dan distribusi dapat mempersempit waktu aman sebelum produk tiba.</p>
                 </li>
                 <li class="flex gap-4">
                     <span class="text-emerald-400">✔</span>
-                    <p class="text-slate-300"><strong class="text-white">Ketimpangan Harga:</strong> Data yang tidak transparan menyebabkan harga di tingkat petani jauh lebih rendah dibanding pasar kota.</p>
+                    <p class="text-slate-300"><strong class="text-white">Fragmented Decision Data:</strong> Data panen, shelf life, kondisi shipment, cuaca, dan rute sering berada pada konteks yang terpisah sehingga keputusan operasional sulit dilakukan secara konsisten.</p>
                 </li>
                 <li class="flex gap-4">
                     <span class="text-emerald-400">✔</span>
-                    <p class="text-slate-300"><strong class="text-white">Kurangnya Prediksi:</strong> Petani sering kesulitan memprediksi risiko cuaca dan jalur distribusi yang optimal.</p>
+                    <p class="text-slate-300"><strong class="text-white">Late Operational Decisions:</strong> Risiko sering baru terlihat setelah shipment berjalan, ketika pilihan intervensi sudah lebih terbatas.</p>
                 </li>
             </ul>
         </div>
         <div class="flex-1 w-full bg-slate-800 p-8 rounded-3xl border border-slate-700">
             <h4 class="font-bold mb-4">Visi Kami</h4>
-            <p class="text-slate-400 italic">"Mendigitalkan pertanian Indonesia dengan teknologi AI untuk memastikan komoditas sampai ke tangan konsumen dengan kualitas terbaik, efisiensi maksimal, dan keuntungan adil bagi petani."</p>
+            <p class="text-slate-400 italic">"Membantu operator rantai pasok mengambil keputusan pascapanen lebih awal dengan menghubungkan kondisi komoditas, risiko operasional, dan pilihan logistik dalam satu decision-support system."</p>
         </div>
     </div>
 </section>
@@ -235,11 +240,10 @@
                 Permasalahan Rantai Pasok Pertanian di Indonesia
             </h2>
 
-            <p class="max-w-3xl mx-auto text-slate-600 text-lg">
-                Setiap hari, hasil pertanian bernilai tinggi mengalami kerusakan
-                akibat distribusi yang tidak efisien, kurangnya pemantauan,
-                dan minimnya pengambilan keputusan berbasis data.
-            </p>
+<p class="max-w-3xl mx-auto text-slate-600 text-lg">
+    Banyak keputusan pascapanen masih dibuat tanpa menggabungkan kondisi komoditas,
+    waktu transit, batas shelf life, dan konteks rute dalam satu penilaian operasional.
+</p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-8">
@@ -248,68 +252,64 @@
                 <div class="text-5xl mb-4">📉</div>
 
                 <h3 class="text-4xl font-black text-rose-600 mb-2">
-                    23–48%
+                    Time-Sensitive Quality
                 </h3>
 
                 <p class="font-bold text-slate-900 mb-3">
-                    Kehilangan Pasca Panen
+                    Post-Harvest Window
                 </p>
 
                 <p class="text-slate-600 text-sm leading-relaxed">
-                    Sebagian besar komoditas hortikultura mengalami kerusakan
-                    selama penyimpanan, penanganan, dan distribusi sebelum
-                    sampai ke konsumen.
+                    Banyak komoditas pertanian memiliki toleransi waktu dan kondisi penyimpanan yang terbatas setelah panen, sehingga keputusan distribusi perlu mempertimbangkan kondisi saat tiba, bukan hanya jarak.
                 </p>
             </div>
 
             <div class="bg-slate-50 border border-slate-100 rounded-3xl p-8 hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
                 <div class="text-5xl mb-4">🚚</div>
 
-                <h3 class="text-4xl font-black text-indigo-600 mb-2">
-                    Risiko Logistik
-                </h3>
+<h3 class="text-3xl font-black text-indigo-600 mb-2">
+    Transit Constraints
+</h3>
 
-                <p class="font-bold text-slate-900 mb-3">
-                    Distribusi Kurang Efisien
-                </p>
+<p class="font-bold text-slate-900 mb-3">
+    Route Feasibility
+</p>
 
-                <p class="text-slate-600 text-sm leading-relaxed">
-                    Keterlambatan pengiriman, pemilihan rute yang kurang optimal,
-                    dan minimnya pemantauan meningkatkan risiko kerusakan produk.
-                </p>
+<p class="text-slate-600 text-sm leading-relaxed">
+    Jarak saja tidak cukup. Waktu transit, margin shelf life, kondisi komoditas,
+    dan keterlambatan perlu dinilai bersama sebelum shipment dijalankan.
+</p>
             </div>
 
             <div class="bg-slate-50 border border-slate-100 rounded-3xl p-8 hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
                 <div class="text-5xl mb-4">🌱</div>
 
-                <h3 class="text-4xl font-black text-emerald-600 mb-2">
-                    Dampak Lingkungan
-                </h3>
+<h3 class="text-3xl font-black text-emerald-600 mb-2">
+    Late Decisions
+</h3>
 
-                <p class="font-bold text-slate-900 mb-3">
-                    Emisi Karbon Meningkat
-                </p>
+<p class="font-bold text-slate-900 mb-3">
+    Limited Intervention Window
+</p>
 
-                <p class="text-slate-600 text-sm leading-relaxed">
-                    Pemborosan pangan dan distribusi yang tidak efisien
-                    berkontribusi terhadap meningkatnya emisi karbon
-                    dalam rantai pasok pertanian.
-                </p>
+<p class="text-slate-600 text-sm leading-relaxed">
+    Ketika risiko baru terlihat setelah shipment berjalan, pilihan tindakan
+    seperti perubahan waktu, route, vehicle, atau handling menjadi lebih terbatas.
+</p>
             </div>
 
         </div>
 
         <div class="mt-12 bg-gradient-to-r from-emerald-600 to-indigo-600 text-white rounded-3xl p-8 text-center">
-            <h3 class="text-2xl font-black mb-3">
-                AgriFlow AI Hadir Sebagai Solusi
-            </h3>
+<h3 class="text-2xl font-black mb-3">
+    Decide Before the Shipment Becomes a Problem
+</h3>
 
-            <p class="max-w-3xl mx-auto text-emerald-50">
-                Dengan prediksi risiko berbasis AI, optimasi rute pengiriman,
-                analisis keberlanjutan, dan pemantauan distribusi secara real-time,
-                AgriFlow AI membantu mengurangi food waste dan meningkatkan
-                efisiensi rantai pasok pertanian Indonesia.
-            </p>
+<p class="max-w-3xl mx-auto text-emerald-50">
+    AgriFlow menggabungkan commodity intelligence, quality-at-arrival assessment,
+    operational risk, freshness-aware routing, dan what-if scenario comparison
+    untuk membantu operator mengambil keputusan sebelum waktu intervensi menyempit.
+</p>
         </div>
 
     </div>
@@ -318,7 +318,7 @@
     <div class="max-w-7xl mx-auto px-6 lg:px-12">
         <div class="text-center mb-20">
             <h2 class="text-4xl font-black text-slate-900 mb-4">Cara Kerja AgriFlow AI</h2>
-            <p class="text-slate-600 font-medium">Transformasi alur logistik Anda dalam empat langkah cerdas.</p>
+            <p class="text-slate-600 font-medium">Dari data panen hingga keputusan logistik dalam empat tahap operasional.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -326,8 +326,14 @@
             <div class="relative group cursor-default">
                 <div class="step-connector relative z-10 flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2">
                     <div class="w-20 h-20 bg-white border-4 border-emerald-500 rounded-3xl flex items-center justify-center text-emerald-600 text-3xl font-black mb-8 shadow-xl shadow-emerald-500/10 group-hover:bg-emerald-500 group-hover:text-white transition-colors">01</div>
-                    <h3 class="font-bold text-lg text-slate-900 mb-3">Data Ingestion</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed px-2">Input data panen secara real-time ke sistem terpusat kami.</p>
+<h3 class="font-bold text-lg text-slate-900 mb-3">
+    Record Harvest & Shipment
+</h3>
+
+<p class="text-slate-500 text-sm leading-relaxed px-2">
+    Masukkan data komoditas, panen, expiry window, origin, destination,
+    dan kondisi pengiriman yang tersedia.
+</p>
                 </div>
             </div>
 
@@ -335,8 +341,14 @@
             <div class="relative group cursor-default">
                 <div class="step-connector relative z-10 flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2">
                     <div class="w-20 h-20 bg-white border-4 border-indigo-500 rounded-3xl flex items-center justify-center text-indigo-600 text-3xl font-black mb-8 shadow-xl shadow-indigo-500/10 group-hover:bg-indigo-500 group-hover:text-white transition-colors">02</div>
-                    <h3 class="font-bold text-lg text-slate-900 mb-3">AI Processing</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed px-2">AI menganalisis risiko kualitas dan potensi kerusakan komoditas.</p>
+<h3 class="font-bold text-lg text-slate-900 mb-3">
+    Assess Arrival Condition
+</h3>
+
+<p class="text-slate-500 text-sm leading-relaxed px-2">
+    Decision Engine mengevaluasi quality-at-arrival, remaining shelf life,
+    safe transit window, dan Operational Risk Index.
+</p>
                 </div>
             </div>
 
@@ -344,8 +356,14 @@
             <div class="relative group cursor-default">
                 <div class="step-connector relative z-10 flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2">
                     <div class="w-20 h-20 bg-white border-4 border-cyan-500 rounded-3xl flex items-center justify-center text-cyan-600 text-3xl font-black mb-8 shadow-xl shadow-cyan-500/10 group-hover:bg-cyan-500 group-hover:text-white transition-colors">03</div>
-                    <h3 class="font-bold text-lg text-slate-900 mb-3">Route Optimization</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed px-2">Menentukan rute logistik tercepat untuk meminimalisir waktu transit.</p>
+<h3 class="font-bold text-lg text-slate-900 mb-3">
+    Evaluate Route Feasibility
+</h3>
+
+<p class="text-slate-500 text-sm leading-relaxed px-2">
+    Bandingkan rute berdasarkan durasi, freshness constraints,
+    transit margin, dan kelayakan operasional shipment.
+</p>
                 </div>
             </div>
 
@@ -353,8 +371,14 @@
             <div class="relative group cursor-default">
                 <div class="relative z-10 flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2">
                     <div class="w-20 h-20 bg-white border-4 border-rose-500 rounded-3xl flex items-center justify-center text-rose-600 text-3xl font-black mb-8 shadow-xl shadow-rose-500/10 group-hover:bg-rose-500 group-hover:text-white transition-colors">04</div>
-                    <h3 class="font-bold text-lg text-slate-900 mb-3">Smart Delivery</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed px-2">Monitoring penuh sampai produk tiba ke tangan konsumen dengan aman.</p>
+<h3 class="font-bold text-lg text-slate-900 mb-3">
+    Compare Operational Scenarios
+</h3>
+
+<p class="text-slate-500 text-sm leading-relaxed px-2">
+    Gunakan Operational Digital Twin untuk membandingkan current plan
+    dengan alternatif vehicle, temperature, delay, atau route.
+</p>
                 </div>
             </div>
         </div>

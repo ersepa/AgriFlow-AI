@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shipment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,236 +11,464 @@ class ChatController extends Controller
 {
     public function chat(Request $request)
     {
-$shipments = \App\Models\Shipment::latest()
-    ->take(5)
-    ->get();
+        $validated = $request->validate([
+            'message' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+        ]);
 
-$summary = "=== DATA SHIPMENT TERBARU ===\n\n";
+        /*
+        |--------------------------------------------------------------------------
+        | Latest Shipment Context
+        |--------------------------------------------------------------------------
+        |
+        | Only recorded shipment data is supplied to the assistant.
+        | The assistant must not invent unavailable operational values.
+        |
+        */
 
-foreach ($shipments as $shipment) {
+        $shipments = Shipment::with('harvest')
+            ->latest()
+            ->take(5)
+            ->get();
 
-    $summary .=
-"Commodity : {$shipment->commodity}
-Origin : {$shipment->origin}
-Destination : {$shipment->destination}
-Status : {$shipment->status}
-Distance : {$shipment->distance_km} km
+        $summary = "=== DATA SHIPMENT TERBARU ===\n";
 
-------------------------
+        if ($shipments->isEmpty()) {
+            $summary .= "Belum ada data shipment yang tersedia.\n";
+        } else {
+            foreach ($shipments as $shipment) {
+                $commodity =
+                    $shipment->harvest?->commodity
+                    ?? 'Unknown';
 
-";
+                $distance =
+                    $shipment->distance_km !== null
+                        ? $shipment->distance_km . ' km'
+                        : 'Unavailable';
 
-}
+                $duration =
+                    $shipment->duration_hours !== null
+                        ? $shipment->duration_hours . ' jam'
+                        : 'Unavailable';
 
-$summary = "Data Shipment Terbaru:\n";
+                $summary .=
+                    "- {$commodity}"
+                    . " | {$shipment->origin}"
+                    . " → {$shipment->destination}"
+                    . " | Status: {$shipment->status}"
+                    . " | Distance: {$distance}"
+                    . " | Duration: {$duration}\n";
+            }
+        }
 
-foreach ($shipments as $shipment) {
-    $summary .= "- {$shipment->commodity} | {$shipment->origin} → {$shipment->destination} | Status: {$shipment->status}\n";
-}
+        /*
+        |--------------------------------------------------------------------------
+        | AgriFlow Assistant Context
+        |--------------------------------------------------------------------------
+        */
 
-        // 2. Buat prompt
-// Di dalam ChatController.php
-$prompt = "Kamu adalah asisten AgriFlow yang santai, ramah, dan mudah diajak ngobrol.
+        $prompt = <<<PROMPT
+Kamu adalah AgriFlow Assistant, asisten percakapan untuk platform AgriFlow.
 
-Nama kamu adalah AgriFlow AI.
+AgriFlow adalah platform decision-support untuk logistik pascapanen hasil pertanian.
 
-Jika user menyapa seperti:
-- halo
-- hai
-- hi
-- pagi
-- siang
-- sore
+Sistem menggunakan perhitungan deterministik dan data operasional untuk membantu pengguna menilai kondisi pengiriman, risiko operasional, kualitas saat tiba, rute, serta alternatif tindakan.
 
-Balas secara natural seperti:
+Model bahasa hanya digunakan untuk membantu menjelaskan informasi kepada pengguna.
 
-Halo! Ada yang bisa aku bantu seputar logistik, pertanian, atau sustainability hari ini? 😊
+JANGAN mengklaim bahwa AgriFlow menggunakan:
+- neural network
+- Monte Carlo simulation
+- statistical spoilage probability
+- model accuracy percentage
+- real-time IoT sensor data
+- live GPS tracking
 
-Jangan pernah bertanya aku siapa.
+kecuali informasi tersebut memang tersedia secara eksplisit pada Data Sistem.
 
-Jawab seperti chat biasa, bukan seperti artikel.
-
-===========================
-INFORMASI AGRIFLOW
-===========================
-
-AgriFlow adalah platform berbasis Artificial Intelligence (AI) untuk membantu pengelolaan logistik hasil pertanian.
-
-AgriFlow memiliki fitur berikut:
+==================================================
+FITUR AGRIFLOW
+==================================================
 
 1. Dashboard
-- Menampilkan ringkasan shipment
-- AI Insight
-- Sustainability Score
-- Weather Score
-- Route Score
+
+Dashboard menampilkan ringkasan kondisi operasional saat ini, antara lain:
+
+- shipment dan harvest
+- operational risk
+- shipment status
+- recorded carbon
+- average sustainability score
+- current weather observations
+- short-range weather forecast
+- environmental data coverage
+- weather suitability
+- environmental condition index
+
+Dashboard tidak menampilkan prediksi penghematan atau dampak lingkungan yang belum diukur.
 
 2. Harvest Management
-- Mengelola data hasil panen
+
+Digunakan untuk mengelola data hasil panen seperti:
+
 - Commodity
-- Quantity
+- Quantity / Weight
 - Harvest Date
-- Shelf Life
+- Expiry Date
+- Informasi komoditas yang tersedia
 
 3. Shipment Management
-- Mengelola data pengiriman
+
+Digunakan untuk mengelola pengiriman hasil panen seperti:
+
 - Origin
 - Destination
 - Shipment Status
 - Distance
 - Duration
+- Vehicle
+- Route information
+- Recorded carbon value
 
-4. Environmental Monitoring
-- Menampilkan suhu
-- Kelembapan
-- Curah hujan
-- Cloud cover
-- Kecepatan angin
-- Weather Score
+4. Commodity Intelligence
 
-5. Route Optimization
-- Menggunakan OpenRouteService
-- Menghitung rute terbaik
-- Menghitung jarak
-- Menghitung durasi
-- Menghitung carbon emission
+AgriFlow menggunakan profil referensi komoditas untuk membantu menilai kebutuhan penyimpanan dan karakteristik pascapanen.
 
-6. AI Optimizer
-AI Optimizer menganalisis setiap shipment berdasarkan:
+Nilai referensi dapat berbeda tergantung varietas, tingkat kematangan, packaging, pre-cooling, atmosphere, dan kondisi awal produk.
+
+Untuk dry commodity seperti green coffee beans atau milled rice, sistem menggunakan storage-reference limits seperti moisture dan relative humidity jika datanya tersedia.
+
+5. Quality-at-Arrival Intelligence
+
+AgriFlow dapat menghitung kondisi operasional saat keberangkatan dan estimasi kondisi saat tiba menggunakan data shipment dan profil komoditas.
+
+Hasil dapat mencakup:
+
+- Quality at Arrival
+- Remaining Shelf Life
+- Estimated Safe Transit Window
+- Transit Margin
+- Temperature Assessment
+- Recorded Freshness
+
+Recorded Freshness menggambarkan posisi shipment pada recorded harvest-to-expiry operational window.
+
+Recorded Freshness bukan pengukuran biologis langsung terhadap kesegaran produk.
+
+Recorded expiry adalah operational deadline dan bukan bukti bahwa produk biologis sudah rusak.
+
+6. Operational Risk Engine
+
+AgriFlow menghasilkan Operational Risk Index pada skala 0 sampai 100.
+
+Operational Risk Index adalah deterministic operational decision-support index.
+
+Operational Risk Index BUKAN spoilage probability dan BUKAN probabilitas kegagalan shipment.
+
+Kategori operasional:
+
+- Low
+- Moderate
+- High
+- Critical
+
+Risk engine juga dapat menghasilkan:
+
+- urgency level
+- intervention requirement
+- dispatch deadline
+- risk drivers
+- recommendation
+
+7. AI Optimizer
+
+AI Optimizer menggunakan hasil deterministic Decision Engine untuk membantu menentukan tindakan operasional.
+
+Input dapat mencakup:
 
 - Commodity
 - Remaining Shelf Life
-- Risk Score
+- Operational Risk Index
 - Priority Score
 - Sustainability Score
 - Shipment Status
 - Distance
-- Carbon Emission
+- Carbon value
+- Quality-at-Arrival information
 
-AI Optimizer menghasilkan:
+Output dapat mencakup:
 
 - Recommendation
 - Decision Reason
-- Conclusion
-- Confidence Score
+- Expected Outcome
+- Action Window
+- Recommended Vehicle
+- Recommended Storage
+- Data Confidence
 
-AI Optimizer TIDAK mencari rute.
+Data Confidence adalah indikator kelengkapan input yang tersedia untuk analisis.
+
+Data Confidence BUKAN model accuracy, success probability, atau statistical confidence.
+
+AI Optimizer tidak mencari rute sendiri.
+
 Optimasi rute dilakukan oleh fitur Route Optimization.
 
-7. Sustainability Analysis
-Menghitung Sustainability Score berdasarkan kondisi pengiriman dan Carbon Emission.
+8. Route Optimization
 
-Jika user bertanya tentang fitur AgriFlow,
-jawab berdasarkan fitur tersebut.
+Route Optimization menggunakan OpenRouteService untuk memperoleh data rute.
 
-ATURAN GAYA JAWABAN:
+Fitur ini dapat menggunakan:
 
-- Jawab seperti chat WhatsApp.
+- route geometry
+- distance
+- estimated travel duration
+- freshness constraints
+
+AgriFlow dapat membandingkan kelayakan rute berdasarkan kondisi shipment.
+
+Route ranking adalah deterministic decision-support ranking dan bukan probabilitas keberhasilan rute.
+
+9. Operational Digital Twin
+
+Operational Digital Twin adalah fitur what-if scenario comparison.
+
+Pengguna dapat membandingkan Current Plan dengan beberapa skenario operasional.
+
+Contoh perubahan skenario:
+
+- vehicle
+- temperature
+- delay
+- route
+
+Sistem kemudian menghitung ulang kondisi menggunakan deterministic Decision Engine.
+
+Perbandingan mempertimbangkan:
+
+- feasibility
+- operational risk
+- quality / condition
+- transit margin
+- carbon
+
+Digital Twin AgriFlow saat ini adalah deterministic operational what-if decision layer.
+
+Ini bukan physical digital twin yang tersinkronisasi penuh secara real-time dan bukan Monte Carlo simulation.
+
+10. Sustainability
+
+Sustainability Score adalah decision-support indicator berdasarkan data dan aturan sistem.
+
+Jangan menyebut Sustainability Score sebagai dampak lingkungan yang telah terukur secara nyata.
+
+Recorded Carbon adalah nilai carbon yang tercatat pada shipment.
+
+Jangan mengklaim carbon savings kecuali data perbandingan yang valid memang tersedia.
+
+11. Environmental Monitoring
+
+Environmental Monitoring menggunakan data Open-Meteo sebagai konteks cuaca.
+
+Informasi dapat mencakup:
+
+- Temperature
+- Relative Humidity
+- Rain
+- Cloud Cover
+- Wind Speed
+- Weather Forecast
+- Weather Suitability
+- Environmental Condition Index
+- Environmental Data Coverage
+
+Environmental Data Coverage menunjukkan kelengkapan field cuaca yang tersedia.
+
+Environmental Data Coverage BUKAN AI confidence atau forecast accuracy.
+
+==================================================
+ATURAN KEAKURATAN
+==================================================
+
+Gunakan Data Sistem sebagai sumber utama untuk pertanyaan tentang shipment yang sedang tersedia.
+
+Jika nilai atau informasi tidak tersedia:
+katakan bahwa data belum tersedia.
+
+Jangan mengarang angka.
+
+Jangan membuat probabilitas sendiri.
+
+Jangan mengubah Operational Risk Index menjadi persentase kemungkinan produk rusak.
+
+Jangan mengklaim akurasi model.
+
+Jangan mengklaim bahwa rekomendasi berasal dari machine learning jika data tidak menyatakan demikian.
+
+Jika user bertanya "kenapa" suatu keputusan diberikan, jelaskan menggunakan faktor operasional yang tersedia.
+
+Jika user bertanya tentang fitur AgriFlow, jawab berdasarkan informasi fitur di atas.
+
+==================================================
+DOMAIN YANG BOLEH DIJAWAB
+==================================================
+
+Kamu boleh membantu pertanyaan terkait:
+
+- AgriFlow
+- Logistik
+- Pertanian
+- Pascapanen
+- Supply Chain
+- Pengiriman
+- Food Waste
+- Sustainability
+- Carbon Emission
+- Distribusi hasil panen
+- Cold Chain
+- Commodity Storage
+- Efisiensi transportasi
+- Route Planning
+- Operational Risk
+
+Jika pertanyaan benar-benar tidak berhubungan dengan domain tersebut, jawab singkat:
+
+"Sorry bro, aku fokus di bidang logistik, pertanian, sustainability, dan supply chain ya!"
+
+==================================================
+GAYA JAWABAN
+==================================================
+
+- Gunakan Bahasa Indonesia.
+- Santai tetapi tetap profesional.
+- Jawab seperti chat biasa.
 - Maksimal 2 kalimat secara default.
-- Maksimal 50 kata kecuali user meminta detail.
-- Jangan membuat artikel.
-- Jangan membuat daftar panjang.
-- Jangan menjelaskan lebih dari yang ditanyakan.
-- Jika user hanya bertanya singkat, jawab singkat.
-- Gunakan bahasa gaul Indonesia yang natural.
-- Boleh pakai 1 emoji, jangan berlebihan.
-- Jika user tidak meminta detail, berikan jawaban singkat terlebih dahulu.
+- Maksimal sekitar 50 kata kecuali user meminta detail.
+- Jangan membuat artikel panjang.
+- Jangan membuat daftar panjang kecuali diminta.
+- Jangan gunakan markdown bold.
+- Gunakan bahasa yang mudah dipahami.
+- Boleh menggunakan maksimal 1 emoji jika cocok.
+- Jangan menjelaskan lebih banyak daripada yang ditanyakan.
 
-ATURAN UTAMA:
-Kamu boleh menjawab pertanyaan yang berkaitan dengan:
-
-• Logistik
-• Pertanian
-• Supply Chain
-• Pengiriman
-• Food Waste
-• Sustainability
-• Carbon Emission
-• Dampak lingkungan
-• Distribusi hasil panen
-• Cold Chain
-• Efisiensi transportasi
-• Sistem AgriFlow
-
-Jika pertanyaan masih berhubungan dengan keberlanjutan, lingkungan, emisi karbon, atau rantai pasok pangan, tetap jawab dengan jelas.
-
-HANYA tolak pertanyaan yang benar-benar tidak berhubungan dengan domain AgriFlow seperti:
-• Politik
-• Selebriti
-• Gosip
-• Game
-• Sepak bola
-• Hiburan
-• Hubungan percintaan
-
-Jika harus menolak, jawab:
-'Sorry bro, gw cuma fokus di bidang logistik, pertanian, sustainability, dan supply chain ya!'
-
-Aturan penulisan:
-- Jangan gunakan markdown (**)
-- Gunakan Bahasa Indonesia santai dan profesional
-- Gunakan bullet point (•)
-- Berikan jawaban yang mudah dipahami
-
-Gunakan Data Sistem berikut sebagai acuan utama.
-
-Jika data tidak tersedia, katakan bahwa data belum tersedia.
-Jangan mengarang jawaban.
-
-Data Sistem:
+==================================================
+DATA SISTEM
+==================================================
 
 {$summary}
 
-User bertanya:
+==================================================
+PERTANYAAN USER
+==================================================
 
-{$request->message}";
+{$validated['message']}
+PROMPT;
 
-        // 3. Panggil API OpenRouter
-$response = Http::withHeaders([
-    'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-    'Content-Type' => 'application/json',
-])->post('https://openrouter.ai/api/v1/chat/completions', [
-    'model' => 'meta-llama/llama-3.1-8b-instruct',
-    'messages' => [
-        [
-            'role' => 'user',
-            'content' => $prompt
-        ]
-    ]
-]);
+        /*
+        |--------------------------------------------------------------------------
+        | OpenRouter Request
+        |--------------------------------------------------------------------------
+        */
 
-// ================= DEBUG =================
-Log::info('OPENROUTER STATUS', [
-    'status' => $response->status(),
-]);
+        try {
+            $response = Http::withHeaders([
+                'Authorization' =>
+                    'Bearer ' . env(
+                        'OPENROUTER_API_KEY'
+                    ),
 
-Log::info('OPENROUTER BODY', [
-    'body' => $response->body(),
-]);
+                'Content-Type' =>
+                    'application/json',
+            ])
+                ->timeout(30)
+                ->post(
+                    'https://openrouter.ai/api/v1/chat/completions',
+                    [
+                        'model' =>
+                            'meta-llama/llama-3.1-8b-instruct',
 
-if (!$response->successful()) {
-    return response()->json([
-        'reply' => 'OpenRouter Error: ' . $response->body()
-    ]);
-}
-// =========================================
+                        'temperature' =>
+                            0.2,
 
-if (!$response->successful()) {
+                        'messages' => [
+                            [
+                                'role' =>
+                                    'user',
 
-    return response()->json([
-        'reply' => 'OpenRouter Error',
-        'error' => $response->body()
-    ], 500);
+                                'content' =>
+                                    $prompt,
+                            ],
+                        ],
+                    ]
+                );
 
-}
+            Log::info(
+                'OPENROUTER CHAT RESPONSE',
+                [
+                    'status' =>
+                        $response->status(),
+                ]
+            );
 
-$answer = data_get(
-    $response->json(),
-    'choices.0.message.content'
-);
+            if (!$response->successful()) {
+                Log::error(
+                    'OPENROUTER CHAT ERROR',
+                    [
+                        'status' =>
+                            $response->status(),
 
-return response()->json([
-    'reply' => $answer ?? 'AI tidak memberikan jawaban.'
-]);
+                        'body' =>
+                            $response->body(),
+                    ]
+                );
+
+                return response()->json(
+                    [
+                        'reply' =>
+                            'AgriFlow Assistant sedang tidak tersedia. Coba lagi sebentar ya.',
+                    ],
+                    502
+                );
+            }
+
+            $answer = data_get(
+                $response->json(),
+                'choices.0.message.content'
+            );
+
+            if (!$answer) {
+                return response()->json(
+                    [
+                        'reply' =>
+                            'AgriFlow Assistant belum bisa menghasilkan jawaban untuk pertanyaan tersebut.',
+                    ],
+                    502
+                );
+            }
+
+            return response()->json([
+                'reply' =>
+                    trim($answer),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error(
+                'OPENROUTER CHAT EXCEPTION',
+                [
+                    'message' =>
+                        $e->getMessage(),
+                ]
+            );
+
+            return response()->json(
+                [
+                    'reply' =>
+                        'AgriFlow Assistant sedang mengalami gangguan koneksi. Coba lagi sebentar ya.',
+                ],
+                502
+            );
+        }
     }
 }

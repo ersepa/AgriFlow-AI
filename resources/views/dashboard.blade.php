@@ -103,7 +103,7 @@
                             </span>
                         </h1>
                         <p class="text-slate-600 mt-3 text-base sm:text-lg font-normal max-w-2xl leading-relaxed">
-                            Welcome back. Here is your real-time supply chain overview, environmental risk predictions, and predictive logistics insights.
+                            Welcome back. Here is your current supply chain overview, environmental conditions, and deterministic logistics decision support.
                         </p>
                     </div>
 
@@ -330,16 +330,16 @@
 
                                 <p class="text-slate-600 mt-4 text-base leading-relaxed max-w-3xl">
                                     AgriFlow AI continuously evaluated <strong>{{ $totalAnalyses }}</strong> shipment operations. 
-                                    @if($criticalShipments)
-                                        🚨 <span class="font-bold text-rose-600">{{ $criticalShipments }} critical shipment(s)</span> require immediate operational attention.
+                                    @if($criticalOperationalCount)
+                                        🚨 <span class="font-bold text-rose-600">{{ $criticalOperationalCount }} critical shipment(s)</span> require immediate operational attention.
                                     @endif
                                     @if($shipImmediately)
                                         🚚 <span class="font-bold text-slate-800">{{ $shipImmediately }} shipment(s)</span> are ready for instant dispatch.
                                     @endif
                                     @if($optimizeRoute)
-                                        🛣️ <span class="font-bold text-slate-800">{{ $optimizeRoute }} route(s)</span> can be optimized to prevent delays.
+                                        🛣️ <span class="font-bold text-slate-800">{{ $optimizeRoute }} route(s)</span> have optimization recommendations available.
                                     @endif
-                                    🌱 Projected food waste reduction reaches <strong>{{ $estimatedWasteReduction }}%</strong> if recommendations are applied.
+                                    🌱 Current operational insights are generated from recorded shipment data and deterministic risk analysis.
                                 </p>
 
                                 <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -354,9 +354,17 @@
                                     </div>
 
                                     <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm col-span-2 sm:col-span-1">
-                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Waste Saved</p>
-                                        <p class="text-2xl font-black text-teal-600 mt-1">{{ number_format($totalWaste, 0, ',', '.') }} <span class="text-xs text-slate-500 font-bold">KG</span></p>
-                                    </div>
+    <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+        Active Critical
+    </p>
+
+    <p class="text-2xl font-black text-rose-600 mt-1">
+        {{ $criticalOperationalCount }}
+        <span class="text-xs text-slate-500 font-bold">
+            shipment(s)
+        </span>
+    </p>
+</div>
                                 </div>
                             </div>
 
@@ -378,7 +386,7 @@
                                         <span class="text-emerald-600 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ready</span>
                                     </div>
                                     <div class="flex justify-between items-center">
-                                        <span class="text-slate-600">Prediction Model</span>
+                                        <span class="text-slate-600">Decision Engine</span>
                                         <span class="text-emerald-600 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Running</span>
                                     </div>
                                 </div>
@@ -403,7 +411,9 @@
                                 <span>LIVE ENVIRONMENTAL INTELLIGENCE</span>
                             </div>
                             <h2 class="text-3xl font-black text-slate-900 tracking-tight">Weather & Route Monitoring</h2>
-                            <p class="text-slate-500 text-sm mt-1">Real-time weather analytics and route risk prediction powered by Open-Meteo API.</p>
+                            <p class="text-slate-500 text-sm mt-1">
+    Current weather observations and short-range forecast data from Open-Meteo, used as environmental context for operational decisions.
+</p>
                         </div>
 
                         <div class="flex items-center gap-4">
@@ -475,43 +485,48 @@
                                     <p class="text-3xl font-black text-slate-900 mt-2">{{ $environment['weather']['cloud_cover'] }}%</p>
                                 </div>
                                 <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
-                                    <p class="text-xs font-bold text-emerald-800">🌍 Weather Score</p>
-                                    <p class="text-3xl font-black text-emerald-700 mt-2">{{ $environment['weather_score'] }}</p>
+                                    <p class="text-xs font-bold text-emerald-800">🌍 Weather Suitability</p>
+                                    <p class="text-3xl font-black text-emerald-700 mt-2">{{ $environment['weather_suitability_score'] ?? '—' }}</p>
                                 </div>
                             </div>
 
                             {{-- AI Weather Summary & Progress Indicators --}}
                             <div class="mt-6 p-6 rounded-2xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                                 <div>
-                                    <p class="text-xs font-extrabold uppercase tracking-wider text-teal-700 mb-2">AI Weather Summary</p>
+                                    <p class="text-xs font-extrabold uppercase tracking-wider text-teal-700 mb-2">Weather Operations Summary</p>
                                     <p class="text-sm text-slate-600 leading-relaxed">{{ $environment['recommendation'] }}</p>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <div class="flex justify-between text-xs font-bold mb-1">
                                             <span class="text-slate-500">Route Health</span>
-                                            <span class="text-slate-900">{{ $environment['route_score'] }}%</span>
+                                            <span class="text-slate-900">{{ $environment['weather_suitability_score'] ?? 0 }}%</span>
                                         </div>
                                         <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
-                                            <div class="h-full bg-emerald-500 rounded-full" style="width:{{ $environment['route_score'] }}%"></div>
+                                            <div class="h-full bg-emerald-500 rounded-full" style="width:{{ $environment['weather_suitability_score'] ?? 0 }}%"></div>
                                         </div>
                                     </div>
                                     <div>
                                         <div class="flex justify-between text-xs font-bold mb-1">
-                                            <span class="text-slate-500">AI Confidence</span>
-                                            <span class="text-slate-900">{{ $environment['confidence'] }}%</span>
+                                            <span class="text-slate-500">Environmental Data Coverage</span>
+<span class="text-slate-900">{{ $environment['data_coverage'] ?? 0 }}%</span>
                                         </div>
                                         <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
-                                            <div class="h-full bg-indigo-600 rounded-full" style="width:{{ $environment['confidence'] }}%"></div>
+                                            <div class="h-full bg-indigo-600 rounded-full" style="width:{{ $environment['data_coverage'] ?? 0 }}%"></div>
                                         </div>
                                     </div>
                                     <div>
                                         <div class="flex justify-between text-xs font-bold mb-1">
-                                            <span class="text-slate-500">Environmental Risk</span>
-                                            <span class="text-slate-900">{{ $environment['environmental_risk'] }}%</span>
+                                            <span class="text-slate-500">Environmental Condition Index</span>
+                                            <span class="text-slate-900">
+    {{ $environment['environmental_condition_index'] ?? '—' }}/100
+</span>
                                         </div>
                                         <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
-                                            <div class="h-full bg-rose-500 rounded-full" style="width:{{ $environment['environmental_risk'] }}%"></div>
+                                            <div
+    class="h-full bg-rose-500 rounded-full"
+    style="width: {{ $environment['environmental_condition_index'] ?? 0 }}%">
+</div>
                                         </div>
                                     </div>
                                 </div>
@@ -526,7 +541,7 @@
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                             <div>
                                 <p class="text-xs font-extrabold uppercase tracking-wider text-teal-700">Forecast Analytics</p>
-                                <h3 class="text-xl font-black text-slate-900">AI Weather Prediction • Next 6 Hours</h3>
+                                <h3 class="text-xl font-black text-slate-900">Weather Forecast • Next 6 Hours</h3>
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 <button class="weather-tab active" data-type="temp">🌡 Temperature</button>
@@ -546,106 +561,136 @@
             </div>
 
 
-            {{-- BEFORE VS AFTER AI IMPACT SIMULATION --}}
-            <div class="mb-12">
-                <div class="mb-6">
-                    <p class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">AI IMPACT SIMULATION</p>
-                    <h2 class="text-3xl font-black text-slate-900 tracking-tight">Before vs After AI Optimization</h2>
-                    <p class="text-slate-500 text-sm mt-1">Direct efficiency and risk comparison achieved when implementing AgriFlow AI logistics model.</p>
-                </div>
+{{-- CURRENT OPERATIONAL SNAPSHOT --}}
+<div class="mb-12">
+    <div class="mb-6">
+        <p class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">
+            OPERATIONAL SNAPSHOT
+        </p>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                    
-                    {{-- 1. Operational Risk --}}
-                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
-                        <div>
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Operational Risk</span>
-                            <div class="mt-6 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
-                                    <p class="text-2xl font-black text-slate-400 line-through">{{ $currentRisk }}%</p>
-                                </div>
-                                <div class="text-emerald-500 font-bold text-xl">➔</div>
-                                <div class="text-right">
-                                    <p class="text-[10px] font-bold text-emerald-600 uppercase">Optimized</p>
-                                    <p class="text-3xl font-black text-emerald-600">{{ $projectedRisk }}%</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-                            <span>Risk Reduction</span>
-                            <span class="px-2.5 py-1 bg-emerald-50 rounded-full">↓ {{ $riskReduction }}%</span>
-                        </div>
-                    </div>
+        <h2 class="text-3xl font-black text-slate-900 tracking-tight">
+            Current Logistics Intelligence
+        </h2>
 
-                    {{-- 2. Food Waste --}}
-                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
-                        <div>
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Food Waste</span>
-                            <div class="mt-6 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
-                                    <p class="text-xl font-black text-slate-400 line-through">{{ number_format($currentWaste,0) }} <span class="text-xs">kg</span></p>
-                                </div>
-                                <div class="text-teal-500 font-bold text-xl">➔</div>
-                                <div class="text-right">
-                                    <p class="text-[10px] font-bold text-teal-600 uppercase">Optimized</p>
-                                    <p class="text-2xl font-black text-teal-600">{{ number_format($projectedWaste,0) }} <span class="text-xs">kg</span></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-teal-700">
-                            <span>Waste Prevented</span>
-                            <span class="px-2.5 py-1 bg-teal-50 rounded-full">↓ {{ number_format($wasteSaved,0) }} kg</span>
-                        </div>
-                    </div>
+        <p class="text-slate-500 text-sm mt-1">
+            Current metrics derived from recorded shipment data and AgriFlow's deterministic operational risk engine.
+        </p>
+    </div>
 
-                    {{-- 3. Carbon Emission --}}
-                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
-                        <div>
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Carbon Emission</span>
-                            <div class="mt-6 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
-                                    <p class="text-xl font-black text-slate-400 line-through">{{ number_format($currentCarbon,0) }} <span class="text-xs">kg</span></p>
-                                </div>
-                                <div class="text-emerald-500 font-bold text-xl">➔</div>
-                                <div class="text-right">
-                                    <p class="text-[10px] font-bold text-emerald-600 uppercase">Optimized</p>
-                                    <p class="text-2xl font-black text-emerald-600">{{ number_format($projectedCarbon,0) }} <span class="text-xs">kg</span></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-                            <span>CO₂ Saved</span>
-                            <span class="px-2.5 py-1 bg-emerald-50 rounded-full">↓ {{ number_format($carbonSaved,0) }} kg</span>
-                        </div>
-                    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-                    {{-- 4. Delivery Efficiency --}}
-                    <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
-                        <div>
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Delivery Efficiency</span>
-                            <div class="mt-6 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current</p>
-                                    <p class="text-2xl font-black text-slate-400 line-through">{{ $currentEfficiency }}%</p>
-                                </div>
-                                <div class="text-indigo-500 font-bold text-xl">➔</div>
-                                <div class="text-right">
-                                    <p class="text-[10px] font-bold text-indigo-600 uppercase">Optimized</p>
-                                    <p class="text-3xl font-black text-indigo-600">{{ $projectedEfficiency }}%</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-700">
-                            <span>Speed Gain</span>
-                            <span class="px-2.5 py-1 bg-indigo-50 rounded-full">↑ {{ $efficiencyGain }}% Faster</span>
-                        </div>
-                    </div>
+        {{-- 1. Average Operational Risk --}}
+        <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Average Operational Risk
+                </span>
 
+                <div class="mt-6">
+                    <p class="text-4xl font-black text-slate-900">
+                        {{ $averageOperationalRisk }}
+                        <span class="text-sm text-slate-400">/100</span>
+                    </p>
+
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                        Average deterministic risk index across active shipments.
+                    </p>
                 </div>
             </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+                <span class="text-slate-500">
+                    High-risk analysis share
+                </span>
+
+                <span class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full">
+                    {{ $highRiskShare }}%
+                </span>
+            </div>
+        </div>
+
+        {{-- 2. Critical Operational Shipments --}}
+        <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Critical Shipments
+                </span>
+
+                <div class="mt-6">
+                    <p class="text-4xl font-black text-rose-600">
+                        {{ $criticalOperationalCount }}
+                    </p>
+
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                        Active shipments currently classified as Critical by the operational risk engine.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100">
+                <span class="text-xs font-bold text-slate-500">
+                    Requires operational attention when present
+                </span>
+            </div>
+        </div>
+
+        {{-- 3. Recorded Carbon --}}
+        <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Recorded Carbon
+                </span>
+
+                <div class="mt-6">
+                    <p class="text-4xl font-black text-emerald-600">
+                        {{ number_format($currentCarbon, 1) }}
+                        <span class="text-sm text-slate-400">kg CO₂</span>
+                    </p>
+
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                        Aggregate carbon value currently recorded across shipment data.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100">
+                <span class="text-xs font-bold text-slate-500">
+                    Recorded metric · not projected savings
+                </span>
+            </div>
+        </div>
+
+        {{-- 4. Delivery Completion --}}
+        <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Delivery Completion
+                </span>
+
+                <div class="mt-6">
+                    <p class="text-4xl font-black text-indigo-600">
+                        {{ $currentEfficiency }}%
+                    </p>
+
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                        Share of recorded shipments currently marked as Delivered.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+                <span class="text-slate-500">
+                    Delivered
+                </span>
+
+                <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+                    {{ $deliveredShipments }} / {{ $totalShipments }}
+                </span>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 
             {{-- MAIN CONTENT GRID: Priority Actions, Sustainability & Analytics Charts --}}
@@ -662,7 +707,7 @@
                                 <p class="text-xs text-slate-500">High-risk shipment alerts requiring immediate operational dispatch</p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-full uppercase">{{ $highRisk }} Critical</span>
+                                <span class="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-full uppercase">{{ $criticalOperationalCount }} Critical</span>
                                 <a href="{{ route('ai-analysis.history') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
                                     <span>View All</span>
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -687,30 +732,55 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-6 rounded-3xl shadow-lg shadow-emerald-600/15 flex flex-col justify-between">
                             <div>
-                                <p class="text-xs font-extrabold opacity-80 uppercase tracking-wider">Green Impact Score</p>
-                                <p class="text-5xl font-black mt-3">{{ $greenImpactScore }}%</p>
+                                <p class="text-xs font-extrabold opacity-80 uppercase tracking-wider">
+    Average Sustainability Score
+</p>
+                                <p class="text-5xl font-black mt-3">
+    {{ $greenImpactScore }}
+    <span class="text-lg">/100</span>
+</p>
                             </div>
-                            <p class="text-xs text-emerald-100 mt-4 leading-relaxed">System-wide environmental sustainability compliance rate across active logistics channels.</p>
+                            <p class="text-xs text-emerald-100 mt-4 leading-relaxed">
+    Average sustainability score from persisted AgriFlow analyses. This is a decision-support indicator, not measured environmental impact.
+</p>
                         </div>
+<div class="agri-card p-6 flex flex-col justify-between">
+    <div>
+        <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            Recorded Carbon
+        </p>
 
-                        <div class="agri-card p-6 flex flex-col justify-between">
-                            <div>
-                                <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Waste Prevented Total</p>
-                                <p class="text-3xl font-black text-slate-900 mt-2">{{ number_format($totalWaste, 0, ',', '.') }} <span class="text-sm font-bold text-slate-500">KG</span></p>
-                            </div>
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
-                                    <span>Sustainability Efficiency</span>
-                                    <span>{{ $greenImpactScore }}%</span>
-                                </div>
-                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                    <div class="bg-emerald-500 h-full rounded-full" style="width: {{ $greenImpactScore }}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <p class="text-3xl font-black text-slate-900 mt-2">
+            {{ number_format($currentCarbon, 1) }}
+            <span class="text-sm font-bold text-slate-500">
+                KG CO₂
+            </span>
+        </p>
+    </div>
 
-                    {{-- System Wawasan Insight --}}
+    <div class="mt-4">
+        <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+            <span>Average Sustainability Score</span>
+            <span>{{ $greenImpactScore }}/100</span>
+        </div>
+
+        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div
+                class="bg-emerald-500 h-full rounded-full"
+                style="width: {{ min(100, max(0, $greenImpactScore)) }}%">
+            </div>
+        </div>
+
+        <p class="text-[10px] text-slate-400 mt-2">
+            Recorded carbon aggregate; no projected savings implied.
+        </p>
+    </div>
+</div>
+
+{{-- Close Sustainability 2-column grid --}}
+</div>
+
+{{-- System Wawasan Insight --}}
                     <div class="agri-card p-6 border-l-4 border-l-teal-500">
                         <h3 class="font-extrabold text-xs text-teal-700 uppercase tracking-wider mb-2">System Insight</h3>
                         <p class="text-slate-700 text-sm italic font-medium">"{{ $aiInsightText }}"</p>
@@ -729,7 +799,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
                                 <p class="text-xs text-slate-500">Critical Shipments</p>
-                                <p class="text-2xl font-black text-rose-600 mt-1">{{ $criticalShipments }}</p>
+                                <p class="text-2xl font-black text-rose-600 mt-1">{{ $criticalOperationalCount }}</p>
                             </div>
                             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
                                 <p class="text-xs text-slate-500">Route Optimization</p>
@@ -744,9 +814,9 @@
                         <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60">
                             <p class="text-xs text-emerald-800 font-extrabold uppercase tracking-wider mb-1">AI Verdict</p>
                             <p class="text-xs text-slate-700 leading-relaxed">
-                                @if($criticalShipments >= 5)
+                                @if($criticalOperationalCount >= 5)
                                     Several shipments require immediate operational attention. Prioritize dispatch scheduling to minimize spoilage and improve logistics efficiency.
-                                @elseif($criticalShipments >= 2)
+                                @elseif($criticalOperationalCount >= 2)
                                     The logistics network remains stable, but several shipments should be monitored to maintain sustainability performance.
                                 @else
                                     Current logistics performance is healthy. Continue monitoring shipment quality and optimize routes where possible.
@@ -773,15 +843,6 @@
                             <span class="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">LIVE</span>
                         </div>
                         <div class="h-56"><canvas id="shipmentStatusChart"></canvas></div>
-                    </div>
-
-                    {{-- AI Prediction Trend Chart --}}
-                    <div class="agri-card p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider">AI Prediction Trend</h3>
-                            <span class="text-xs font-bold text-indigo-600">Next 7 Days</span>
-                        </div>
-                        <div class="h-60"><canvas id="predictionChart"></canvas></div>
                     </div>
 
                     {{-- Critical Alert Box --}}
@@ -923,36 +984,6 @@
                 }
             },
             plugins: [ChartDataLabels]
-        });
-
-        // AI Prediction Line Chart
-        const predictionCtx = document.getElementById('predictionChart');
-        new Chart(predictionCtx, {
-            type: 'line',
-            data: {
-                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
-                datasets: [{
-                    label: 'Predicted Risk',
-                    data: @json($predictionTrend),
-                    borderColor: '#0d9488',
-                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
-                    fill: true,
-                    tension: .4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { labels: { color: '#475569', font: { weight: 'bold' } } }
-                },
-                scales: {
-                    x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } },
-                    y: { beginAtZero: true, max: 100, ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } }
-                }
-            }
         });
 
         // Weather Forecast Trend Chart

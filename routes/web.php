@@ -10,8 +10,8 @@
     use App\Models\AiAnalysis;
     use App\Http\Controllers\AIOptimizerController;
     use App\Services\AI\DecisionEngine;
-    use App\Http\Controllers\SimulationController;
     use App\Services\EnvironmentalService;
+    use App\Http\Controllers\OperationalDigitalTwinController;
 
 
 Route::get('/test-environment', function () {
@@ -31,18 +31,79 @@ Route::get('/test-environment', function () {
         return view('welcome');
     });
 
-    Route::middleware('auth')->group(function(){
-
-    Route::get('/simulation',
-        [SimulationController::class,'index']
-    )->name('simulation.index');
-
-});
+Route::get(
+    '/digital-twin',
+    [OperationalDigitalTwinController::class, 'index']
+)
+    ->middleware('auth')
+    ->name('digital-twin.index');
 
 Route::post(
-    '/simulation/run',
-    [SimulationController::class,'run']
-)->name('simulation.run');  
+    '/digital-twin/{shipment}/simulate',
+    [OperationalDigitalTwinController::class, 'simulate']
+)
+    ->middleware('auth')
+    ->name('digital-twin.simulate');
+
+Route::post(
+    '/digital-twin/{shipment}/scenarios',
+    [OperationalDigitalTwinController::class, 'store']
+)
+    ->middleware('auth')
+    ->name('digital-twin.scenarios.store');
+
+Route::get(
+    '/digital-twin/scenarios/history',
+    [OperationalDigitalTwinController::class, 'history']
+)
+    ->middleware('auth')
+    ->name('digital-twin.scenarios.history');
+
+Route::get(
+    '/digital-twin/scenarios/{scenario}',
+    [OperationalDigitalTwinController::class, 'show']
+)
+    ->middleware('auth')
+    ->name('digital-twin.scenarios.show');
+
+Route::post(
+    '/digital-twin/scenarios/{scenario}/prefer',
+    [OperationalDigitalTwinController::class, 'prefer']
+)
+    ->middleware('auth')
+    ->name('digital-twin.scenarios.prefer');
+
+    // ==========================================
+// STEP 6.2 — MULTI-SCENARIO COMPARISON
+// ==========================================
+
+Route::post(
+    '/digital-twin/{shipment}/compare',
+    [OperationalDigitalTwinController::class, 'compare']
+)
+    ->middleware('auth')
+    ->name('digital-twin.compare');
+
+Route::post(
+    '/digital-twin/{shipment}/comparison-sets',
+    [OperationalDigitalTwinController::class, 'storeComparison']
+)
+    ->middleware('auth')
+    ->name('digital-twin.comparisons.store');
+
+Route::get(
+    '/digital-twin/comparisons/history',
+    [OperationalDigitalTwinController::class, 'comparisonHistory']
+)
+    ->middleware('auth')
+    ->name('digital-twin.comparisons.history');
+
+Route::get(
+    '/digital-twin/comparisons/{comparisonSet}',
+    [OperationalDigitalTwinController::class, 'comparisonShow']
+)
+    ->middleware('auth')
+    ->name('digital-twin.comparisons.show');
 
 Route::get('/ai-optimizer/explain/{shipment}', 
     [AIOptimizerController::class, 'explain']
@@ -143,14 +204,20 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
         'avgScore' => $avgScore,
     ]);
 
-    // Asumsi: Waste Prevented adalah (Total Weight * (avgScore/100))
-        $greenImpactScore = round($avgScore, 0); 
-        $totalWaste = round($totalWeight * ($avgScore / 100), 1);
+// Average sustainability score from persisted AI analyses.
+// This is a decision-support aggregate, not measured environmental impact.
+$greenImpactScore = round(
+    $avgScore,
+    0
+);
 
-    $decoded = json_decode($aiInsight, true);
+$aiInsightText =
+    $aiInsight['insight']
+    ?? 'No insight available';
 
-    $aiInsightText = $decoded['insight'] ?? 'No insight available';
-    $aiRecommendation = $decoded['recommendation'] ?? '';
+$aiRecommendation =
+    $aiInsight['recommendation']
+    ?? '';
 
     $latestHighRisk = \App\Models\AiAnalysis::where('risk_level', 'High')
         ->latest()
@@ -160,7 +227,11 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
 // AI Executive Summary
 // ==============================
 
-$criticalShipments = \App\Models\AiAnalysis::where('risk_level', 'High')->count();
+$highRiskAnalyses =
+    \App\Models\AiAnalysis::where(
+        'risk_level',
+        'High'
+    )->count();
 
 $optimizeRoute = \App\Models\AiAnalysis::where(
     'recommendations',
@@ -173,11 +244,6 @@ $shipImmediately = \App\Models\AiAnalysis::where(
     'like',
     '%Ship immediately%'
 )->count();
-
-$estimatedWasteReduction = min(
-    100,
-    round($greenImpactScore * 0.35)
-);
 
 $engine = app(DecisionEngine::class);
 
@@ -249,8 +315,6 @@ $statusTransit = \App\Models\Shipment::where('status','In Transit')->count();
 
 $statusDelivered = \App\Models\Shipment::where('status','Delivered')->count();
 
-$predictionTrend = [];
-
 /*
 |--------------------------------------------------------------------------
 | Live Environmental Intelligence
@@ -263,69 +327,85 @@ $environment = $environmentService->getEnvironment(null);
 
 $engine = app(DecisionEngine::class);
 
-foreach(range(1,7) as $day){
-
-    $riskAverage = 0;
-
-    $count = 0;
-
-    foreach(
-        \App\Models\Shipment::with('harvest')
-        ->whereIn('status',['Harvested','Packed','In Transit'])
-        ->get()
-        as $shipment
-    ){
-
-        $analysis = $engine->analyze($shipment);
-
-        $riskAverage += $analysis['risk_score'];
-
-        $count++;
-
-    }
-
-    $predictionTrend[] = max(
-        5,
-        round(($riskAverage / max($count,1)) - ($day*3))
-    );
-
-}
-      $currentRisk = $totalAnalyses > 0
-    ? round(($highRisk / $totalAnalyses) * 100)
+$highRiskShare = $totalAnalyses > 0
+    ? round(
+        ($highRisk / $totalAnalyses) * 100
+    )
     : 0;
 
-// Proyeksi setelah semua rekomendasi AI diterapkan
-$projectedRisk = max(0, round($currentRisk * 0.65));
+// ==========================================
+// Observed Operational Metrics
+// ==========================================
 
-$currentWaste = round($totalWaste, 1);
-$projectedWaste = round($currentWaste * 0.68, 1);
+// Share of persisted analyses currently
+// classified as High risk.
+$highRiskShare = $totalAnalyses > 0
+    ? round(
+        ($highRisk / $totalAnalyses) * 100
+    )
+    : 0;
 
+// Recorded shipment carbon aggregate.
+// This uses persisted shipment data;
+// it is not a projected reduction.
 $currentCarbon = round(
-    \App\Models\Shipment::sum('carbon_emission'),
+    \App\Models\Shipment::sum(
+        'carbon_emission'
+    ),
     1
 );
 
-$projectedCarbon = round($currentCarbon * 0.82, 1);
-
+// Observed delivery completion rate.
 $currentEfficiency = $totalShipments > 0
-    ? round(($deliveredShipments / $totalShipments) * 100)
+    ? round(
+        (
+            $deliveredShipments
+            / $totalShipments
+        ) * 100
+    )
     : 0;
 
-$projectedEfficiency = min(
-    100,
-    $currentEfficiency + 22
-);
+// Current operational risk from active
+// shipments using the deterministic
+// DecisionEngine.
+$activeShipmentAnalyses =
+    \App\Models\Shipment::with('harvest')
+        ->whereIn(
+            'status',
+            [
+                'Harvested',
+                'Packed',
+                'In Transit',
+            ]
+        )
+        ->get()
+        ->map(
+            fn ($shipment) =>
+                $engine->analyze(
+                    $shipment
+                )
+        );
 
-// Confidence dihitung dari kualitas data
-$projectionConfidence = min(
-    98,
-    80 + floor($totalAnalyses * 0.8)
-);
+$averageOperationalRisk =
+    $activeShipmentAnalyses->isNotEmpty()
+        ? round(
+            $activeShipmentAnalyses
+                ->avg('risk_score')
+        )
+        : 0;
 
-$riskReduction = $currentRisk - $projectedRisk;
-$wasteSaved = $currentWaste - $projectedWaste;
-$carbonSaved = $currentCarbon - $projectedCarbon;
-$efficiencyGain = $projectedEfficiency - $currentEfficiency;  
+$criticalOperationalCount =
+    $activeShipmentAnalyses
+        ->filter(
+            fn ($analysis) =>
+                (
+                    $analysis[
+                        'risk_severity'
+                    ]
+                    ?? null
+                ) === 'Critical'
+        )
+        ->count(); 
 
 $forecast = $environment['forecast'] ?? [];
 $weatherTrend = [];
@@ -373,55 +453,50 @@ if (
     }
 }
 
-    return view('dashboard', compact(
-        'totalHarvests',
-        'totalWeight',
-        'totalShipments',
-        'deliveredShipments',
-        'totalAnalyses',
-        'avgScore',
-        'lowRisk',
-        'mediumRisk',
-        'highRisk',
-        'mostRiskyShipment',
-        'aiInsight',
-        'aiInsightText',
-        'aiRecommendation',
-        'latestHighRisk',
-        'greenImpactScore', 
-        'totalWaste',
-        'criticalShipments',
-'optimizeRoute',
-'shipImmediately',
-'estimatedWasteReduction',
-'operationalRecommendation',
-'dashboardShipments',
-'statusHarvested',
-'statusPacked',
-'statusTransit',
-'statusDelivered',
-'predictionTrend',
-'currentRisk',
-'projectedRisk',
+return view('dashboard', compact(
+    'totalHarvests',
+    'totalWeight',
+    'totalShipments',
+    'deliveredShipments',
 
-'currentWaste',
-'projectedWaste',
+    'totalAnalyses',
+    'avgScore',
 
-'currentCarbon',
-'projectedCarbon',
+    'lowRisk',
+    'mediumRisk',
+    'highRisk',
 
-'currentEfficiency',
-'projectedEfficiency',
+    'mostRiskyShipment',
 
-'projectionConfidence',
+    'aiInsight',
+    'aiInsightText',
+    'aiRecommendation',
 
-'riskReduction',
-'wasteSaved',
-'carbonSaved',
-'efficiencyGain',
-'environment',
-'weatherTrend',
-    ));
+    'latestHighRisk',
+
+    'greenImpactScore',
+
+    'optimizeRoute',
+    'shipImmediately',
+
+    'operationalRecommendation',
+    'dashboardShipments',
+
+    'statusHarvested',
+    'statusPacked',
+    'statusTransit',
+    'statusDelivered',
+
+    'highRiskShare',
+    'averageOperationalRisk',
+    'criticalOperationalCount',
+
+    'currentCarbon',
+    'currentEfficiency',
+
+    'environment',
+    'weatherTrend',
+));
 
     })->middleware(['auth'])->name('dashboard');
         Route::resource('harvests', HarvestController::class)

@@ -30,10 +30,9 @@ class AIOptimizerController extends Controller
                 $engine,
                 $freshnessRoutes
             ) {
-                $analysis =
-                    $engine->analyze(
-                        $shipment
-                    );
+                $analysis = $engine->analyze(
+                    $shipment
+                );
 
                 $routeAssessment =
                     $freshnessRoutes
@@ -43,31 +42,32 @@ class AIOptimizerController extends Controller
                         );
 
                 return [
-                    'shipment' => $shipment,
+                    'shipment' =>
+                        $shipment,
 
                     'commodity' =>
-                        $shipment->harvest?->commodity
+                        $shipment
+                            ->harvest
+                            ?->commodity
                         ?? 'Unknown',
 
-                    'origin' => $shipment->origin,
+                    'origin' =>
+                        $shipment->origin,
+
                     'destination' =>
                         $shipment->destination,
 
                     'origin_lat' =>
-                        $shipment->origin_lat
-                        ?? -6.2,
+                        $shipment->origin_lat,
 
                     'origin_lng' =>
-                        $shipment->origin_lng
-                        ?? 106.8,
+                        $shipment->origin_lng,
 
                     'destination_lat' =>
-                        $shipment->destination_lat
-                        ?? -6.2,
+                        $shipment->destination_lat,
 
                     'destination_lng' =>
-                        $shipment->destination_lng
-                        ?? 106.8,
+                        $shipment->destination_lng,
 
                     'priority_score' =>
                         $analysis[
@@ -87,10 +87,12 @@ class AIOptimizerController extends Controller
                     'risk_severity' =>
                         $analysis[
                             'risk_severity'
-                        ] ?? (
+                        ]
+                        ?? (
                             $analysis[
                                 'risk_level'
-                            ] ?? 'Unknown'
+                            ]
+                            ?? 'Unknown'
                         ),
 
                     'sustainability_score' =>
@@ -101,22 +103,26 @@ class AIOptimizerController extends Controller
                     'quality_at_arrival' =>
                         $analysis[
                             'quality_at_arrival'
-                        ] ?? null,
+                        ]
+                        ?? null,
 
                     'quality_status' =>
                         $analysis[
                             'quality_status'
-                        ] ?? 'Unavailable',
+                        ]
+                        ?? 'Unavailable',
 
                     'transit_margin_hours' =>
                         $analysis[
                             'transit_margin_hours'
-                        ] ?? null,
+                        ]
+                        ?? null,
 
                     'safe_transit_status' =>
                         $analysis[
                             'safe_transit_status'
-                        ] ?? 'Unavailable',
+                        ]
+                        ?? 'Unavailable',
 
                     'route_assessment' =>
                         $routeAssessment,
@@ -124,17 +130,20 @@ class AIOptimizerController extends Controller
                     'freshness_route_score' =>
                         $routeAssessment[
                             'route_score'
-                        ],
+                        ]
+                        ?? null,
 
                     'freshness_feasibility' =>
                         $routeAssessment[
                             'freshness_feasibility'
-                        ],
+                        ]
+                        ?? 'Unavailable',
 
                     'delay_tolerance_hours' =>
                         $routeAssessment[
                             'delay_tolerance_hours'
-                        ],
+                        ]
+                        ?? null,
                 ];
             })
             ->sortByDesc(
@@ -146,29 +155,43 @@ class AIOptimizerController extends Controller
             $collection->count();
 
         $criticalCount =
-            $collection->where(
-                'risk_severity',
-                'Critical'
-            )->count();
+            $collection
+                ->where(
+                    'risk_severity',
+                    'Critical'
+                )
+                ->count();
 
         $highCount =
-            $collection->where(
-                'risk_severity',
-                'High'
-            )->count();
+            $collection
+                ->where(
+                    'risk_severity',
+                    'High'
+                )
+                ->count();
 
         $freshnessSafeCount =
-            $collection->where(
-                'freshness_feasibility',
-                'Safe'
-            )->count();
+            $collection
+                ->where(
+                    'freshness_feasibility',
+                    'Safe'
+                )
+                ->count();
+
+        $routeScores =
+            $collection
+                ->pluck(
+                    'freshness_route_score'
+                )
+                ->filter(
+                    fn ($value) =>
+                        $value !== null
+                );
 
         $averageRouteScore =
-            $totalShipments > 0
+            $routeScores->isNotEmpty()
                 ? round(
-                    $collection->avg(
-                        'freshness_route_score'
-                    ),
+                    $routeScores->avg(),
                     1
                 )
                 : 0;
@@ -193,13 +216,19 @@ class AIOptimizerController extends Controller
 
         $results =
             new LengthAwarePaginator(
-                $collection->forPage(
-                    $page,
-                    $perPage
-                )->values(),
+                $collection
+                    ->forPage(
+                        $page,
+                        $perPage
+                    )
+                    ->values(),
+
                 $collection->count(),
+
                 $perPage,
+
                 $page,
+
                 [
                     'path' =>
                         request()->url(),
@@ -268,25 +297,32 @@ class AIOptimizerController extends Controller
             );
         }
 
-        $route = $routes->getRoute(
-            [
-                'lat' =>
-                    (float) $shipment->origin_lat,
+        $route =
+            $routes->getRoute(
+                [
+                    'lat' =>
+                        (float) $shipment
+                            ->origin_lat,
 
-                'lon' =>
-                    (float) $shipment->origin_lng,
-            ],
-            [
-                'lat' =>
-                    (float) $shipment->destination_lat,
+                    'lon' =>
+                        (float) $shipment
+                            ->origin_lng,
+                ],
+                [
+                    'lat' =>
+                        (float) $shipment
+                            ->destination_lat,
 
-                'lon' =>
-                    (float) $shipment->destination_lng,
-            ]
-        );
+                    'lon' =>
+                        (float) $shipment
+                            ->destination_lng,
+                ]
+            );
 
         $feature =
-            $route['features'][0]
+            $route[
+                'features'
+            ][0]
             ?? null;
 
         if (!$feature) {
@@ -314,6 +350,12 @@ class AIOptimizerController extends Controller
         ]);
     }
 
+    /**
+     * LLM explanation endpoint.
+     *
+     * DecisionEngine remains the source of truth for operational decisions.
+     * GeminiService only explains the deterministic result.
+     */
     public function explain(
         Shipment $shipment,
         DecisionEngine $engine,
@@ -332,7 +374,9 @@ class AIOptimizerController extends Controller
             $gemini
                 ->generateShipmentExplanation([
                     'commodity' =>
-                        $shipment->harvest?->commodity
+                        $shipment
+                            ->harvest
+                            ?->commodity
                         ?? 'Unknown',
 
                     'origin' =>
@@ -347,10 +391,12 @@ class AIOptimizerController extends Controller
                     'remaining_days' =>
                         $analysis[
                             'remaining_days'
-                        ] ?? 0,
+                        ]
+                        ?? 0,
 
                     'distance' =>
-                        $shipment->distance_km
+                        $shipment
+                            ->distance_km
                         ?? 0,
 
                     'risk_score' =>
@@ -371,12 +417,14 @@ class AIOptimizerController extends Controller
                     'recommended_action' =>
                         $analysis[
                             'recommended_action'
-                        ] ?? null,
+                        ]
+                        ?? null,
 
                     'recommendation_reason' =>
                         $analysis[
                             'recommendation_reason'
-                        ] ?? null,
+                        ]
+                        ?? null,
                 ]);
 
         if (!$result) {
@@ -384,48 +432,79 @@ class AIOptimizerController extends Controller
                 'recommendation' =>
                     $analysis[
                         'recommended_action'
-                    ] ?? 'Review shipment',
+                    ]
+                    ?? 'Review shipment',
 
                 'decision_reason' =>
                     $analysis[
                         'recommendation_reason'
-                    ] ?? 'No explanation available.',
+                    ]
+                    ?? 'No explanation available.',
 
                 'conclusion' =>
-                    'Use the deterministic AgriFlow decision outputs as the operational source of truth.',
+                    $analysis[
+                        'expected_outcome'
+                    ]
+                    ?? 'Use the deterministic AgriFlow decision outputs as the operational source of truth.',
 
-                'confidence' => 0,
+                'data_confidence' =>
+                    $analysis[
+                        'data_confidence'
+                    ]
+                    ?? 0,
             ]);
         }
 
         return response()->json([
+            /*
+             * IMPORTANT:
+             * Recommendation always comes from DecisionEngine.
+             * The LLM cannot replace the operational decision.
+             */
             'recommendation' =>
-                $result[
-                    'recommendation'
-                ] ?? (
-                    $analysis[
-                        'recommended_action'
-                    ] ?? '-'
-                ),
+                $analysis[
+                    'recommended_action'
+                ]
+                ?? 'Review shipment',
 
+            /*
+             * LLM may explain the existing deterministic decision.
+             */
             'decision_reason' =>
                 $result[
                     'decision_reason'
-                ] ?? (
+                ]
+                ?? (
                     $analysis[
                         'recommendation_reason'
-                    ] ?? '-'
+                    ]
+                    ?? 'No explanation available.'
                 ),
 
+            /*
+             * LLM may summarize the expected operational outcome,
+             * but deterministic engine output remains the fallback.
+             */
             'conclusion' =>
                 $result[
                     'conclusion'
-                ] ?? '-',
+                ]
+                ?? (
+                    $analysis[
+                        'expected_outcome'
+                    ]
+                    ?? 'Review the deterministic operational assessment.'
+                ),
 
-            'confidence' =>
-                $result[
-                    'confidence'
-                ] ?? 0,
+            /*
+             * Input completeness from DecisionEngine.
+             * This is not model accuracy.
+             */
+            'data_confidence' =>
+                $analysis[
+                    'data_confidence'
+                ]
+                ?? 0,
         ]);
     }
 }

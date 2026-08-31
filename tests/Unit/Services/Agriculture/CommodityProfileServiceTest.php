@@ -3,8 +3,9 @@
 use App\Models\CommodityProfile;
 use App\Services\Agriculture\CommodityProfileService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('matches a commodity using its Indonesian alias', function () {
     CommodityProfile::create([

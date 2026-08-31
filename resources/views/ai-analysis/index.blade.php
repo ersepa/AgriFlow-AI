@@ -59,10 +59,6 @@
                 <span>View Analysis History</span>
             </a>
         </div>
-                
-        @php
-            $predictionData = session('prediction_data', []);
-        @endphp
 
         {{-- AI Prediction Result Engine View --}}
         @if(session('ai_result'))
@@ -74,7 +70,7 @@
                 };
                 
                 $riskLevel = session('risk_level');
-                $wasteProb = session('waste_probability');
+                $riskIndex = session('risk_index_value');
                 $sustainScore = session('sustainability_score');
                 $shipmentData = session('shipment_data');
             @endphp
@@ -160,7 +156,7 @@
                     
                     <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Risk Index</p>
-                        <p class="mt-2 text-2xl font-black text-white">{{ $wasteProb }}</p>
+                        <p class="mt-2 text-2xl font-black text-white">{{ $riskIndex }}/100</p>
                     </div>
 
                     <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
@@ -170,7 +166,7 @@
                 </div>
 
                 {{-- Interactive Map & Spoilage Chart Grid --}}
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="grid grid-cols-1 gap-6 mb-8">
 
                     {{-- Route Visualization --}}
                     <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
@@ -179,18 +175,6 @@
                             <span>Live Route GIS Telemetry</span>
                         </h3>
                         <div id="map" class="h-[320px] rounded-xl overflow-hidden border border-slate-700"></div>
-                    </div>
-
-                    {{-- Operational Risk Trend --}}
-                    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
-                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-2">
-                            <span>ðŸ“ˆ</span>
-                            <span>Operational Risk Trend</span>
-                        </h3>
-                        <p class="text-slate-400 text-xs mb-4">Projected operational risk index under current shipment conditions.</p>
-                        <div class="h-[320px]">
-                            <canvas id="riskChart"></canvas>
-                        </div>
                     </div>
 
                 </div>
@@ -367,10 +351,9 @@
     </div>
 
     {{-- Map Leaflet Initialization --}}
-    @php
-        $shipmentData = session('shipment_data');
-        $predictionData = session('prediction_data');
-    @endphp
+@php
+    $shipmentData = session('shipment_data');
+@endphp
 
     @if($shipmentData)
     @php
@@ -399,53 +382,6 @@
         }).addTo(map);
 
         map.fitBounds(routeLine.getBounds());
-    });
-    </script>
-    @endif
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    @if(session()->has('prediction_data'))
-    <script>
-    const predictionData = @json($predictionData);
-    const labels = predictionData.map(item => 'Day ' + item.day);
-    const risks = predictionData.map(item => item.risk);
-
-    new Chart(document.getElementById('riskChart'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Operational Risk Index',
-                data: risks,
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    min: 0,
-                    max: 100,
-                    ticks: { color: '#94a3b8' },
-                    grid: { color: 'rgba(51, 65, 85, 0.4)' }
-                },
-                x: {
-                    ticks: { color: '#94a3b8' },
-                    grid: { color: 'rgba(51, 65, 85, 0.4)' }
-                }
-            },
-            plugins: {
-                legend: {
-                    labels: { color: '#f8fafc', font: { weight: 'bold' } }
-                }
-            }
-        }
     });
     </script>
     @endif

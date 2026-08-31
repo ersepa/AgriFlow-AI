@@ -4,8 +4,9 @@ use App\Models\CommodityProfile;
 use App\Services\Agriculture\CommodityProfileService;
 use Database\Seeders\CommodityProfileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(CommodityProfileSeeder::class);

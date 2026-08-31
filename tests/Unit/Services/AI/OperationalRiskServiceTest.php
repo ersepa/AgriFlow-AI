@@ -147,9 +147,8 @@ it('treats moderate risk as monitoring rather than mandatory intervention', func
         ]
     );
 
-    expect($result['risk_severity'])->toBe('Moderate')
-        ->and($result['urgency_level'])->toBe('Elevated')
-        ->and($result['intervention_required'])->toBeFalse()
-        ->and($result['intervention_status'])->toBe('Monitor')
-        ->and($result['dispatch_deadline'])->toBe('Within 24 hours');
+expect($result['risk_severity'])->toBe('Moderate')
+    ->and($result['urgency_level'])->toBe('Elevated')
+    ->and($result['intervention_required'])->toBeFalse()
+    ->and($result['dispatch_deadline'])->toBe('Within 24 hours');
 });

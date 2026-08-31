@@ -6,6 +6,8 @@ use App\Models\Shipment;
 use App\Services\Agriculture\QualityPredictionService;
 use Carbon\Carbon;
 
+uses(Tests\TestCase::class);
+
 beforeEach(function () {
     Carbon::setTestNow(Carbon::parse('2026-08-29 12:00:00'));
 });

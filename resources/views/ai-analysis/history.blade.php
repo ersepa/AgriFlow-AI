@@ -169,12 +169,12 @@
                                     </div>
                                 </td>
 
-                                {{-- WASTE PROBABILITY --}}
-                                <td class="px-6 py-5 border-t border-b {{ $theme['border'] }} bg-white">
-                                    <span class="font-mono font-bold text-slate-600 text-xs bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-sm">
-                                        📉 {{ $a->waste_probability }}
-                                    </span>
-                                </td>
+{{-- OPERATIONAL RISK INDEX --}}
+<td class="px-6 py-5 border-t border-b {{ $theme['border'] }} bg-white">
+    <span class="font-mono font-bold text-slate-600 text-xs bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-sm">
+        {{ str_replace('/100', '', $a->waste_probability) }}/100
+    </span>
+</td>
 
                                 {{-- ACTIONS --}}
                                 <td class="px-6 py-5 text-right rounded-r-2xl border-r border-t border-b {{ $theme['border'] }} bg-white">

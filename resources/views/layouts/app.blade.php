@@ -66,11 +66,12 @@
             {{-- Navigasi Utama --}}
             <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
 
-                {{-- Home --}}
-                <a href="{{ url('/') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-semibold text-sm">
-                    <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    <span>Home Page</span>
-                </a>
+                    {{-- Overview --}}
+    <div class="px-4 pt-2 pb-1">
+        <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+            Overview
+        </span>
+    </div>
                 
                 {{-- Dashboard --}}
                 <a href="{{ route('dashboard') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
@@ -85,8 +86,16 @@
                     <span>Dashboard</span>
                 </a>
 
+                    {{-- Operations --}}
+    <div class="px-4 pt-5 pb-1">
+        <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+            Operations
+        </span>
+    </div>
+
+
                 {{-- Harvests --}}
-                <a href="/harvests" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
+                <a href="{{ route('harvests.index') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
                     {{ request()->routeIs('harvests*') ? 'bg-emerald-50 text-emerald-800 shadow-sm border border-emerald-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700' }}">
                     
                     <div class="absolute left-0 w-1.5 h-6 bg-emerald-500 rounded-r-full transition-transform duration-300 
@@ -97,7 +106,7 @@
                 </a>
 
                 {{-- Shipments --}}
-                <a href="/shipments" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
+                <a href="{{ route('shipments.index') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
                     {{ request()->routeIs('shipments*') ? 'bg-teal-50 text-teal-800 shadow-sm border border-teal-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-teal-700' }}">
                     
                     <div class="absolute left-0 w-1.5 h-6 bg-teal-500 rounded-r-full transition-transform duration-300 
@@ -107,8 +116,15 @@
                     <span>Shipments</span>
                 </a>
 
+                    {{-- Decision Intelligence --}}
+    <div class="px-4 pt-5 pb-1">
+        <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+            Decision Intelligence
+        </span>
+    </div>
+
                 {{-- AI Analysis --}}
-                <a href="/ai-analysis" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
+                <a href="{{ route('ai-analysis.index') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
                     {{ request()->routeIs('ai-analysis*') ? 'bg-indigo-50 text-indigo-800 shadow-sm border border-indigo-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-700' }}">
                     
                     <div class="absolute left-0 w-1.5 h-6 bg-indigo-500 rounded-r-full transition-transform duration-300 
@@ -119,7 +135,7 @@
                 </a>
 
                 {{-- AI Optimizer --}}
-                <a href="/ai-optimizer" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
+                <a href="{{ route('ai-optimizer') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 
                     {{ request()->routeIs('ai-optimizer*') ? 'bg-purple-50 text-purple-800 shadow-sm border border-purple-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-purple-700' }}">
                     
                     <div class="absolute left-0 w-1.5 h-6 bg-purple-500 rounded-r-full transition-transform duration-300 
@@ -131,23 +147,30 @@
                     <span>AI Optimizer</span>
                 </a>
 
-                {{-- AI Digital Twin --}}
-                <a href="{{ route('simulation.index') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden
-                    {{ request()->routeIs('simulation*') ? 'bg-cyan-50 text-cyan-800 shadow-sm border border-cyan-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-cyan-700' }}">
+                {{-- Digital Twin --}}
+                <a href="{{ route('digital-twin.index') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden
+                    {{ request()->routeIs('digital-twin.*') ? 'bg-cyan-50 text-cyan-800 shadow-sm border border-cyan-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-cyan-700' }}">
 
                     <div class="absolute left-0 w-1.5 h-6 bg-cyan-500 rounded-r-full transition-transform duration-300
-                        {{ request()->routeIs('simulation*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}">
+                        {{ request()->routeIs('digital-twin.*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}">
                     </div>
 
-                    <svg class="w-5 h-5 {{ request()->routeIs('simulation*') ? 'text-cyan-600' : 'text-slate-400 group-hover:text-cyan-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 {{ request()->routeIs('digital-twin.*') ? 'text-cyan-600' : 'text-slate-400 group-hover:text-cyan-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M3 9h2m14 0h2M9 19v2m6-2v2M3 15h2m14 0h2M7 7h10v10H7V7z"/>
                     </svg>
-                    <span>AI Digital Twin</span>
+                    <span>Operational Digital Twin</span>
                 </a>
 
                 <div class="pt-4 pb-1">
                     <hr class="border-slate-100">
                 </div>
+
+                    {{-- Account --}}
+    <div class="px-4 pt-2 pb-1">
+        <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+            Account
+        </span>
+    </div>
 
                 {{-- Profile --}}
                 <a href="/profile" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden 

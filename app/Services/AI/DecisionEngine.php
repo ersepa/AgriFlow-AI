@@ -239,11 +239,6 @@ class DecisionEngine
             'explainability' => $this->riskExplainability(
                 $riskAssessment
             ),
-            'prediction_data' => $this->buildRiskProjection(
-                $riskScore,
-                $remainingDays
-            ),
-
             // Prescriptive outputs
             'recommendation_plan' => $recommendationPlan,
             'recommended_actions' => $recommendationPlan['actions'],
@@ -258,73 +253,6 @@ class DecisionEngine
             'estimated_arrival_quality' =>
                 $qualityPrediction['quality_at_arrival'],
             'food_waste_level' => $riskAssessment['risk_level'],
-        ];
-    }
-
-    /**
-     * Digital Twin scenario through the same engine used everywhere else.
-     */
-    public function simulate(Shipment $shipment, array $scenario): array
-    {
-        $before = $this->analyze($shipment);
-        $after = $this->analyze($shipment, $scenario);
-
-        $baseDuration = (float) ($shipment->duration_hours ?? 0);
-        $delay = max(0, (float) ($scenario['delay'] ?? 0));
-        $routeOptimized = filter_var(
-            $scenario['route'] ?? false,
-            FILTER_VALIDATE_BOOLEAN
-        );
-
-        $afterDuration = $baseDuration;
-
-        // Temporary route scenario assumption. Real alternative-route ETA
-        // comes in the routing step later in the roadmap.
-        if ($routeOptimized && $afterDuration > 0) {
-            $afterDuration *= 0.90;
-        }
-
-        $afterDuration += $delay;
-
-        return [
-            'before' => [
-                'risk_score' => $before['risk_score'],
-                'sustainability_score' => $before['sustainability_score'],
-                'carbon' => round($before['carbon_kg'], 1),
-                'duration' => round($baseDuration, 1),
-                'vehicle' => 'Standard Truck',
-                'quality_at_arrival' => $before['quality_at_arrival'],
-                'remaining_shelf_life_days' =>
-                    $before['predicted_remaining_shelf_life_days'],
-                'safe_transit_window_hours' =>
-                    $before['safe_transit_window_hours'],
-            ],
-            'after' => [
-                'risk_score' => $after['risk_score'],
-                'sustainability_score' => $after['sustainability_score'],
-                'carbon' => round($after['carbon_kg'], 1),
-                'carbon_saved' => round(
-                    $before['carbon_kg'] - $after['carbon_kg'],
-                    1
-                ),
-                'duration' => round($afterDuration, 1),
-                'vehicle' => $this->displayVehicle($scenario['vehicle'] ?? 'Truck'),
-                'quality_at_arrival' => $after['quality_at_arrival'],
-                'quality_change' =>
-    $after['quality_at_arrival'] !== null
-    && $before['quality_at_arrival'] !== null
-        ? (
-            $after['quality_at_arrival']
-            - $before['quality_at_arrival']
-        )
-        : null,
-                'remaining_shelf_life_days' =>
-                    $after['predicted_remaining_shelf_life_days'],
-                'safe_transit_window_hours' =>
-                    $after['safe_transit_window_hours'],
-            ],
-            'analysis_before' => $before,
-            'analysis_after' => $after,
         ];
     }
 
@@ -487,25 +415,6 @@ class DecisionEngine
             ->sortByDesc('impact')
             ->values()
             ->all();
-    }
-
-    private function buildRiskProjection(int $riskScore, float $remainingDays): array
-    {
-        $projection = [];
-        $urgencyFactor = $remainingDays <= 0
-            ? 1.5
-            : max(0.35, 1 - min($remainingDays, 14) / 20);
-
-        for ($day = 1; $day <= 7; $day++) {
-            $projected = $riskScore + (($day ** 1.45) * 4.5 * $urgencyFactor);
-
-            $projection[] = [
-                'day' => $day,
-                'risk' => $this->clamp((int) round($projected), 0, 100),
-            ];
-        }
-
-        return $projection;
     }
 
     private function buildOperationalRecommendation(

@@ -126,9 +126,8 @@ class AiAnalysisController extends Controller
                 'data_confidence' => $analysis['data_confidence'],
             ])
             ->with('risk_level', $analysis['risk_level'])
-            ->with('waste_probability', $analysis['risk_index'] . '/100')
+            ->with('risk_index_value', $analysis['risk_index'])
             ->with('sustainability_score', $analysis['sustainability_score'])
-            ->with('prediction_data', $analysis['prediction_data'])
             ->with('explainability', $analysis['explainability'])
             ->with('priority_score', $analysis['priority_score'])
             ->with(
