@@ -583,24 +583,7 @@
     </a>
 </div>
 
-{{-- OPTION 2: COMMODITY STORAGE GUIDANCE CARD --}}
-<div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800 relative overflow-hidden">
-    <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none"></div>
-
-    <div class="flex items-center gap-2 mb-3">
-        <span class="text-lg">💡</span>
-        <h3 class="text-xs font-black text-cyan-400 uppercase tracking-widest">Storage Protocol</h3>
-    </div>
-
-    <p class="text-xs text-slate-300 leading-relaxed">
-        Untuk menjaga <strong class="text-white">{{ $shipment->harvest->commodity }}</strong> tetap segar hingga tujuan, pastikan kontainer pendingin diatur pada suhu optimal <strong class="text-cyan-400">7.5°C</strong> dan kelembapan berkisar <strong class="text-cyan-400">95–100% RH</strong>.
-    </p>
-
-    <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-semibold">
-        <span>Chilling Risk Threshold:</span>
-        <span class="text-rose-400 font-extrabold">&lt; 5.0°C</span>
-    </div>
-</div>
+@include('shared.step9-condition-intelligence', ['showConditionUpdateForm' => true])
 
                 <div class="bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-800 text-center relative overflow-hidden">
 

@@ -73,9 +73,21 @@
                                             required
                                             class="w-full bg-transparent border-0 focus:ring-0 text-slate-900 font-bold text-sm p-0">
                                         @foreach($harvests as $harvest)
-                                            <option value="{{ $harvest->id }}" 
+                                            @php
+                                                $conditionProfile = $conditionProfiles[$harvest->id] ?? [];
+                                            @endphp
+                                            <option value="{{ $harvest->id }}"
+                                                    @selected((string) old('harvest_id') === (string) $harvest->id)
                                                     data-origin="{{ $harvest->location }}"
-                                                    data-weight="{{ $harvest->weight }}">
+                                                    data-weight="{{ $harvest->weight }}"
+                                                    data-condition-model="{{ $conditionProfile['quality_model_type'] ?? 'shelf_life_quality' }}"
+                                                    data-temp-min="{{ $conditionProfile['optimal_temp_min'] ?? '' }}"
+                                                    data-temp-max="{{ $conditionProfile['optimal_temp_max'] ?? '' }}"
+                                                    data-rh-min="{{ $conditionProfile['optimal_humidity_min'] ?? '' }}"
+                                                    data-rh-max="{{ $conditionProfile['optimal_humidity_max'] ?? '' }}"
+                                                    data-moisture-max="{{ $conditionProfile['safe_moisture_short_term_max_percent'] ?? '' }}"
+                                                    data-dry-rh-max="{{ $conditionProfile['safe_relative_humidity_max_percent'] ?? '' }}"
+                                                    data-source="{{ $conditionProfile['source_name'] ?? '' }}">
                                                 {{ $harvest->commodity }}
                                             </option>
                                         @endforeach
@@ -176,6 +188,86 @@
                             @enderror
                         </div>
 
+                        {{-- STEP 9: Recorded Shipment Conditions --}}
+                        <div class="rounded-2xl border border-cyan-200 bg-cyan-50/50 p-5 space-y-4">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">
+                                        Recorded Shipment Conditions
+                                    </p>
+                                    <h3 class="mt-1 text-sm font-black text-slate-900">
+                                        Condition & Cold-Chain Evidence
+                                    </h3>
+                                    <p class="mt-1 text-xs leading-relaxed text-slate-600">
+                                        Optional point-in-time condition record. Leave unknown values blank—AgriFlow will report an evidence gap instead of inventing data.
+                                    </p>
+                                </div>
+                                <span id="conditionModelBadge" class="shrink-0 rounded-full border border-cyan-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cyan-700">
+                                    Fresh Produce
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div id="temperatureConditionField">
+                                    <label for="recorded_temperature_c" class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                                        Recorded Cargo Temperature (°C)
+                                    </label>
+                                    <input type="number"
+                                           step="0.1"
+                                           min="-50"
+                                           max="80"
+                                           id="recorded_temperature_c"
+                                           name="recorded_temperature_c"
+                                           value="{{ old('recorded_temperature_c') }}"
+                                           placeholder="e.g. 12"
+                                           class="w-full rounded-xl border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-cyan-500 focus:ring-cyan-500">
+                                    @error('recorded_temperature_c')
+                                        <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div id="moistureConditionField" class="hidden">
+                                    <label for="recorded_moisture_percent" class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                                        Recorded Cargo Moisture (%)
+                                    </label>
+                                    <input type="number"
+                                           step="0.1"
+                                           min="0"
+                                           max="100"
+                                           id="recorded_moisture_percent"
+                                           name="recorded_moisture_percent"
+                                           value="{{ old('recorded_moisture_percent') }}"
+                                           placeholder="e.g. 10.5"
+                                           class="w-full rounded-xl border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-cyan-500 focus:ring-cyan-500">
+                                    @error('recorded_moisture_percent')
+                                        <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="recorded_relative_humidity_percent" class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                                        Recorded Relative Humidity (% RH)
+                                    </label>
+                                    <input type="number"
+                                           step="0.1"
+                                           min="0"
+                                           max="100"
+                                           id="recorded_relative_humidity_percent"
+                                           name="recorded_relative_humidity_percent"
+                                           value="{{ old('recorded_relative_humidity_percent') }}"
+                                           placeholder="e.g. 85"
+                                           class="w-full rounded-xl border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-cyan-500 focus:ring-cyan-500">
+                                    @error('recorded_relative_humidity_percent')
+                                        <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div id="conditionReferenceHint" class="rounded-xl border border-cyan-100 bg-white/80 px-4 py-3 text-[11px] leading-relaxed text-slate-600">
+                                Select a commodity to show its available reference condition.
+                            </div>
+                        </div>
+
                         {{-- Submit Button --}}
                         <div class="pt-3">
                             <button type="submit" 
@@ -260,17 +352,71 @@
             const harvestSelect = document.getElementById('harvestSelect');
             const originInput = document.getElementById('originInput');
             const weightInput = document.getElementById('weightInput');
+            const temperatureField = document.getElementById('temperatureConditionField');
+            const moistureField = document.getElementById('moistureConditionField');
+            const temperatureInput = document.getElementById('recorded_temperature_c');
+            const moistureInput = document.getElementById('recorded_moisture_percent');
+            const conditionModelBadge = document.getElementById('conditionModelBadge');
+            const conditionReferenceHint = document.getElementById('conditionReferenceHint');
 
             function updateHarvestDetails() {
                 if (harvestSelect && harvestSelect.options.length > 0) {
                     const selectedOption = harvestSelect.options[harvestSelect.selectedIndex];
-                    
-                    // Autofill Origin
+
                     originInput.value = selectedOption.dataset.origin || '';
-                    
-                    // Autofill Weight dengan penambahan format KG
+
                     const weightVal = selectedOption.dataset.weight;
                     weightInput.value = weightVal ? `${parseFloat(weightVal).toLocaleString('id-ID')} KG` : '';
+
+                    const isDry = selectedOption.dataset.conditionModel === 'storage_stability';
+                    temperatureField?.classList.toggle('hidden', isDry);
+                    moistureField?.classList.toggle('hidden', !isDry);
+
+                    if (temperatureInput) {
+                        temperatureInput.disabled = isDry;
+                    }
+
+                    if (moistureInput) {
+                        moistureInput.disabled = !isDry;
+                    }
+
+                    if (conditionModelBadge) {
+                        conditionModelBadge.textContent = isDry
+                            ? 'Dry Commodity'
+                            : 'Fresh Produce';
+                    }
+
+                    if (conditionReferenceHint) {
+                        const source = selectedOption.dataset.source
+                            ? ` Source: ${selectedOption.dataset.source}.`
+                            : '';
+
+                        if (isDry) {
+                            const moisture = selectedOption.dataset.moistureMax;
+                            const rh = selectedOption.dataset.dryRhMax;
+                            const details = [
+                                moisture ? `Moisture ≤ ${moisture}%` : null,
+                                rh ? `RH ≤ ${rh}%` : null,
+                            ].filter(Boolean);
+
+                            conditionReferenceHint.textContent = details.length
+                                ? `Available storage reference: ${details.join(' · ')}.${source}`
+                                : `Dry-commodity reference exists, but exact moisture/RH limits are not available for this selected profile.${source}`;
+                        } else {
+                            const tempMin = selectedOption.dataset.tempMin;
+                            const tempMax = selectedOption.dataset.tempMax;
+                            const rhMin = selectedOption.dataset.rhMin;
+                            const rhMax = selectedOption.dataset.rhMax;
+                            const details = [
+                                tempMin !== '' && tempMax !== '' ? `${tempMin}–${tempMax}°C` : null,
+                                rhMin !== '' && rhMax !== '' ? `${rhMin}–${rhMax}% RH` : null,
+                            ].filter(Boolean);
+
+                            conditionReferenceHint.textContent = details.length
+                                ? `Available commodity reference: ${details.join(' · ')}.${source}`
+                                : `No exact temperature/RH reference is available for this selected profile.${source}`;
+                        }
+                    }
                 }
             }
 

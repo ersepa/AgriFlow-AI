@@ -502,6 +502,10 @@ return view('dashboard', compact(
         Route::resource('harvests', HarvestController::class)
         ->middleware(['auth']);
 
+        Route::patch('/shipments/{shipment}/conditions', [ShipmentController::class, 'updateConditions'])
+        ->middleware(['auth'])
+        ->name('shipments.conditions.update');
+
         Route::resource('shipments', ShipmentController::class)
         ->middleware(['auth']);
 

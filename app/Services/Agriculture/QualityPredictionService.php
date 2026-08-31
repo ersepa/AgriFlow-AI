@@ -63,15 +63,41 @@ class QualityPredictionService
         $transitHours = $this->scenarioTransitHours($shipment, $scenario);
         $transitDays = $transitHours / 24;
 
-        $temperature = $this->scenarioTemperature($scenario);
-        $temperatureBasis = $temperature !== null
-            ? 'scenario_input'
-            : 'reference_neutral_fallback';
+        $temperatureInput = $this->resolveConditionInput(
+            $scenario,
+            'temperature',
+            $shipment->recorded_temperature_c
+        );
+
+        $temperature = $temperatureInput['value'];
+        $temperatureBasis = $temperatureInput['basis'] === 'unavailable'
+            ? 'reference_neutral_fallback'
+            : $temperatureInput['basis'];
+
+        $humidityInput = $this->resolveConditionInput(
+            $scenario,
+            'relative_humidity_percent',
+            $shipment->recorded_relative_humidity_percent
+        );
 
         $temperatureAssessment = $this->commodityProfiles->assessTemperature(
             $profile,
             $temperature,
             $transitHours
+        );
+
+        $relativeHumidityAssessment = $this->relativeHumidityAssessment(
+            $profile,
+            $humidityInput['value']
+        );
+
+        $conditionAssessment = $this->freshConditionAssessment(
+            $shipment,
+            $profile,
+            $temperatureAssessment,
+            $temperatureInput,
+            $relativeHumidityAssessment,
+            $humidityInput
         );
 
         $temperatureModel = $this->temperatureDeteriorationModel(
@@ -194,7 +220,7 @@ class QualityPredictionService
 
         return [
             'model_name' => 'AgriFlow Domain-Informed Quality Model',
-            'model_version' => 'step3.2-reconciled-v2',
+            'model_version' => 'step9-recorded-condition-v1',
             'model_type' => 'deterministic_domain_model',
 
             'baseline_shelf_life_days' => $baselineShelfLife,
@@ -219,6 +245,10 @@ class QualityPredictionService
             'temperature_c' => $temperature,
             'temperature_basis' => $temperatureBasis,
             'temperature_assessment' => $temperatureAssessment,
+            'relative_humidity_percent' => $humidityInput['value'],
+            'relative_humidity_basis' => $humidityInput['basis'],
+            'relative_humidity_assessment' => $relativeHumidityAssessment,
+            'condition_assessment' => $conditionAssessment,
             'q10_used' => $temperatureModel['q10_used'],
             'q10_basis' => $temperatureModel['q10_basis'],
             'reference_temperature_c' => $temperatureModel['reference_temperature_c'],
@@ -285,7 +315,7 @@ class QualityPredictionService
             'operational_window_available' =>
                 $safeTransitWindowHours !== null,
             'prediction_basis' => $profile
-                ? 'Validated fresh-produce storage-life profile + harvest age + transit duration + scenario temperature'
+                ? 'Validated fresh-produce storage-life profile + harvest age + transit duration + recorded shipment condition or explicit scenario override when available'
                 : 'No validated fresh-produce shelf-life profile; biological quality is not estimated',
 
             'source_name' => $profile?->source_name,
@@ -293,7 +323,7 @@ class QualityPredictionService
 
             'limitations' => [
                 'This is not a trained machine-learning model.',
-                'The model does not yet use real cargo sensor telemetry.',
+                'Recorded shipment conditions are point-in-time operator evidence, not continuous live sensor telemetry.',
                 'Packaging, maturity stage, mechanical damage, ethylene exposure, and atmosphere are not yet modeled.',
                 'Reference storage life is a commodity profile range and may vary by cultivar, maturity, and handling conditions.',
                 'Recorded expiry is treated as an operational deadline, not proof of biological spoilage.',
@@ -343,31 +373,26 @@ class QualityPredictionService
                 )
                 : null;
 
-        $moisture =
-            array_key_exists(
-                'moisture_percent',
-                $scenario
-            )
-                && $scenario[
-                    'moisture_percent'
-                ] !== ''
-                ? (float) $scenario[
-                    'moisture_percent'
-                ]
-                : null;
+        $moistureInput = $this->resolveConditionInput(
+            $scenario,
+            'moisture_percent',
+            $shipment->recorded_moisture_percent
+        );
 
-        $relativeHumidity =
-            array_key_exists(
-                'relative_humidity_percent',
-                $scenario
-            )
-                && $scenario[
-                    'relative_humidity_percent'
-                ] !== ''
-                ? (float) $scenario[
-                    'relative_humidity_percent'
-                ]
-                : null;
+        $humidityInput = $this->resolveConditionInput(
+            $scenario,
+            'relative_humidity_percent',
+            $shipment->recorded_relative_humidity_percent
+        );
+
+        $temperatureInput = $this->resolveConditionInput(
+            $scenario,
+            'temperature',
+            $shipment->recorded_temperature_c
+        );
+
+        $moisture = $moistureInput['value'];
+        $relativeHumidity = $humidityInput['value'];
 
         $storageHorizon =
             (string) (
@@ -385,11 +410,19 @@ class QualityPredictionService
                     $storageHorizon
                 );
 
+        $conditionAssessment = $this->dryConditionAssessment(
+            $shipment,
+            $profile,
+            $storageStability,
+            $moistureInput,
+            $humidityInput
+        );
+
         return [
             'model_name' =>
                 'AgriFlow Dry Commodity Storage Stability Model',
             'model_version' =>
-                'step5.2.1-storage-stability-v1',
+                'step9-recorded-storage-condition-v1',
             'model_type' =>
                 'deterministic_reference_threshold_model',
             'condition_model_type' =>
@@ -476,37 +509,22 @@ class QualityPredictionService
                     2
                 ),
 
-            'temperature_c' =>
-                array_key_exists(
-                    'temperature',
-                    $scenario
-                )
-                    && $scenario[
-                        'temperature'
-                    ] !== ''
-                    ? (float) $scenario[
-                        'temperature'
-                    ]
-                    : null,
-            'temperature_basis' =>
+            'temperature_c' => $temperatureInput['value'],
+            'temperature_basis' => $temperatureInput['basis'],
+            'temperature_role' =>
                 'not_used_as_primary_dry_commodity_driver',
             'temperature_assessment' =>
                 $this->commodityProfiles
                     ->assessTemperature(
                         $profile,
-                        array_key_exists(
-                            'temperature',
-                            $scenario
-                        )
-                            && $scenario[
-                                'temperature'
-                            ] !== ''
-                            ? (float) $scenario[
-                                'temperature'
-                            ]
-                            : null,
+                        $temperatureInput['value'],
                         $transitHours
                     ),
+            'moisture_percent' => $moisture,
+            'moisture_basis' => $moistureInput['basis'],
+            'relative_humidity_percent' => $relativeHumidity,
+            'relative_humidity_basis' => $humidityInput['basis'],
+            'condition_assessment' => $conditionAssessment,
 
             'q10_used' => null,
             'q10_basis' =>
@@ -571,7 +589,7 @@ class QualityPredictionService
             'limitations' => [
                 'This is not a trained machine-learning model.',
                 'Moisture and relative humidity thresholds are reference storage limits, not probabilities of spoilage.',
-                'Without cargo moisture/RH telemetry, AgriFlow reports the evidence gap instead of inventing a quality score.',
+                'Without recorded cargo moisture/RH condition evidence, AgriFlow reports the evidence gap instead of inventing a quality score.',
                 'Recorded expiry is an operational deadline and is not proof of biological spoilage.',
                 'Green coffee, roasted coffee, coffee cherry, milled rice, and paddy require distinct storage profiles.',
             ],
@@ -640,17 +658,295 @@ class QualityPredictionService
         return $duration;
     }
 
-    private function scenarioTemperature(array $scenario): ?float
+    private function resolveConditionInput(
+        array $scenario,
+        string $scenarioKey,
+        mixed $recordedValue
+    ): array {
+        if (
+            array_key_exists($scenarioKey, $scenario)
+            && $scenario[$scenarioKey] !== null
+            && $scenario[$scenarioKey] !== ''
+        ) {
+            return [
+                'value' => (float) $scenario[$scenarioKey],
+                'basis' => 'scenario_input',
+            ];
+        }
+
+        if ($recordedValue !== null && $recordedValue !== '') {
+            return [
+                'value' => (float) $recordedValue,
+                'basis' => 'recorded_shipment',
+            ];
+        }
+
+        return [
+            'value' => null,
+            'basis' => 'unavailable',
+        ];
+    }
+
+    private function relativeHumidityAssessment(
+        ?CommodityProfile $profile,
+        ?float $relativeHumidityPercent
+    ): array {
+        if ($relativeHumidityPercent === null) {
+            return [
+                'available' => false,
+                'status' => 'Not provided',
+                'severity' => 'unknown',
+                'relative_humidity_percent' => null,
+                'message' =>
+                    'No recorded or scenario relative-humidity condition was provided.',
+            ];
+        }
+
+        if (
+            !$profile
+            || $profile->optimal_humidity_min === null
+            || $profile->optimal_humidity_max === null
+        ) {
+            return [
+                'available' => true,
+                'status' => 'Humidity reference unavailable',
+                'severity' => 'unknown',
+                'relative_humidity_percent' =>
+                    round($relativeHumidityPercent, 1),
+                'reference_min_percent' => null,
+                'reference_max_percent' => null,
+                'message' =>
+                    'A relative-humidity condition was recorded, but the current commodity profile does not assert an exact RH reference range.',
+            ];
+        }
+
+        $min = (float) $profile->optimal_humidity_min;
+        $max = (float) $profile->optimal_humidity_max;
+
+        if (
+            $relativeHumidityPercent >= $min
+            && $relativeHumidityPercent <= $max
+        ) {
+            return [
+                'available' => true,
+                'status' => 'Within reference',
+                'severity' => 'low',
+                'relative_humidity_percent' =>
+                    round($relativeHumidityPercent, 1),
+                'reference_min_percent' => $min,
+                'reference_max_percent' => $max,
+                'message' => sprintf(
+                    '%.1f%% RH is inside the %.0f–%.0f%% RH reference range for %s.',
+                    $relativeHumidityPercent,
+                    $min,
+                    $max,
+                    $profile->local_name ?: $profile->name
+                ),
+            ];
+        }
+
+        $direction = $relativeHumidityPercent < $min
+            ? 'below'
+            : 'above';
+
+        return [
+            'available' => true,
+            'status' => 'Outside reference',
+            'severity' => 'attention',
+            'relative_humidity_percent' =>
+                round($relativeHumidityPercent, 1),
+            'reference_min_percent' => $min,
+            'reference_max_percent' => $max,
+            'message' => sprintf(
+                '%.1f%% RH is %s the %.0f–%.0f%% RH reference range for %s.',
+                $relativeHumidityPercent,
+                $direction,
+                $min,
+                $max,
+                $profile->local_name ?: $profile->name
+            ),
+        ];
+    }
+
+    private function freshConditionAssessment(
+        Shipment $shipment,
+        ?CommodityProfile $profile,
+        array $temperatureAssessment,
+        array $temperatureInput,
+        array $humidityAssessment,
+        array $humidityInput
+    ): array {
+        $temperatureStatus =
+            $temperatureAssessment['status'] ?? 'Not provided';
+        $humidityStatus =
+            $humidityAssessment['status'] ?? 'Not provided';
+
+        $temperatureOutside = in_array(
+            $temperatureStatus,
+            ['Chilling risk', 'Above optimum', 'Below optimum'],
+            true
+        );
+
+        $humidityOutside = $humidityStatus === 'Outside reference';
+
+        $availableCount = count(array_filter([
+            $temperatureInput['value'] !== null,
+            $humidityInput['value'] !== null,
+        ]));
+
+        $overallStatus = match (true) {
+            $temperatureOutside || $humidityOutside =>
+                'Outside reference',
+            $availableCount === 0 =>
+                'Condition evidence unavailable',
+            default =>
+                'Within available reference inputs',
+        };
+
+        $primaryDriver = match (true) {
+            $temperatureOutside =>
+                $temperatureAssessment['message']
+                ?? 'Temperature is outside the commodity reference.',
+            $humidityOutside =>
+                $humidityAssessment['message']
+                ?? 'Relative humidity is outside the commodity reference.',
+            $availableCount === 0 =>
+                'No recorded shipment temperature or relative-humidity condition is available.',
+            default =>
+                'Available recorded/scenario condition inputs do not exceed the current commodity references.',
+        };
+
+        return [
+            'model_name' =>
+                'AgriFlow Recorded Cold-Chain Condition Assessment',
+            'model_version' => 'step9-recorded-condition-v1',
+            'condition_model_type' => 'cold_chain',
+            'evidence_status' => $this->conditionEvidenceStatus([
+                $temperatureInput,
+                $humidityInput,
+            ]),
+            'overall_status' => $overallStatus,
+            'primary_driver' => $primaryDriver,
+            'temperature' => array_merge(
+                $temperatureAssessment,
+                [
+                    'basis' => $temperatureInput['basis'],
+                    'reference_min_c' =>
+                        $profile?->optimal_temp_min !== null
+                            ? (float) $profile->optimal_temp_min
+                            : null,
+                    'reference_max_c' =>
+                        $profile?->optimal_temp_max !== null
+                            ? (float) $profile->optimal_temp_max
+                            : null,
+                ]
+            ),
+            'relative_humidity' => array_merge(
+                $humidityAssessment,
+                [
+                    'basis' => $humidityInput['basis'],
+                ]
+            ),
+            'recorded_condition_source' =>
+                $shipment->condition_source,
+            'recorded_at' =>
+                $shipment->condition_recorded_at?->toIso8601String(),
+            'source_name' => $profile?->source_name,
+            'source_url' => $profile?->source_url,
+            'is_live_sensor_data' => false,
+        ];
+    }
+
+    private function dryConditionAssessment(
+        Shipment $shipment,
+        CommodityProfile $profile,
+        array $storageStability,
+        array $moistureInput,
+        array $humidityInput
+    ): array {
+        $available = (bool) ($storageStability['available'] ?? false);
+        $outside = ($storageStability['status'] ?? null)
+            === 'Outside reference storage limits';
+
+        return [
+            'model_name' =>
+                'AgriFlow Recorded Storage-Stability Condition Assessment',
+            'model_version' => 'step9-recorded-condition-v1',
+            'condition_model_type' => 'storage_stability',
+            'evidence_status' => $this->conditionEvidenceStatus([
+                $moistureInput,
+                $humidityInput,
+            ]),
+            'overall_status' => match (true) {
+                $outside => 'Outside reference',
+                !$available => 'Condition evidence unavailable',
+                default => 'Within available reference inputs',
+            },
+            'primary_driver' =>
+                $storageStability['message']
+                ?? 'Dry-commodity storage condition evidence is unavailable.',
+            'moisture' => [
+                'value_percent' => $moistureInput['value'],
+                'basis' => $moistureInput['basis'],
+                'reference_limit_percent' =>
+                    $storageStability['moisture_limit_percent']
+                    ?? null,
+            ],
+            'relative_humidity' => [
+                'value_percent' => $humidityInput['value'],
+                'basis' => $humidityInput['basis'],
+                'reference_limit_percent' =>
+                    $storageStability['relative_humidity_limit_percent']
+                    ?? null,
+            ],
+            'recorded_condition_source' =>
+                $shipment->condition_source,
+            'recorded_at' =>
+                $shipment->condition_recorded_at?->toIso8601String(),
+            'source_name' => $profile->source_name,
+            'source_url' => $profile->source_url,
+            'is_live_sensor_data' => false,
+        ];
+    }
+
+    private function conditionEvidenceStatus(array $inputs): string
     {
-        if (!array_key_exists('temperature', $scenario)) {
-            return null;
+        $available = array_values(array_filter(
+            $inputs,
+            fn (array $input) => $input['value'] !== null
+        ));
+
+        if ($available === []) {
+            return 'Unavailable';
         }
 
-        if ($scenario['temperature'] === null || $scenario['temperature'] === '') {
-            return null;
+        $hasScenario = collect($available)
+            ->contains(fn (array $input) =>
+                $input['basis'] === 'scenario_input'
+            );
+
+        $hasRecorded = collect($available)
+            ->contains(fn (array $input) =>
+                $input['basis'] === 'recorded_shipment'
+            );
+
+        $partial = count($available) < count($inputs);
+
+        if ($hasScenario && $hasRecorded) {
+            return $partial
+                ? 'Partial scenario + recorded evidence'
+                : 'Scenario override + recorded baseline';
         }
 
-        return (float) $scenario['temperature'];
+        if ($hasScenario) {
+            return $partial
+                ? 'Partial scenario evidence'
+                : 'Scenario override';
+        }
+
+        return $partial
+            ? 'Partial recorded evidence'
+            : 'Recorded';
     }
 
     private function temperatureDeteriorationModel(

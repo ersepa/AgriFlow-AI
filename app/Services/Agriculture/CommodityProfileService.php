@@ -95,7 +95,7 @@ class CommodityProfileService
                 'severity' => 'unknown',
                 'temperature_c' => null,
                 'risk_modifier' => 0,
-                'message' => 'No scenario temperature was provided.',
+                'message' => 'No recorded or scenario cargo temperature was provided.',
             ];
         }
 
@@ -360,7 +360,7 @@ class CommodityProfileService
             return [
                 'applicable' => true,
                 'available' => false,
-                'status' => 'Storage telemetry required',
+                'status' => 'Storage condition evidence required',
                 'severity' => 'unknown',
                 'moisture_percent' => null,
                 'moisture_limit_percent' =>
@@ -369,7 +369,7 @@ class CommodityProfileService
                 'relative_humidity_limit_percent' =>
                     $rhLimit,
                 'message' =>
-                    'Validated storage thresholds exist, but cargo moisture/RH telemetry was not provided. AgriFlow does not fabricate a condition score.',
+                    'Validated storage thresholds exist, but recorded cargo moisture/RH condition was not provided. AgriFlow does not fabricate a condition score.',
             ];
         }
 
@@ -429,7 +429,7 @@ class CommodityProfileService
             'relative_humidity_limit_percent' =>
                 $rhLimit,
             'message' =>
-                'Provided storage telemetry does not exceed the validated limits currently stored for this commodity.',
+                'Recorded storage condition does not exceed the validated limits currently stored for this commodity.',
         ];
     }
 

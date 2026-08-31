@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AiAnalysis;
 use App\Models\Harvest;
 use App\Models\Shipment;
+use App\Services\Agriculture\CommodityProfileService;
 use App\Services\AI\DecisionEngine;
 use App\Services\RouteService;
+use App\Services\Routing\FreshnessAwareRouteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Services\Routing\FreshnessAwareRouteService;
 
 class ShipmentController extends Controller
 {
@@ -71,11 +72,48 @@ class ShipmentController extends Controller
             ->with('success', 'Status updated successfully!');
     }
 
-    public function create()
+    public function create(CommodityProfileService $commodityProfiles)
     {
         $harvests = Harvest::all();
 
-        return view('shipments.create', compact('harvests'));
+        $conditionProfiles = $harvests
+            ->mapWithKeys(function (Harvest $harvest) use ($commodityProfiles) {
+                $profile = $commodityProfiles->findForCommodity(
+                    $harvest->commodity
+                );
+
+                $summary = $commodityProfiles->summary($profile);
+
+                return [
+                    $harvest->id => [
+                        'quality_model_type' =>
+                            $summary['quality_model_type']
+                            ?? 'shelf_life_quality',
+                        'optimal_temp_min' =>
+                            $summary['optimal_temp_min'] ?? null,
+                        'optimal_temp_max' =>
+                            $summary['optimal_temp_max'] ?? null,
+                        'optimal_humidity_min' =>
+                            $summary['optimal_humidity_min'] ?? null,
+                        'optimal_humidity_max' =>
+                            $summary['optimal_humidity_max'] ?? null,
+                        'safe_moisture_short_term_max_percent' =>
+                            $summary['safe_moisture_short_term_max_percent']
+                            ?? null,
+                        'safe_relative_humidity_max_percent' =>
+                            $summary['safe_relative_humidity_max_percent']
+                            ?? null,
+                        'source_name' =>
+                            $summary['source_name'] ?? null,
+                    ],
+                ];
+            })
+            ->all();
+
+        return view(
+            'shipments.create',
+            compact('harvests', 'conditionProfiles')
+        );
     }
 
     public function store(
@@ -83,29 +121,32 @@ class ShipmentController extends Controller
         RouteService $routeService,
         DecisionEngine $engine
     ) {
-        $validated = $request->validate([
-            'harvest_id' => [
-                'required',
-                'integer',
-                'exists:harvests,id',
+        $validated = $request->validate(array_merge(
+            [
+                'harvest_id' => [
+                    'required',
+                    'integer',
+                    'exists:harvests,id',
+                ],
+                'origin' => [
+                    'required',
+                    'string',
+                    'max:255',
+                ],
+                'destination' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'different:origin',
+                ],
+                'status' => [
+                    'required',
+                    'string',
+                    'in:Harvested,Packed,In Transit,Delivered',
+                ],
             ],
-            'origin' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'destination' => [
-                'required',
-                'string',
-                'max:255',
-                'different:origin',
-            ],
-            'status' => [
-                'required',
-                'string',
-                'in:Harvested,Packed,In Transit,Delivered',
-            ],
-        ]);
+            $this->conditionValidationRules()
+        ));
 
         $originCoords = $this->getCoordinates($validated['origin']);
         $destinationCoords = $this->getCoordinates($validated['destination']);
@@ -160,41 +201,67 @@ class ShipmentController extends Controller
             );
         }
 
-        $shipment = Shipment::create([
-            'harvest_id' => $validated['harvest_id'],
-            'origin' => $validated['origin'],
-            'destination' => $validated['destination'],
-            'distance_km' => $distanceKm,
-            'duration_hours' => $durationHours,
-            'carbon_emission' => $carbonEmission,
-            'route_score' => $routeScore,
-            'status' => $validated['status'],
-            'origin_lat' => $originCoords['lat'] ?? null,
-            'origin_lng' => $originCoords['lon'] ?? null,
-            'destination_lat' => $destinationCoords['lat'] ?? null,
-            'destination_lng' => $destinationCoords['lon'] ?? null,
-            'route_geometry' => $routeGeometry,
-        ]);
+        $shipment = Shipment::create(array_merge(
+            [
+                'harvest_id' => $validated['harvest_id'],
+                'origin' => $validated['origin'],
+                'destination' => $validated['destination'],
+                'distance_km' => $distanceKm,
+                'duration_hours' => $durationHours,
+                'carbon_emission' => $carbonEmission,
+                'route_score' => $routeScore,
+                'status' => $validated['status'],
+                'origin_lat' => $originCoords['lat'] ?? null,
+                'origin_lng' => $originCoords['lon'] ?? null,
+                'destination_lat' => $destinationCoords['lat'] ?? null,
+                'destination_lng' => $destinationCoords['lon'] ?? null,
+                'route_geometry' => $routeGeometry,
+            ],
+            $this->conditionPayload($validated)
+        ));
 
         $shipment->load('harvest');
 
         $analysis = $engine->analyze($shipment);
 
-        AiAnalysis::create([
-            'shipment_id' => $shipment->id,
-            'risk_level' => $analysis['risk_level'],
-            'waste_probability' => $analysis['risk_index'] . '/100',
-            'sustainability_score' => $analysis['sustainability_score'],
-            'recommendations' => $analysis['recommended_action']
-                . ' — '
-                . $analysis['recommendation_reason'],
-        ]);
+        $this->persistAnalysisSnapshot($shipment, $analysis);
 
         return redirect()
             ->route('shipments.index')
             ->with(
                 'success',
                 'Shipment created and analyzed successfully.'
+            );
+    }
+
+    /**
+     * Step 9: update recorded shipment condition without changing route data.
+     * These values are point-in-time operator records, not claimed as live IoT.
+     */
+    public function updateConditions(
+        Request $request,
+        Shipment $shipment,
+        DecisionEngine $engine
+    ) {
+        $validated = $request->validate(
+            $this->conditionValidationRules()
+        );
+
+        $shipment->update(
+            $this->conditionPayload($validated)
+        );
+
+        $shipment->loadMissing('harvest');
+
+        $analysis = $engine->analyze($shipment);
+
+        $this->persistAnalysisSnapshot($shipment, $analysis);
+
+        return redirect()
+            ->route('shipments.show', $shipment)
+            ->with(
+                'success',
+                'Recorded shipment conditions updated and reassessed.'
             );
     }
 
@@ -208,35 +275,108 @@ class ShipmentController extends Controller
             ->with('success', 'Shipment berhasil dihapus!');
     }
 
-public function show(
-    $id,
-    DecisionEngine $engine,
-    FreshnessAwareRouteService $freshnessRoutes
-) {
-    $shipment = Shipment::with([
-        'harvest',
-        'aiAnalyses'
-    ])->findOrFail($id);
+    public function show(
+        $id,
+        DecisionEngine $engine,
+        FreshnessAwareRouteService $freshnessRoutes
+    ) {
+        $shipment = Shipment::with([
+            'harvest',
+            'aiAnalyses',
+        ])->findOrFail($id);
 
-    $analysis =
-        $engine->analyze(
-            $shipment
-        );
+        $analysis = $engine->analyze($shipment);
 
-    $routeDecision =
-        $freshnessRoutes
+        $routeDecision = $freshnessRoutes
             ->assessCurrentRoute(
                 $shipment,
                 $analysis
             );
 
-    return view(
-        'shipments.show',
-        compact(
-            'shipment',
-            'analysis',
-            'routeDecision'
-        )
-    );
-}
+        return view(
+            'shipments.show',
+            compact(
+                'shipment',
+                'analysis',
+                'routeDecision'
+            )
+        );
     }
+
+    private function conditionValidationRules(): array
+    {
+        return [
+            'recorded_temperature_c' => [
+                'nullable',
+                'numeric',
+                'between:-50,80',
+            ],
+            'recorded_relative_humidity_percent' => [
+                'nullable',
+                'numeric',
+                'between:0,100',
+            ],
+            'recorded_moisture_percent' => [
+                'nullable',
+                'numeric',
+                'between:0,100',
+            ],
+        ];
+    }
+
+    private function conditionPayload(array $validated): array
+    {
+        $temperature = $this->nullableFloat(
+            $validated['recorded_temperature_c'] ?? null
+        );
+
+        $humidity = $this->nullableFloat(
+            $validated['recorded_relative_humidity_percent'] ?? null
+        );
+
+        $moisture = $this->nullableFloat(
+            $validated['recorded_moisture_percent'] ?? null
+        );
+
+        $hasCondition =
+            $temperature !== null
+            || $humidity !== null
+            || $moisture !== null;
+
+        return [
+            'recorded_temperature_c' => $temperature,
+            'recorded_relative_humidity_percent' => $humidity,
+            'recorded_moisture_percent' => $moisture,
+            'condition_source' => $hasCondition
+                ? 'manual_entry'
+                : null,
+            'condition_recorded_at' => $hasCondition
+                ? now()
+                : null,
+        ];
+    }
+
+    private function nullableFloat(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (float) $value;
+    }
+
+    private function persistAnalysisSnapshot(
+        Shipment $shipment,
+        array $analysis
+    ): void {
+        AiAnalysis::create([
+            'shipment_id' => $shipment->id,
+            'risk_level' => $analysis['risk_level'],
+            'waste_probability' => $analysis['risk_index'] . '/100',
+            'sustainability_score' => $analysis['sustainability_score'],
+            'recommendations' => $analysis['recommended_action']
+                . ' — '
+                . $analysis['recommendation_reason'],
+        ]);
+    }
+}

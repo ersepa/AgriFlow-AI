@@ -253,7 +253,7 @@ class InterventionRecommendationService
             $status =
                 $storageAssessment[
                     'status'
-                ] ?? 'Storage telemetry required';
+                ] ?? 'Storage condition evidence required';
 
             if (!$available) {
                 return [
@@ -263,7 +263,7 @@ class InterventionRecommendationService
                     'action' =>
                         'Verify cargo moisture and storage/transport relative humidity before dispatch where possible',
                     'reason' =>
-                        'Validated moisture/RH reference thresholds are available for this dry commodity, but actual cargo moisture/RH telemetry was not provided.',
+                        'Validated moisture/RH reference thresholds are available for this dry commodity, but recorded cargo moisture/RH condition evidence was not provided.',
                     'window' =>
                         'Before dispatch',
                     'priority' => 3,
@@ -284,7 +284,7 @@ class InterventionRecommendationService
                         $storageAssessment[
                             'message'
                         ]
-                        ?? 'Available storage telemetry is outside the validated dry-commodity reference limits.',
+                        ?? 'Recorded storage condition is outside the validated dry-commodity reference limits.',
                     'window' =>
                         'Before or during dispatch',
                     'priority' => 3,
@@ -298,7 +298,7 @@ class InterventionRecommendationService
                 'action' =>
                     'Maintain dry handling and protect the cargo from moisture ingress or re-wetting through arrival',
                 'reason' =>
-                    'Available storage telemetry does not exceed the current reference limits; preserving dry conditions reduces avoidable storage exposure.',
+                    'Recorded storage condition does not exceed the current reference limits; preserving dry conditions reduces avoidable storage exposure.',
                 'window' => 'Through arrival',
                 'priority' => 3,
             ];
@@ -309,7 +309,7 @@ class InterventionRecommendationService
                 'type' => 'condition',
                 'label' => 'Data verification',
                 'action' => 'Verify cargo temperature before dispatch when possible',
-                'reason' => 'No cargo temperature scenario was provided, so temperature-related uncertainty remains in the assessment.',
+                'reason' => 'No recorded shipment temperature or scenario override was provided, so temperature-related uncertainty remains in the assessment.',
                 'window' => 'Before dispatch',
                 'priority' => 3,
             ];
@@ -540,7 +540,7 @@ class InterventionRecommendationService
             !($assessment['available'] ?? false)
         ) {
             return
-                'Cargo moisture/RH telemetry not provided';
+                'Recorded cargo moisture/RH condition not provided';
         }
 
         return

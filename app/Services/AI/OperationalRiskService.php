@@ -120,9 +120,9 @@ class OperationalRiskService
             'limitations' => [
                 'The score is an operational risk index, not a spoilage probability.',
                 'The model is deterministic and has not been statistically calibrated against outcome labels.',
-                'Actual cargo sensor telemetry, packaging condition, mechanical damage, atmosphere, and microbial measurements are not yet included.',
-                'Temperature exposure uses scenario data when available; otherwise uncertainty is represented explicitly.',
-                'For dry commodities, missing moisture/RH telemetry is represented as evidence uncertainty rather than a fabricated arrival-quality score.',
+                'Continuous cargo sensor time-series, packaging condition, mechanical damage, atmosphere, and microbial measurements are not yet included.',
+                'Temperature exposure uses an explicit Digital Twin scenario override when provided, otherwise the recorded shipment temperature is used; missing condition evidence remains explicit.',
+                'For dry commodities, missing recorded moisture/RH condition is represented as evidence uncertainty rather than a fabricated arrival-quality score.',
             ],
         ];
     }
@@ -152,7 +152,7 @@ class OperationalRiskService
             $status =
                 $storageAssessment[
                     'status'
-                ] ?? 'Storage telemetry required';
+                ] ?? 'Storage condition evidence required';
 
             $score = match (true) {
                 !$available => 45,

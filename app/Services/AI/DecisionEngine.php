@@ -164,6 +164,9 @@ class DecisionEngine
             'commodity_profile_found' => $commodityProfile !== null,
             'commodity_profile' => $profileSummary,
             'temperature_assessment' => $temperatureAssessment,
+            'condition_assessment' =>
+                $qualityPrediction['condition_assessment']
+                ?? null,
 
             // Quality-at-Arrival intelligence (Step 3)
             'quality_prediction' => $qualityPrediction,
@@ -377,9 +380,10 @@ class DecisionEngine
         $complete = count(array_filter($checks));
         $score = (int) round(($complete / count($checks)) * 100);
 
-        // Step 3 predictions without an explicit temperature scenario use a
-        // neutral reference-temperature assumption. Keep the result usable,
-        // but reduce data confidence because actual cargo temperature is unknown.
+        // When neither a scenario override nor a recorded shipment temperature is
+        // available, the fresh-produce model uses a neutral reference assumption.
+        // Keep the result usable, but reduce evidence coverage because cargo
+        // temperature is unknown.
         if (($qualityPrediction['temperature_basis'] ?? '') === 'reference_neutral_fallback') {
             $score -= 8;
         }
