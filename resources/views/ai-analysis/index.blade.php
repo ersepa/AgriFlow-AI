@@ -70,6 +70,7 @@
                 };
                 
                 $riskLevel = session('risk_level');
+                $riskDisplayLevel = $riskLevel === 'Medium' ? 'Moderate' : $riskLevel;
                 $riskIndex = session('risk_index_value');
                 $readinessScore = session('operational_readiness_score', session('sustainability_score'));
                 $shipmentData = session('shipment_data');
@@ -82,7 +83,7 @@
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="text-xl font-black flex items-center gap-2.5">
                         <span class="w-3 h-3 bg-indigo-400 rounded-full animate-pulse"></span>
-                        <span>Predictive Analysis Output</span>
+                        <span>Decision Analysis Output</span>
                     </h2>
                     <span class="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                         AGRIFLOW DECISION ENGINE
@@ -94,7 +95,7 @@
                 <div class="mb-8 bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
                     <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
                         <span>📦</span>
-                        <span>Shipment Telemetry Summary</span>
+                        <span>Shipment Data Summary</span>
                     </h3>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
@@ -137,7 +138,7 @@
 
                         <div>
                             <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Estimated Road-Freight CO₂e</p>
-                            <p class="font-extrabold text-rose-400 text-base mt-0.5">{{ $shipmentData['carbon_emission'] ?? 'N/A' }} kg CO₂ee</p>
+                            <p class="font-extrabold text-rose-400 text-base mt-0.5">{{ $shipmentData['carbon_emission'] ?? 'N/A' }} kg CO₂e</p>
                         </div>
                     </div>
                 </div>
@@ -150,7 +151,7 @@
                         <span class="inline-block mt-3 px-4 py-1.5 rounded-xl text-xs font-black uppercase border
                             {{ str_contains($riskLevel, 'High') ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 
                                (str_contains($riskLevel, 'Medium') ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30') }}">
-                            {{ $riskLevel }}
+                            {{ $riskDisplayLevel }}
                         </span>
                     </div>
                     
@@ -172,7 +173,7 @@
                     {{-- Route Visualization --}}
                     <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6">
                         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                            <span>ðŸ—ºï¸</span>
+                            <span aria-hidden="true">🗺️</span>
                             <span>Shipment Route Visualization</span>
                         </h3>
                         <div id="map" class="h-[320px] rounded-xl overflow-hidden border border-slate-700"></div>
@@ -208,14 +209,24 @@
                                 $textColor = 'text-rose-400';
                                 $label = 'Critical';
                             }elseif($driver['impact'] >= 10){
-                                $barColor = 'bg-amber-400';
+                                $barColor = 'bg-amber-500';
                                 $textColor = 'text-amber-400';
                                 $label = 'High';
+                            }elseif($driver['impact'] >= 5){
+                                $barColor = 'bg-amber-400';
+                                $textColor = 'text-amber-300';
+                                $label = 'Moderate';
+                            }elseif($driver['impact'] > 0){
+                                $barColor = 'bg-cyan-500';
+                                $textColor = 'text-cyan-300';
+                                $label = 'Low';
                             }else{
-                                $barColor = 'bg-emerald-500';
-                                $textColor = 'text-emerald-400';
-                                $label = 'Medium';
+                                $barColor = 'bg-slate-600';
+                                $textColor = 'text-slate-400';
+                                $label = 'Minimal';
                             }
+
+                            $impactBarWidth = max(0, min(100, (float) $driver['impact']));
                         @endphp
 
                         <div>
@@ -233,7 +244,7 @@
                                 </div>
                             </div>
                             <div class="h-2.5 rounded-full bg-slate-700 overflow-hidden">
-                                <div class="h-full rounded-full transition-all duration-1000 {{ $barColor }}" style="width: {{ number_format($driver['impact'], 1) }} pts;"></div>
+                                <div class="h-full rounded-full transition-all duration-1000 {{ $barColor }}" style="width: {{ $impactBarWidth }}%;"></div>
                             </div>
                         </div>
                         @endforeach
@@ -245,7 +256,7 @@
                             <span class="text-white font-black text-sm">{{ number_format($totalImpact, 1) }} pts</span>
                         </div>
                         <div class="h-3 rounded-full bg-slate-700 overflow-hidden">
-                            <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 transition-all duration-1000" style="width: {{ number_format($totalImpact, 1) }} pts"></div>
+                            <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 transition-all duration-1000" style="width: {{ max(0, min(100, (float) $totalImpact)) }}%"></div>
                         </div>
                         <p class="mt-4 text-slate-300 text-xs leading-relaxed">
                             <span class="font-bold text-white">Primary Cause:</span> {{ $drivers[0]['reason'] }} This factor contributes the most to the current operational risk model.
@@ -265,8 +276,8 @@
         <div class="agri-card p-6 sm:p-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-black text-slate-900">Active Shipments for AI Evaluation</h2>
-                    <p class="text-xs text-slate-500 font-medium">Select a shipment logistics record below to execute predictive risk analytics.</p>
+                    <h2 class="text-lg font-black text-slate-900">Active Shipments for Decision Assessment</h2>
+                    <p class="text-xs text-slate-500 font-medium">Select a shipment record below to run the current operational risk and condition assessment.</p>
                 </div>
             </div>
 

@@ -31,7 +31,7 @@
                     <span>AGRICULTURAL OUTPUT LOG</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Harvest Records</h1>
-                <p class="text-slate-500 mt-1 font-medium text-sm">Log, track, and manage your field agricultural yields in real time.</p>
+                <p class="text-slate-500 mt-1 font-medium text-sm">Log, track, and manage recorded field harvest data for downstream shipment decisions.</p>
             </div>
 
             <a href="{{ route('harvests.create') }}" 

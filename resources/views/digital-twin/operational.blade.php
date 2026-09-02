@@ -87,7 +87,7 @@
                                 {{ data_get(
                                     $baseline,
                                     'analysis.quality_prediction.storage_stability_assessment.status',
-                                    'Telemetry required'
+                                    'Condition evidence required'
                                 ) }}
                             @else
                                 {{ data_get($baseline, 'analysis.quality_at_arrival') !== null

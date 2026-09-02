@@ -116,6 +116,18 @@
                     <span>Shipments</span>
                 </a>
 
+
+                {{-- Completed Shipments --}}
+                <a href="{{ route('completed-shipments.index') }}" class="agri-sidebar-link group relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 overflow-hidden
+                    {{ request()->routeIs('completed-shipments.*') ? 'bg-emerald-50 text-emerald-800 shadow-sm border border-emerald-200/60' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700' }}">
+                    <div class="absolute left-0 w-1.5 h-6 bg-emerald-500 rounded-r-full transition-transform duration-300
+                        {{ request()->routeIs('completed-shipments.*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}"></div>
+                    <svg class="w-5 h-5 {{ request()->routeIs('completed-shipments.*') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Completed Shipments</span>
+                </a>
+
                     {{-- Decision Intelligence --}}
     <div class="px-4 pt-5 pb-1">
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">

@@ -185,23 +185,23 @@
                             🧠
                         </div>
                         <div>
-                            <h3 class="font-extrabold text-sm text-slate-900">Yield & Freshness Engine</h3>
-                            <p class="text-[11px] text-emerald-700 font-bold">Optimasi Kuantitas & Masa Simpan</p>
+                            <h3 class="font-extrabold text-sm text-slate-900">Harvest Data Foundation</h3>
+                            <p class="text-[11px] text-emerald-700 font-bold">Input operasional untuk analisis pascapanen</p>
                         </div>
                     </div>
 
                     <ul class="space-y-3.5 text-xs text-slate-700 font-medium">
                         <li class="flex items-start gap-2.5">
                             <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Penimbangan Presisi:</strong> Input berat bersih (KG) berguna sebagai baseline pengiriman (*Shipments*) dan kalkulasi penyusutan bobot (*shrinkage*).</span>
+                            <span><strong class="text-slate-900">Recorded Weight:</strong> Berat panen (KG) menjadi input kuantitas shipment dan perhitungan activity-based road-freight CO₂e.</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Estimasi Masa Kedaluwarsa:</strong> Membantu algoritma AI menentukan alokasi rute tercepat sebelum kualitas komoditas menurun.</span>
+                            <span><strong class="text-slate-900">Recorded Operational Deadline:</strong> Tanggal expiry digunakan sebagai batas operasional yang direkonsiliasi dengan reference shelf life saat tersedia.</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Otentikasi Asal Lahan:</strong> Lokasi panen terdaftar otomatis menjadi titik berangkat pengiriman barang (*Origin*).</span>
+                            <span><strong class="text-slate-900">Harvest Origin:</strong> Lokasi panen disimpan sebagai konteks asal dan dapat digunakan saat membuat shipment.</span>
                         </li>
                     </ul>
                 </div>
@@ -223,7 +223,7 @@
                             <span class="text-lg">☀️</span>
                             <div>
                                 <p class="font-extrabold text-slate-900 text-[11px]">Waktu Pencatatan</p>
-                                <p class="text-[10px] text-slate-600">Catat segera setelah penimbangan lapangan untuk akurasi data kelembapan.</p>
+                                <p class="text-[10px] text-slate-600">Catat sedekat mungkin dengan waktu panen agar harvest age dan recorded operational deadline memiliki konteks waktu yang konsisten.</p>
                             </div>
                         </div>
 

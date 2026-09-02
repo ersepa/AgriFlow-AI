@@ -12,9 +12,18 @@ class AiAnalysis extends Model
         'waste_probability',
         'sustainability_score',
         'recommendations',
+        'analysis_snapshot',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'analysis_snapshot' => 'array',
+        ];
+    }
+
     public function shipment()
-{
-    return $this->belongsTo(Shipment::class);
-}
+    {
+        return $this->belongsTo(Shipment::class);
+    }
 }

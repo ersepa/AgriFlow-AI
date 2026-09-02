@@ -4,58 +4,72 @@ namespace App\Http\Controllers;
 
 use App\Models\AiAnalysis;
 use App\Models\Shipment;
+use App\Services\AI\AnalysisSnapshotService;
 use App\Services\AI\DecisionEngine;
 use App\Services\GeminiService;
-use Illuminate\Http\Request;
 use App\Services\Routing\FreshnessAwareRouteService;
+use Illuminate\Http\Request;
 
 class AiAnalysisController extends Controller
 {
     public function index()
     {
-        $shipments = Shipment::with('harvest')->latest()->get();
+        $shipments = Shipment::with('harvest')
+            ->operationallyActive()
+            ->latest()
+            ->get();
+
         return view('ai-analysis.index', compact('shipments'));
     }
 
     public function bulkDestroy(Request $request)
     {
         $ids = json_decode($request->ids, true);
+
         if (is_array($ids) && !empty($ids)) {
             AiAnalysis::whereIn('id', $ids)->delete();
         }
+
         return redirect()->back()->with('success', 'Data terpilih berhasil dihapus.');
     }
 
     public function truncate()
     {
         AiAnalysis::query()->delete();
+
         return redirect()->back()->with('success', 'Seluruh riwayat analisis berhasil dikosongkan.');
     }
 
     /**
-     * Core scores and recommended actions come from deterministic services.
-     * The LLM is only an explanation layer and cannot replace those actions.
+     * Active operational analysis only.
+     * Delivered shipments are historical records and cannot generate new
+     * dispatch, intervention, route, or Digital Twin recommendations.
      */
     public function analyze(
-    Shipment $shipment,
-    DecisionEngine $engine,
-    GeminiService $ai,
-    FreshnessAwareRouteService $freshnessRoutes
-)
- {
+        Shipment $shipment,
+        DecisionEngine $engine,
+        GeminiService $ai,
+        FreshnessAwareRouteService $freshnessRoutes,
+        AnalysisSnapshotService $snapshots
+    ) {
+        if ($shipment->isDelivered()) {
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with(
+                    'warning',
+                    'This shipment has already been delivered. Operational analysis is closed; historical assessments remain available for review.'
+                );
+        }
+
         $shipment->loadMissing('harvest');
 
         $analysis = $engine->analyze($shipment);
-        $routeDecision =
-    $freshnessRoutes
-        ->assessCurrentRoute(
-            $shipment,
-            $analysis
-        );
+        $routeDecision = $freshnessRoutes
+            ->assessCurrentRoute($shipment, $analysis);
         $plan = $analysis['recommendation_plan'] ?? [];
         $actions = $analysis['recommended_actions'] ?? [];
 
-        // LLM explanation only. The deterministic primary action remains authoritative.
+        // LLM explanation only. Deterministic actions remain authoritative.
         $explanation = $ai->generateShipmentExplanation([
             'commodity' => $shipment->harvest?->commodity ?? 'Unknown',
             'origin' => $shipment->origin,
@@ -65,7 +79,8 @@ class AiAnalysisController extends Controller
             'distance' => $shipment->distance_km ?? 0,
             'risk_score' => $analysis['risk_score'],
             'priority_score' => $analysis['priority_score'],
-            'operational_readiness_score' => $analysis['operational_readiness_score'],
+            'operational_readiness_score' =>
+                $analysis['operational_readiness_score'],
             'recommended_action' => $analysis['recommended_action'],
             'recommendation_reason' => $analysis['recommendation_reason'],
         ]);
@@ -84,25 +99,21 @@ class AiAnalysisController extends Controller
             $actionLines = '- ' . $analysis['recommended_action'];
         }
 
-        // Current result UI still consumes a text block for backward compatibility.
         $aiResult = "Recommendations:\n{$actionLines}\n\n"
             . "Explanation:\n{$decisionReason}\n\n"
             . "Conclusion:\n{$expectedOutcome}";
 
-        // Persist all deterministic actions so new History Detail records retain
-        // the complete recommendation plan without requiring a schema migration.
         $persistedRecommendation = "Recommendations:\n{$actionLines}\n\n"
             . "Explanation:\n{$analysis['recommendation_reason']}\n\n"
             . "Conclusion:\n{$expectedOutcome}";
 
-        AiAnalysis::create([
-            'shipment_id' => $shipment->id,
-            'risk_level' => $analysis['risk_level'],
-            // Existing DB column retained for compatibility; semantic is Risk Index.
-            'waste_probability' => $analysis['risk_index'] . '/100',
-            'operational_readiness_score' => $analysis['operational_readiness_score'],
-            'recommendations' => $persistedRecommendation,
-        ]);
+        $snapshots->persist(
+            $shipment,
+            $analysis,
+            $persistedRecommendation,
+            $routeDecision,
+            'analyze_now'
+        );
 
         return redirect()
             ->route('ai-analysis.index')
@@ -135,7 +146,6 @@ class AiAnalysisController extends Controller
                 'total_impact',
                 collect($analysis['explainability'])->sum('impact')
             )
-            // Step 3 freshness intelligence
             ->with('quality_prediction', $analysis['quality_prediction'] ?? [])
             ->with('quality_at_departure', $analysis['quality_at_departure'] ?? null)
             ->with('quality_at_arrival', $analysis['quality_at_arrival'] ?? null)
@@ -146,23 +156,18 @@ class AiAnalysisController extends Controller
             ->with('safe_transit_status', $analysis['safe_transit_status'] ?? null)
             ->with('temperature_assessment', $analysis['temperature_assessment'] ?? [])
             ->with('data_confidence', $analysis['data_confidence'] ?? 0)
-            // Step 4 risk intelligence
             ->with('risk_assessment', $analysis['risk_assessment'] ?? [])
             ->with('risk_severity', $analysis['risk_severity'] ?? null)
             ->with('urgency_level', $analysis['urgency_level'] ?? null)
             ->with('intervention_required', $analysis['intervention_required'] ?? false)
             ->with('intervention_reason', $analysis['intervention_reason'] ?? null)
             ->with('dispatch_deadline', $analysis['dispatch_deadline'] ?? null)
-            // Step 4.2 deterministic recommendation plan
             ->with('recommendation_plan', $plan)
             ->with('recommended_actions', $actions)
             ->with('recommended_action', $analysis['recommended_action'])
             ->with('recommendation_reason', $analysis['recommendation_reason'])
             ->with('expected_outcome', $expectedOutcome)
-            ->with(
-    'route_decision',
-    $routeDecision
-);;
+            ->with('route_decision', $routeDecision);
     }
 
     public function history()
@@ -184,44 +189,105 @@ class AiAnalysisController extends Controller
             ->with('success', 'Data berhasil dihapus!');
     }
 
-public function show(
-    $id,
-    DecisionEngine $engine,
-    FreshnessAwareRouteService $freshnessRoutes
-) {
-    $analysis = AiAnalysis::with([
-        'shipment.harvest',
-        'shipment.aiAnalyses',
-    ])->findOrFail($id);
+    /**
+     * Historical analysis detail is immutable.
+     * New records use analysis_snapshot. Legacy records display only persisted
+     * fields rather than silently recomputing against today's shipment state.
+     */
+    public function show($id)
+    {
+        $analysis = AiAnalysis::with([
+            'shipment.harvest',
+            'shipment.aiAnalyses',
+        ])->findOrFail($id);
 
-    $shipment = $analysis->shipment;
+        $shipment = $analysis->shipment;
 
-    abort_if(
-        !$shipment,
-        404,
-        'Shipment not found for this analysis.'
-    );
-
-    $decisionAnalysis =
-        $engine->analyze(
-            $shipment
+        abort_if(
+            !$shipment,
+            404,
+            'Shipment not found for this analysis.'
         );
 
-    $routeDecision =
-        $freshnessRoutes
-            ->assessCurrentRoute(
-                $shipment,
-                $decisionAnalysis
-            );
+        $snapshot = $analysis->analysis_snapshot;
 
-    return view(
-        'ai-analysis.show',
-        [
-            'shipment' => $shipment,
+        if (empty($snapshot)) {
+            return view('ai-analysis.legacy-show', [
+                'shipment' => $shipment,
+                'analysisRecord' => $analysis,
+            ]);
+        }
+
+        $snapshotShipment = $this->shipmentFromSnapshot(
+            $shipment,
+            $snapshot['shipment'] ?? []
+        );
+
+        return view('ai-analysis.show', [
+            'shipment' => $snapshotShipment,
             'analysisRecord' => $analysis,
-            'decisionAnalysis' => $decisionAnalysis,
-            'routeDecision' => $routeDecision,
-        ]
-    );
-}
+            'decisionAnalysis' => $snapshot['analysis'] ?? [],
+            'routeDecision' => $snapshot['route_decision'] ?? null,
+            'isHistoricalSnapshot' => true,
+            'snapshotMeta' => [
+                'version' => $snapshot['snapshot_version'] ?? null,
+                'context' => $snapshot['context'] ?? null,
+                'captured_at' => $snapshot['captured_at'] ?? null,
+            ],
+        ]);
+    }
+
+    private function shipmentFromSnapshot(
+        Shipment $shipment,
+        array $snapshot
+    ): Shipment {
+        $historical = clone $shipment;
+
+        foreach ([
+            'origin',
+            'destination',
+            'distance_km',
+            'duration_hours',
+            'recorded_temperature_c',
+            'recorded_relative_humidity_percent',
+            'recorded_moisture_percent',
+            'condition_source',
+        ] as $field) {
+            if (array_key_exists($field, $snapshot)) {
+                $historical->{$field} = $snapshot[$field];
+            }
+        }
+
+        if (array_key_exists('status_at_capture', $snapshot)) {
+            $historical->status = $snapshot['status_at_capture'];
+        }
+
+        if (array_key_exists('condition_recorded_at', $snapshot)) {
+            $historical->condition_recorded_at =
+                $snapshot['condition_recorded_at']
+                    ? \Carbon\Carbon::parse($snapshot['condition_recorded_at'])
+                    : null;
+        }
+
+        if ($shipment->harvest) {
+            $historicalHarvest = clone $shipment->harvest;
+
+            if (array_key_exists('commodity', $snapshot)) {
+                $historicalHarvest->commodity = $snapshot['commodity'];
+            }
+            if (array_key_exists('weight_kg', $snapshot)) {
+                $historicalHarvest->weight = $snapshot['weight_kg'];
+            }
+            if (array_key_exists('harvest_date', $snapshot)) {
+                $historicalHarvest->harvest_date = $snapshot['harvest_date'];
+            }
+            if (array_key_exists('expiry_date', $snapshot)) {
+                $historicalHarvest->expiry_date = $snapshot['expiry_date'];
+            }
+
+            $historical->setRelation('harvest', $historicalHarvest);
+        }
+
+        return $historical;
+    }
 }

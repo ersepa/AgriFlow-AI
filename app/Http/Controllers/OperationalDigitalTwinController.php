@@ -71,6 +71,13 @@ class OperationalDigitalTwinController extends Controller
         Shipment $shipment,
         ScenarioEngine $engine
     ): JsonResponse {
+        if ($shipment->isDelivered()) {
+            return response()->json([
+                'message' =>
+                    'This shipment has been delivered. New Digital Twin scenarios are closed; historical scenario records remain available.',
+            ], 409);
+        }
+
         $validated =
             $this->validateScenario(
                 $request
@@ -101,6 +108,15 @@ class OperationalDigitalTwinController extends Controller
         Shipment $shipment,
         ScenarioEngine $engine
     ): RedirectResponse {
+        if ($shipment->isDelivered()) {
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with(
+                    'warning',
+                    'This shipment has been delivered. New Digital Twin scenarios are closed; historical scenario records remain available.'
+                );
+        }
+
         $validated =
             $this->validateScenario(
                 $request
@@ -164,6 +180,13 @@ class OperationalDigitalTwinController extends Controller
         Shipment $shipment,
         ScenarioEngine $engine
     ): JsonResponse {
+        if ($shipment->isDelivered()) {
+            return response()->json([
+                'message' =>
+                    'This shipment has been delivered. New Digital Twin scenarios are closed; historical scenario records remain available.',
+            ], 409);
+        }
+
         $validated =
             $request->validate([
                 'scenarios' => [
@@ -242,6 +265,15 @@ class OperationalDigitalTwinController extends Controller
         Shipment $shipment,
         ScenarioEngine $engine
     ): RedirectResponse {
+        if ($shipment->isDelivered()) {
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with(
+                    'warning',
+                    'This shipment has been delivered. New Digital Twin scenarios are closed; historical scenario records remain available.'
+                );
+        }
+
         $validated =
             $request->validate([
                 'name' => [
@@ -406,6 +438,17 @@ public function comparisonHistory(): View
     public function prefer(
         DigitalTwinScenario $scenario
     ): RedirectResponse {
+        $scenario->loadMissing('shipment');
+
+        if ($scenario->shipment?->isDelivered()) {
+            return redirect()
+                ->route('digital-twin.scenarios.show', $scenario)
+                ->with(
+                    'warning',
+                    'This scenario belongs to a delivered shipment. Historical scenario preference is locked after completion.'
+                );
+        }
+
         DigitalTwinScenario::where(
             'shipment_id',
             $scenario->shipment_id

@@ -109,7 +109,7 @@
                 <div class="agri-card p-5 sm:p-6 {{ $stat[3] }} transition-all duration-300 hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-2xl">{{ $stat[2] }}</span>
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Telemetry</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Shipment Data</span>
                     </div>
                     <p class="text-[11px] font-bold uppercase tracking-widest text-slate-500">{{ $stat[0] }}</p>
                     <h2 class="text-2xl sm:text-3xl font-black mt-0.5 tracking-tight text-slate-900">{{ $stat[1] }}</h2>
@@ -248,7 +248,7 @@
 
                         <div>
                             <p class="text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                Freshness Feasibility
+                                Route Feasibility
                             </p>
                             <p class="text-lg font-black mt-2
                                 {{ $result['freshness_feasibility'] === 'Safe' ? 'text-emerald-600' : '' }}
@@ -272,7 +272,7 @@
                                     Current Route Assessment
                                 </h3>
                                 <span class="px-2.5 py-0.5 rounded-md bg-teal-100 text-teal-800 text-[10px] font-extrabold uppercase">
-                                    Step 5
+                                    Deterministic
                                 </span>
                             </div>
 
@@ -307,14 +307,14 @@
                             </h3>
 
                             <p class="text-xs text-slate-600 leading-relaxed font-medium">
-                                Use <strong class="text-indigo-900">Freshness Routes</strong>
+                                Use <strong class="text-indigo-900">Route Candidates</strong>
                                 to compare real route candidates when the routing provider supports them.
-                                Routes are ranked by freshness preservation, risk protection, transit margin,
+                                Routes are ranked by condition preservation, risk protection, transit margin,
                                 duration, and carbon exposure.
                             </p>
 
                             <p class="text-[10px] text-slate-500 mt-4 leading-relaxed">
-                                AgriFlow does not claim live traffic, does not fabricate route alternatives, and will explicitly report when no freshness-safe route exists.
+                                AgriFlow does not claim live traffic, does not fabricate route alternatives, and explicitly reports when no condition-compatible route is available.
                             </p>
                         </div>
                     </div>
@@ -358,7 +358,7 @@
                 <div class="flex justify-center mb-4">
                     <div class="w-10 h-10 border-4 border-indigo-900 border-t-indigo-400 rounded-full animate-spin"></div>
                 </div>
-                <p class="text-white font-bold text-sm">Evaluating shipment telemetry...</p>
+                <p class="text-white font-bold text-sm">Evaluating shipment data...</p>
                 <p class="text-slate-400 text-xs mt-1">Explaining deterministic risk, freshness, and route context.</p>
             </div>
 
@@ -558,7 +558,7 @@ async function updateMap(element, button = null){
 
     } catch(error){
         console.error(error);
-        alert("Failed to load route telemetry");
+        alert("Failed to load route data");
     } finally {
         if(button){
             setRouteLoading(button, false);
@@ -713,7 +713,7 @@ async function showFreshnessRoutes(id) {
         );
 
         if(!response.ok){
-            throw new Error('Freshness route optimization failed');
+            throw new Error('Condition-aware route optimization failed');
         }
 
         const data = await response.json();

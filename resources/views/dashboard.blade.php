@@ -114,7 +114,7 @@
         {{-- Main Center Card Container --}}
         <div class="bg-white/95 backdrop-blur-md rounded-3xl p-6 border border-slate-200/80 shadow-[0_15px_35px_-10px_rgba(15,23,42,0.08)] flex flex-col justify-between">
             
-            {{-- Top Header Row: Status & Active Sync --}}
+            {{-- Top Header Row: Status & Current Snapshot --}}
             <div class="flex items-center justify-between gap-3 mb-5">
                 <div class="flex items-center gap-3">
                     <div class="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -123,26 +123,26 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">AI Supply Chain Status</p>
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Operational Supply Chain Status</p>
                         <h3 class="text-base font-black text-slate-900 mt-0.5">
                             @if($highRisk > 0)
                                 <span class="text-amber-600">Attention Required</span>
                             @else
-                                <span class="text-emerald-600">Optimal Performance</span>
+                                <span class="text-emerald-600">Stable Operations</span>
                             @endif
                         </h3>
                     </div>
                 </div>
                 
                 <span class="text-[10px] font-extrabold px-3 py-1.5 bg-emerald-100/80 text-emerald-800 rounded-full border border-emerald-200/50 shrink-0">
-                    Active Sync
+                    Current Snapshot
                 </span>
             </div>
 
-            {{-- Middle Section: Progress Bar Route Health Score --}}
+            {{-- Middle Section: Progress Bar Average Operational Readiness --}}
             <div class="space-y-2 mb-6">
                 <div class="flex justify-between text-xs font-bold">
-                    <span class="text-slate-500">Route Health Score</span>
+                    <span class="text-slate-500">Average Operational Readiness</span>
                     <span class="text-slate-900 font-extrabold">{{ round($avgScore) }}%</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200/50">
@@ -274,7 +274,8 @@
                                     foreach ($recentAnalyses as $a) {
                                         $commodity = $a->shipment->harvest->commodity ?? 'Unknown';
                                         $riskColor = $a->risk_level === 'High' ? '#ef4444' : ($a->risk_level === 'Medium' ? '#f59e0b' : '#10b981');
-                                        $inner .= "<li style='margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid #f1f5f9;'><strong>Commodity:</strong> {$commodity}<br><strong>Risk:</strong> <span style='color:{$riskColor};font-weight:bold;'>{$a->risk_level}</span> | <strong>Score:</strong> {$a->sustainability_score}</li>";
+                                        $riskDisplay = $a->risk_level === 'Medium' ? 'Moderate' : $a->risk_level;
+                                        $inner .= "<li style='margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid #f1f5f9;'><strong>Commodity:</strong> {$commodity}<br><strong>Risk:</strong> <span style='color:{$riskColor};font-weight:bold;'>{$riskDisplay}</span></li>";
                                     }
                                     $inner .= "</ul><div style='margin-top:12px; text-align:center;'><a href='" . route('ai-analysis.history') . "' style='display:inline-block;padding:6px 16px;background:#4f46e5;color:white;border-radius:8px;font-weight:bold;font-size:12px;'>View All Analyses →</a></div></div>";
                                     $content = $wrapperStart . $inner . $wrapperEnd;
@@ -644,7 +645,7 @@
                 <div class="mt-6">
                     <p class="text-4xl font-black text-emerald-600">
                         {{ number_format($currentCarbon, 1) }}
-                        <span class="text-sm text-slate-400">kg CO₂ee</span>
+                        <span class="text-sm text-slate-400">kg CO₂e</span>
                     </p>
 
                     <p class="text-xs text-slate-500 mt-2 leading-relaxed">
@@ -753,7 +754,7 @@
         <p class="text-3xl font-black text-slate-900 mt-2">
             {{ number_format($currentCarbon, 1) }}
             <span class="text-sm font-bold text-slate-500">
-                KG CO₂
+                kg CO₂e
             </span>
         </p>
     </div>
@@ -790,7 +791,7 @@
                     <div class="agri-card p-6 relative overflow-hidden">
                         <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
                             <div>
-                                <p class="text-[10px] uppercase tracking-widest text-teal-600 font-extrabold">AI Executive Summary</p>
+                                <p class="text-[10px] uppercase tracking-widest text-teal-600 font-extrabold">Operational Executive Summary</p>
                                 <h3 class="text-lg font-black text-slate-900">Logistics Overview</h3>
                             </div>
                             <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-lg">🤖</div>
@@ -812,7 +813,7 @@
                         </div>
 
                         <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60">
-                            <p class="text-xs text-emerald-800 font-extrabold uppercase tracking-wider mb-1">AI Verdict</p>
+                            <p class="text-xs text-emerald-800 font-extrabold uppercase tracking-wider mb-1">Operational Summary</p>
                             <p class="text-xs text-slate-700 leading-relaxed">
                                 @if($criticalOperationalCount >= 5)
                                     Several shipments require immediate operational attention. Prioritize dispatch scheduling to reduce post-harvest loss exposure and improve logistics efficiency.
@@ -917,7 +918,7 @@
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Low', 'Medium', 'High'],
+                labels: ['Low', 'Moderate', 'High'],
                 datasets: [{
                     data: [{{ $lowRisk }}, {{ $mediumRisk }}, {{ $highRisk }}],
                     backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],

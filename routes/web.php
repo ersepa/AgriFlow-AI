@@ -13,6 +13,7 @@
     use App\Services\EnvironmentalService;
 use App\Services\Sustainability\FreightCarbonEstimateService;
     use App\Http\Controllers\OperationalDigitalTwinController;
+use App\Http\Controllers\CompletedShipmentController;
 
 
 Route::get('/test-environment', function () {
@@ -106,9 +107,11 @@ Route::get(
     ->middleware('auth')
     ->name('digital-twin.comparisons.show');
 
-Route::get('/ai-optimizer/explain/{shipment}', 
+Route::get('/ai-optimizer/explain/{shipment}',
     [AIOptimizerController::class, 'explain']
-)->name('ai.explain');
+)
+    ->middleware('auth')
+    ->name('ai.explain');
 
 Route::get(
     '/ai-optimizer/route/{shipment}',
@@ -494,6 +497,14 @@ return view('dashboard', compact(
     })->middleware(['auth'])->name('dashboard');
         Route::resource('harvests', HarvestController::class)
         ->middleware(['auth']);
+
+        Route::get('/completed-shipments', [CompletedShipmentController::class, 'index'])
+        ->middleware(['auth'])
+        ->name('completed-shipments.index');
+
+        Route::get('/completed-shipments/{shipment}', [CompletedShipmentController::class, 'show'])
+        ->middleware(['auth'])
+        ->name('completed-shipments.show');
 
         Route::patch('/shipments/{shipment}/conditions', [ShipmentController::class, 'updateConditions'])
         ->middleware(['auth'])

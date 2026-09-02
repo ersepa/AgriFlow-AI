@@ -28,16 +28,22 @@
             <div>
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-100/80 border border-teal-200 text-teal-800 text-xs font-bold tracking-wide mb-2 shadow-sm">
                     <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                    <span>LOGISTICS & SHIPMENT TRACKING</span>
+                    <span>ACTIVE LOGISTICS OPERATIONS</span>
                 </div>
-                <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Shipment Management</h1>
-                <p class="text-slate-500 mt-1 font-medium text-sm">Track, route, and manage your field-to-market agricultural logistics flow.</p>
+                <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Active Shipments</h1>
+                <p class="text-slate-500 mt-1 font-medium text-sm">Manage shipments that are still inside the active operational decision cycle.</p>
             </div>
 
-            <a href="{{ route('shipments.create') }}" 
-               class="inline-flex items-center gap-2 bg-gradient-to-r from-teal-600 via-indigo-600 to-indigo-700 text-white px-6 py-3.5 rounded-2xl font-extrabold text-sm transition-all hover:from-teal-700 hover:to-indigo-800 hover:shadow-lg hover:shadow-indigo-600/20 hover:-translate-y-0.5">
-                <span>+ Add Shipment</span>
-            </a>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{{ route('completed-shipments.index') }}"
+                   class="inline-flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-700 px-5 py-3.5 rounded-2xl font-extrabold text-sm hover:bg-slate-50 transition-colors">
+                    <span>Completed Shipments</span>
+                </a>
+                <a href="{{ route('shipments.create') }}"
+                   class="inline-flex items-center gap-2 bg-gradient-to-r from-teal-600 via-indigo-600 to-indigo-700 text-white px-6 py-3.5 rounded-2xl font-extrabold text-sm transition-all hover:from-teal-700 hover:to-indigo-800 hover:shadow-lg hover:shadow-indigo-600/20 hover:-translate-y-0.5">
+                    <span>+ Add Shipment</span>
+                </a>
+            </div>
         </div>
 
         {{-- Main Container Card --}}
@@ -182,17 +188,34 @@
                                     </button>
 
                                     {{-- Delete Button --}}
-                                    <form action="{{ route('shipments.destroy', $shipment->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pengiriman ini?')">
-                                        @csrf 
-                                        @method('DELETE')
-                                        <button type="submit" 
-                                                class="p-2.5 bg-white/90 text-slate-500 rounded-xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all border border-slate-200/80 shadow-sm"
-                                                title="Delete Shipment">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </form>
+                                   <form id="deleteShipmentForm-{{ $shipment->id }}"
+      action="{{ route('shipments.destroy', $shipment->id) }}"
+      method="POST">
+    @csrf
+    @method('DELETE')
+
+    <button type="button"
+            onclick="openDeleteShipmentModal(
+                '{{ $shipment->id }}',
+                @js($shipment->harvest->commodity ?? 'Shipment'),
+                @js($shipment->origin),
+                @js($shipment->destination)
+            )"
+            class="p-2.5 bg-white/90 text-slate-500 rounded-xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all border border-slate-200/80 shadow-sm"
+            title="Delete Shipment">
+
+        <svg class="w-4 h-4"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+            </path>
+        </svg>
+    </button>
+</form>
 
                                 </div>
                             </td>
@@ -218,69 +241,484 @@
         </div>
     </div>
 
-    {{-- Update Status Modal Dialog (Styling Modern Glassmorphism Senada) --}}
-    <div id="editModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative overflow-hidden animate-card">
-            
-            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                        🔄
-                    </div>
-                    <h2 class="font-black text-slate-900 text-lg">Update Status</h2>
-                </div>
-                <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-                    ✕
-                </button>
-            </div>
+    {{-- Update Status Modal --}}
+<div id="editModal"
+     class="fixed inset-0 z-[9990] hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
 
-            <form id="editForm" method="POST" class="space-y-5">
-                @csrf
-                @method('PATCH')
+    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative overflow-hidden animate-card">
+
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <svg class="w-4 h-4"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                        Select New Shipment Status
-                    </label>
-                    <select id="statusSelect" name="status" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-sm font-bold text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all">
-                        <option value="Harvested">Harvested</option>
-                        <option value="Packed">Packed</option>
-                        <option value="In Transit">In Transit</option>
-                        <option value="Delivered">Delivered</option>
-                    </select>
-                </div>
+                    <p class="text-[9px] uppercase tracking-[0.18em] font-black text-indigo-500">
+                        Shipment Lifecycle
+                    </p>
 
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-2xl font-extrabold text-xs transition-colors">
-                        Batal
-                    </button>
-                    <button type="submit" class="w-1/2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white py-3.5 rounded-2xl font-extrabold text-xs transition-all shadow-md shadow-indigo-600/20">
-                        Simpan
-                    </button>
+                    <h2 class="font-black text-slate-900 text-lg">
+                        Update Status
+                    </h2>
                 </div>
-            </form>
+            </div>
+
+            <button type="button"
+                    onclick="closeEditModal()"
+                    class="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                <svg class="w-4 h-4"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+
         </div>
+
+        <form id="editForm"
+              method="POST"
+              class="space-y-5"
+              onsubmit="return handleShipmentStatusSubmit(event)">
+
+            @csrf
+            @method('PATCH')
+
+            <div>
+                <label for="statusSelect"
+                       class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                    Select New Shipment Status
+                </label>
+
+                <select id="statusSelect"
+                        name="status"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-sm font-bold text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all">
+
+                    <option value="Harvested">Harvested</option>
+                    <option value="Packed">Packed</option>
+                    <option value="In Transit">In Transit</option>
+                    <option value="Delivered">Delivered</option>
+                </select>
+
+                <div class="mt-3 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <svg class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+
+                    <p class="text-[11px] leading-relaxed text-slate-500">
+                        Marking a shipment as Delivered closes active analysis,
+                        route optimization, condition updates, and Digital Twin
+                        actions. Historical evidence remains archived.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+
+                <button type="button"
+                        onclick="closeEditModal()"
+                        class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-2xl font-extrabold text-xs transition-colors">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="w-1/2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white py-3.5 rounded-2xl font-extrabold text-xs transition-all shadow-md shadow-indigo-600/20">
+                    Save Status
+                </button>
+
+            </div>
+        </form>
     </div>
+</div>
 
-    {{-- Modal Handler Scripts --}}
-    <script>
-        function openEditModal(url, currentStatus) {
-            document.getElementById('editForm').action = url;
-            if (currentStatus) {
-                document.getElementById('statusSelect').value = currentStatus;
-            }
-            document.getElementById('editModal').style.display = 'flex';
+
+{{-- Delivered Lifecycle Confirmation Modal --}}
+<div id="deliveredConfirmModal"
+     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-slate-950/70 backdrop-blur-md p-4">
+
+    <div class="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-card">
+
+        <div class="p-7 sm:p-8">
+
+            <div class="flex items-start gap-4">
+
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700">
+
+                    <svg class="h-6 w-6"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+
+                </div>
+
+                <div class="min-w-0">
+
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                        Complete Shipment
+                    </p>
+
+                    <h3 class="mt-1 text-xl font-black tracking-tight text-slate-900">
+                        Mark as Delivered?
+                    </h3>
+
+                    <p class="mt-3 text-sm leading-6 text-slate-500">
+                        This shipment will leave the active operational decision
+                        cycle and move into the Completed Shipments archive.
+                    </p>
+
+                </div>
+            </div>
+
+
+            <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+
+                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                    What happens next
+                </p>
+
+                <div class="mt-4 space-y-3">
+
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                            <svg class="h-3 w-3"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="3"
+                                      d="M5 13l4 4L19 7">
+                                </path>
+                            </svg>
+                        </div>
+
+                        <p class="text-xs leading-5 text-slate-600">
+                            Existing analyses and recorded shipment conditions remain archived.
+                        </p>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                            <svg class="h-3 w-3"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="3"
+                                      d="M5 13l4 4L19 7">
+                                </path>
+                            </svg>
+                        </div>
+
+                        <p class="text-xs leading-5 text-slate-600">
+                            A final operational snapshot is retained for completed-shipment review.
+                        </p>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                            <svg class="h-3 w-3"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2.5"
+                                      d="M6 18L18 6M6 6l12 12">
+                                </path>
+                            </svg>
+                        </div>
+
+                        <p class="text-xs leading-5 text-slate-600">
+                            New analysis, condition updates, route optimization,
+                            and Digital Twin scenarios will be closed.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="mt-7 flex flex-col-reverse sm:flex-row gap-3">
+
+                <button type="button"
+                        onclick="closeDeliveredConfirmModal()"
+                        class="sm:w-1/2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50">
+                    Keep Active
+                </button>
+
+                <button type="button"
+                        onclick="confirmDeliveredShipment()"
+                        class="sm:w-1/2 rounded-2xl bg-emerald-700 px-4 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-700/20 transition hover:bg-emerald-800">
+                    Mark as Delivered
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+{{-- Delete Shipment Confirmation Modal --}}
+<div id="deleteShipmentModal"
+     class="fixed inset-0 z-[10010] hidden items-center justify-center bg-slate-950/70 backdrop-blur-md p-4">
+
+    <div class="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-card">
+
+        <div class="p-7 sm:p-8">
+
+            <div class="flex items-start gap-4">
+
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-600">
+
+                    <svg class="h-5 w-5"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-rose-600">
+                        Delete Shipment
+                    </p>
+
+                    <h3 class="mt-1 text-xl font-black tracking-tight text-slate-900">
+                        Remove this shipment?
+                    </h3>
+
+                    <p class="mt-3 text-sm leading-6 text-slate-500">
+                        You are about to permanently remove
+                        <span id="deleteShipmentCommodity"
+                              class="font-bold text-slate-700">
+                            this shipment
+                        </span>.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="mt-6 rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+
+                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-rose-500">
+                    Shipment Route
+                </p>
+
+                <p id="deleteShipmentRoute"
+                   class="mt-2 text-sm font-bold text-slate-800">
+                    —
+                </p>
+
+                <p class="mt-2 text-xs leading-5 text-slate-500">
+                    This action is intended for incorrect or disposable records.
+                    Delivered shipments should normally remain in the Completed
+                    Shipments archive instead of being deleted.
+                </p>
+
+            </div>
+
+
+            <div class="mt-7 flex gap-3">
+
+                <button type="button"
+                        onclick="closeDeleteShipmentModal()"
+                        class="w-1/2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        onclick="confirmDeleteShipment()"
+                        class="w-1/2 rounded-2xl bg-rose-600 px-4 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-700">
+                    Delete Shipment
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+{{-- Modal Handler Scripts --}}
+<script>
+    let pendingDeleteShipmentId = null;
+
+
+    function openEditModal(url, currentStatus) {
+        const form = document.getElementById('editForm');
+        const statusSelect = document.getElementById('statusSelect');
+
+        form.action = url;
+
+        if (currentStatus) {
+            statusSelect.value = currentStatus;
         }
 
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+
+    function handleShipmentStatusSubmit(event) {
+        const status = document.getElementById('statusSelect').value;
+
+        if (status !== 'Delivered') {
+            return true;
         }
 
-        window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target === modal) {
-                closeEditModal();
-            }
+        event.preventDefault();
+
+        document.getElementById('deliveredConfirmModal').style.display = 'flex';
+
+        return false;
+    }
+
+
+    function closeDeliveredConfirmModal() {
+        document.getElementById('deliveredConfirmModal').style.display = 'none';
+    }
+
+
+    function confirmDeliveredShipment() {
+        const form = document.getElementById('editForm');
+
+        closeDeliveredConfirmModal();
+
+        /*
+         * Bypass the form's onsubmit handler so the confirmation
+         * modal does not open for a second time.
+         */
+        HTMLFormElement.prototype.submit.call(form);
+    }
+
+
+    function openDeleteShipmentModal(id, commodity, origin, destination) {
+        pendingDeleteShipmentId = id;
+
+        document.getElementById('deleteShipmentCommodity').textContent =
+            commodity || 'this shipment';
+
+        document.getElementById('deleteShipmentRoute').textContent =
+            `${origin || 'Unknown origin'} → ${destination || 'Unknown destination'}`;
+
+        document.getElementById('deleteShipmentModal').style.display = 'flex';
+    }
+
+
+    function closeDeleteShipmentModal() {
+        pendingDeleteShipmentId = null;
+
+        document.getElementById('deleteShipmentModal').style.display = 'none';
+    }
+
+
+    function confirmDeleteShipment() {
+        if (!pendingDeleteShipmentId) {
+            return;
         }
-    </script>
+
+        const form = document.getElementById(
+            `deleteShipmentForm-${pendingDeleteShipmentId}`
+        );
+
+        if (!form) {
+            closeDeleteShipmentModal();
+            return;
+        }
+
+        HTMLFormElement.prototype.submit.call(form);
+    }
+
+
+    window.addEventListener('click', function (event) {
+        const editModal = document.getElementById('editModal');
+        const deliveredModal = document.getElementById('deliveredConfirmModal');
+        const deleteModal = document.getElementById('deleteShipmentModal');
+
+        if (event.target === deliveredModal) {
+            closeDeliveredConfirmModal();
+            return;
+        }
+
+        if (event.target === deleteModal) {
+            closeDeleteShipmentModal();
+            return;
+        }
+
+        if (event.target === editModal) {
+            closeEditModal();
+        }
+    });
+
+
+    window.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        const deliveredModal = document.getElementById('deliveredConfirmModal');
+        const deleteModal = document.getElementById('deleteShipmentModal');
+        const editModal = document.getElementById('editModal');
+
+        if (deliveredModal.style.display === 'flex') {
+            closeDeliveredConfirmModal();
+            return;
+        }
+
+        if (deleteModal.style.display === 'flex') {
+            closeDeleteShipmentModal();
+            return;
+        }
+
+        if (editModal.style.display === 'flex') {
+            closeEditModal();
+        }
+    });
+</script>
 </x-app-layout>

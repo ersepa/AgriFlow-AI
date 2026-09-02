@@ -6,6 +6,7 @@ use App\Models\AiAnalysis;
 use App\Models\Harvest;
 use App\Models\Shipment;
 use App\Services\Agriculture\CommodityProfileService;
+use App\Services\AI\AnalysisSnapshotService;
 use App\Services\AI\DecisionEngine;
 use App\Services\RouteService;
 use App\Services\Routing\FreshnessAwareRouteService;
@@ -49,13 +50,21 @@ class ShipmentController extends Controller
 
     public function index()
     {
-        $shipments = Shipment::with('harvest')->latest()->get();
+        $shipments = Shipment::with('harvest')
+            ->operationallyActive()
+            ->latest()
+            ->get();
 
         return view('shipments.index', compact('shipments'));
     }
 
-    public function update(Request $request, Shipment $shipment)
-    {
+    public function update(
+        Request $request,
+        Shipment $shipment,
+        DecisionEngine $engine,
+        FreshnessAwareRouteService $freshnessRoutes,
+        AnalysisSnapshotService $snapshots
+    ) {
         $validated = $request->validate([
             'status' => [
                 'required',
@@ -64,13 +73,71 @@ class ShipmentController extends Controller
             ],
         ]);
 
+        if ($shipment->isDelivered()) {
+            if ($validated['status'] !== 'Delivered') {
+                return redirect()
+                    ->route('completed-shipments.show', $shipment)
+                    ->with(
+                        'warning',
+                        'Delivered is a terminal state in the competition workflow. Reopening requires a separate explicit lifecycle action.'
+                    );
+            }
+
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with('info', 'This shipment is already completed.');
+        }
+
+        if ($validated['status'] === 'Delivered') {
+            $shipment->loadMissing('harvest');
+
+            // Capture the final active-state decision before closing the
+            // operational lifecycle. Delivered itself does not generate new
+            // dispatch/intervention recommendations.
+            $analysis = $engine->analyze($shipment);
+            $routeDecision = $freshnessRoutes
+                ->assessCurrentRoute($shipment, $analysis);
+            $deliveredAt = now();
+
+            $completionSnapshot = $snapshots->build(
+                $shipment,
+                $analysis,
+                $routeDecision,
+                'delivery_completion',
+                $deliveredAt
+            );
+
+            $snapshots->persist(
+                $shipment,
+                $analysis,
+                $this->buildRecommendationText($analysis),
+                $routeDecision,
+                'delivery_completion',
+                $deliveredAt,
+                $completionSnapshot
+            );
+
+            $shipment->update([
+                'status' => 'Delivered',
+                'delivered_at' => $deliveredAt,
+                'completion_snapshot' => $completionSnapshot,
+            ]);
+
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with(
+                    'success',
+                    'Shipment marked as Delivered. The active decision cycle is closed and the final operational snapshot has been archived.'
+                );
+        }
+
         $shipment->update([
             'status' => $validated['status'],
         ]);
 
         return redirect()
             ->route('shipments.index')
-            ->with('success', 'Status updated successfully!');
+            ->with('success', 'Shipment status updated successfully.');
     }
 
     public function create(CommodityProfileService $commodityProfiles)
@@ -121,7 +188,9 @@ class ShipmentController extends Controller
         Request $request,
         RouteService $routeService,
         DecisionEngine $engine,
-        FreightCarbonEstimateService $freightCarbon
+        FreshnessAwareRouteService $freshnessRoutes,
+        FreightCarbonEstimateService $freightCarbon,
+        AnalysisSnapshotService $snapshots
     ) {
         $validated = $request->validate(array_merge(
             [
@@ -144,7 +213,7 @@ class ShipmentController extends Controller
                 'status' => [
                     'required',
                     'string',
-                    'in:Harvested,Packed,In Transit,Delivered',
+                    'in:Harvested,Packed,In Transit',
                 ],
             ],
             $this->conditionValidationRules()
@@ -225,8 +294,16 @@ class ShipmentController extends Controller
         $shipment->load('harvest');
 
         $analysis = $engine->analyze($shipment);
+        $routeDecision = $freshnessRoutes
+            ->assessCurrentRoute($shipment, $analysis);
 
-        $this->persistAnalysisSnapshot($shipment, $analysis);
+        $snapshots->persist(
+            $shipment,
+            $analysis,
+            $this->buildRecommendationText($analysis),
+            $routeDecision,
+            'shipment_created'
+        );
 
         return redirect()
             ->route('shipments.index')
@@ -243,8 +320,19 @@ class ShipmentController extends Controller
     public function updateConditions(
         Request $request,
         Shipment $shipment,
-        DecisionEngine $engine
+        DecisionEngine $engine,
+        FreshnessAwareRouteService $freshnessRoutes,
+        AnalysisSnapshotService $snapshots
     ) {
+        if ($shipment->isDelivered()) {
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with(
+                    'warning',
+                    'Recorded conditions are locked after delivery. Historical evidence remains available in the completed shipment archive.'
+                );
+        }
+
         $validated = $request->validate(
             $this->conditionValidationRules()
         );
@@ -256,8 +344,16 @@ class ShipmentController extends Controller
         $shipment->loadMissing('harvest');
 
         $analysis = $engine->analyze($shipment);
+        $routeDecision = $freshnessRoutes
+            ->assessCurrentRoute($shipment, $analysis);
 
-        $this->persistAnalysisSnapshot($shipment, $analysis);
+        $snapshots->persist(
+            $shipment,
+            $analysis,
+            $this->buildRecommendationText($analysis),
+            $routeDecision,
+            'condition_update'
+        );
 
         return redirect()
             ->route('shipments.show', $shipment)
@@ -270,11 +366,21 @@ class ShipmentController extends Controller
     public function destroy($id)
     {
         $shipment = Shipment::findOrFail($id);
+
+        if ($shipment->isDelivered()) {
+            return redirect()
+                ->route('completed-shipments.show', $shipment)
+                ->with(
+                    'warning',
+                    'Completed shipment records are preserved as an operational audit trail and cannot be deleted from the active shipment workflow.'
+                );
+        }
+
         $shipment->delete();
 
         return redirect()
             ->route('shipments.index')
-            ->with('success', 'Shipment berhasil dihapus!');
+            ->with('success', 'Shipment deleted successfully.');
     }
 
     public function show(
@@ -286,6 +392,11 @@ class ShipmentController extends Controller
             'harvest',
             'aiAnalyses',
         ])->findOrFail($id);
+
+        if ($shipment->isDelivered()) {
+            return redirect()
+                ->route('completed-shipments.show', $shipment);
+        }
 
         $analysis = $engine->analyze($shipment);
 
@@ -367,10 +478,8 @@ class ShipmentController extends Controller
         return (float) $value;
     }
 
-    private function persistAnalysisSnapshot(
-        Shipment $shipment,
-        array $analysis
-    ): void {
+    private function buildRecommendationText(array $analysis): string
+    {
         $actionLines = collect(
             $analysis['recommended_actions'] ?? []
         )
@@ -394,17 +503,10 @@ class ShipmentController extends Controller
             $analysis['expected_outcome']
             ?? 'Preserve the current operational window and reassess when recorded conditions change.';
 
-        $snapshotText =
+        return
             "Recommendations:\n{$actionLines}\n\n"
             . "Explanation:\n{$decisionReason}\n\n"
             . "Conclusion:\n{$expectedOutcome}";
-
-        AiAnalysis::create([
-            'shipment_id' => $shipment->id,
-            'risk_level' => $analysis['risk_level'],
-            'waste_probability' => $analysis['risk_index'] . '/100',
-            'sustainability_score' => $analysis['sustainability_score'],
-            'recommendations' => $snapshotText,
-        ]);
     }
+
 }

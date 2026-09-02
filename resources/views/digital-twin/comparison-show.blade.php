@@ -100,7 +100,7 @@
                                 ? data_get(
                                     $snapshot,
                                     'analysis.quality_prediction.storage_stability_assessment.status',
-                                    'Telemetry required'
+                                    'Condition evidence required'
                                 )
                                 : (
                                     data_get(

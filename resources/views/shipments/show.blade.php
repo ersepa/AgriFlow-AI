@@ -476,7 +476,7 @@
                             <h3 class="text-base font-black text-white uppercase tracking-widest">Analysis History</h3>
                             <p class="text-xs text-slate-500 mt-1 leading-relaxed max-w-2xl">
                                 Historical snapshots preserve the assessment generated at that time. Older records may reflect
-                                earlier decision logic; use the live assessment above for the current shipment state.
+                                earlier decision logic; use the current assessment above for the current shipment state.
                             </p>
                         </div>
 
@@ -504,7 +504,7 @@
 
             <span class="font-black text-sm uppercase tracking-wider {{ $historyAnalysis->risk_level == 'High' ? 'text-rose-400' : ($historyAnalysis->risk_level == 'Medium' ? 'text-amber-400' : 'text-emerald-400') }}">
 
-                {{ $historyAnalysis->risk_level }} Risk
+                {{ $historyAnalysis->risk_level === 'Medium' ? 'Moderate' : $historyAnalysis->risk_level }} Risk
 
             </span>
 
@@ -655,11 +655,11 @@
     <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Quick Actions</h3>
     
     <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
-        <span>📄</span> Print Safety Manifest
+        <span>📄</span> Print Assessment Summary
     </button>
 
     <a href="{{ route('ai-analysis.history') }}" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 px-4 rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center justify-center gap-2">
-        <span>📊</span> View All AI History
+        <span>📊</span> View Analysis History
     </a>
 </div>
 

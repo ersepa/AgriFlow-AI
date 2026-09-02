@@ -179,7 +179,6 @@
                                         <option value="Harvested">Harvested</option>
                                         <option value="Packed">Packed</option>
                                         <option value="In Transit">In Transit</option>
-                                        <option value="Delivered">Delivered</option>
                                     </select>
                                 </div>
                             </div>
@@ -196,7 +195,7 @@
                                         Recorded Shipment Conditions
                                     </p>
                                     <h3 class="mt-1 text-sm font-black text-slate-900">
-                                        Condition & Cold-Chain Evidence
+                                        Recorded Condition Evidence
                                     </h3>
                                     <p class="mt-1 text-xs leading-relaxed text-slate-600">
                                         Optional point-in-time condition record. Leave unknown values blank—AgriFlow will report an evidence gap instead of inventing data.
@@ -305,7 +304,7 @@
                         </li>
                         <li class="flex items-start gap-2.5">
                             <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Shipment Status:</strong> Pembaruan status dari *Harvested* hingga *Delivered* membantu menjaga konteks operasional shipment.</span>
+                            <span><strong class="text-slate-900">Shipment Status:</strong> Shipment baru dimulai sebagai *Harvested*, *Packed*, atau *In Transit*. Status *Delivered* digunakan untuk menutup lifecycle setelah operasi selesai.</span>
                         </li>
                     </ul>
                 </div>

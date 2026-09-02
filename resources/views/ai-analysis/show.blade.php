@@ -2,7 +2,7 @@
     @php
         /*
          * $analysisRecord = persisted AiAnalysis selected from history.
-         * $decisionAnalysis = live Step 3 DecisionEngine output.
+         * $decisionAnalysis = immutable snapshot payload selected from history.
          *
          * Compatibility fallback:
          * if the controller has not yet been updated to provide $analysisRecord,
@@ -11,6 +11,8 @@
         $analysisRecord =
             $analysisRecord
             ?? $shipment->aiAnalyses->sortByDesc('created_at')->first();
+
+        $isHistoricalSnapshot = $isHistoricalSnapshot ?? true;
 
         $qualityPrediction =
             $decisionAnalysis['quality_prediction']
@@ -96,6 +98,11 @@
             $analysisRecord?->risk_level
             ?? $decisionAnalysis['risk_level']
             ?? 'Unknown';
+
+        $riskDisplayLevel =
+            $riskLevel === 'Medium'
+                ? 'Moderate'
+                : $riskLevel;
 
         $riskScore =
             $decisionAnalysis['risk_score']
@@ -212,6 +219,15 @@ $explanation =
             ← Back to history
         </a>
 
+        @if($isHistoricalSnapshot)
+            <div class="mb-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4">
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-700">Immutable Historical Snapshot</p>
+                <p class="mt-2 text-xs leading-relaxed text-slate-600">
+                    This page reads the decision snapshot stored when the analysis was created. Later condition, route, status, or model changes do not rewrite this record.
+                </p>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
 
@@ -223,7 +239,7 @@ $explanation =
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
                             <div>
                                 <p class="text-[10px] uppercase font-black text-cyan-400 tracking-[0.24em]">
-                                    AI Analysis Detail
+                                    Historical Decision Snapshot
                                 </p>
 
                                 <h1 class="text-4xl sm:text-5xl font-black text-white capitalize tracking-tight mt-3">
@@ -231,7 +247,7 @@ $explanation =
                                 </h1>
 
                                 <p class="text-sm text-slate-400 mt-3">
-                                    Predictive post-harvest intelligence for this shipment.
+                                    Decision evidence preserved from this analysis event; values are not recomputed from the shipment's later state.
                                 </p>
                             </div>
 
@@ -241,7 +257,7 @@ $explanation =
                                     {{ $riskLevel === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : '' }}
                                     {{ !in_array($riskLevel, ['High', 'Medium']) ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : '' }}
                                 ">
-                                    {{ $riskLevel }} Risk
+                                    {{ $riskDisplayLevel }} Risk
                                 </span>
 
                                 @if($analysisRecord?->created_at)
@@ -758,11 +774,11 @@ $explanation =
     <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Quick Actions</h3>
     
     <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
-        <span>📄</span> Print Safety Manifest
+        <span>📄</span> Print Assessment Summary
     </button>
 
     <a href="{{ route('ai-analysis.history') }}" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 px-4 rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center justify-center gap-2">
-        <span>📊</span> View All AI History
+        <span>📊</span> View Analysis History
     </a>
 </div>
 

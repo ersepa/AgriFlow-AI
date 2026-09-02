@@ -24,6 +24,8 @@ class ScenarioEngine
     public function baseline(
         Shipment $shipment
     ): array {
+        $this->assertOperationallyActive($shipment);
+
         $shipment->loadMissing('harvest');
 
         $analysis =
@@ -71,6 +73,8 @@ class ScenarioEngine
         Shipment $shipment,
         array $input
     ): array {
+        $this->assertOperationallyActive($shipment);
+
         $shipment->loadMissing('harvest');
 
         $routeCandidate =
@@ -383,6 +387,8 @@ class ScenarioEngine
     public function routeOptions(
         Shipment $shipment
     ): array {
+        $this->assertOperationallyActive($shipment);
+
         $shipment->loadMissing('harvest');
 
         $optimization =
@@ -877,4 +883,13 @@ class ScenarioEngine
                 'deterministic_decision_support',
         ];
     }
+    private function assertOperationallyActive(Shipment $shipment): void
+    {
+        if ($shipment->isDelivered()) {
+            throw new \InvalidArgumentException(
+                'Digital Twin simulation is closed for delivered shipments. Historical scenarios remain available for review.'
+            );
+        }
+    }
+
 }

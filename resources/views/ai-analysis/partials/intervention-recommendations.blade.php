@@ -145,7 +145,7 @@
                             Evidence Status
                         </p>
                         <p class="text-sm font-bold text-amber-300 mt-2">
-                            {{ $recommendationPlan['storage_evidence_status'] ?? 'Condition telemetry not available' }}
+                            {{ $recommendationPlan['storage_evidence_status'] ?? 'Condition evidence unavailable' }}
                         </p>
                     </div>
                 </div>

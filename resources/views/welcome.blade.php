@@ -404,11 +404,11 @@
                                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
                                     </path>
                                 </svg>
-                                Traceability Penuh
+                                Recorded Origin Context
                             </h4>
 
                             <p class="text-slate-400 text-sm leading-relaxed">
-                                Setiap komoditas memiliki rekam jejak digital. Konsumen tahu persis dari mana bahan pangan mereka berasal, meningkatkan kepercayaan pasar.
+                                Data panen dan shipment menyimpan konteks asal, waktu, dan tujuan sehingga operator dapat menelusuri catatan operasional yang tersedia di dalam AgriFlow.
                             </p>
                         </div>
 
@@ -423,7 +423,7 @@
                             </h4>
 
                             <p class="text-slate-400 text-sm leading-relaxed">
-                                Dengan AI, kami memprediksi masa simpan produk dan mengoptimalkan rantai pasok untuk mencegah pembuangan hasil panen yang tidak perlu.
+                                AgriFlow mengestimasi kondisi saat tiba, operational risk, dan kelayakan rute untuk membantu operator mengambil tindakan sebelum window pascapanen semakin sempit.
                             </p>
                         </div>
 
@@ -453,7 +453,7 @@
     <section class="py-20">
     <div class="max-w-4xl mx-auto px-6 text-center">
         <h2 class="text-4xl font-black text-slate-900 mb-6">Siap Memulai Transformasi Pertanian Anda?</h2>
-        <p class="text-lg text-slate-600 mb-10">Bergabunglah dengan ratusan petani modern yang telah mengoptimalkan hasil panen mereka bersama AgriFlow AI.</p>
+        <p class="text-lg text-slate-600 mb-10">Gunakan AgriFlow AI untuk mengevaluasi shipment pascapanen dengan keputusan yang lebih transparan dan dapat ditelusuri.</p>
         <!-- awal  register -->
         <a href="{{ route('register') }}" class="inline-flex items-center px-10 py-5 text-lg font-bold text-white bg-slate-900 rounded-2xl hover:bg-emerald-600 transition-all duration-300 shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1">
             Daftar Sekarang Secara Gratis

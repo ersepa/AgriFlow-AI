@@ -263,6 +263,13 @@ class AIOptimizerController extends Controller
         Shipment $shipment,
         FreshnessAwareRouteService $freshnessRoutes
     ) {
+        if ($shipment->isDelivered()) {
+            return response()->json([
+                'message' =>
+                    'This shipment has been delivered. Active optimizer and explanation endpoints are closed; use Completed Shipments for historical review.',
+            ], 409);
+        }
+
         $shipment->loadMissing(
             'harvest'
         );
@@ -282,6 +289,13 @@ class AIOptimizerController extends Controller
         Shipment $shipment,
         RouteService $routes
     ) {
+        if ($shipment->isDelivered()) {
+            return response()->json([
+                'message' =>
+                    'This shipment has been delivered. Active optimizer and explanation endpoints are closed; use Completed Shipments for historical review.',
+            ], 409);
+        }
+
         if (
             $shipment->origin_lat === null
             || $shipment->origin_lng === null
@@ -361,6 +375,13 @@ class AIOptimizerController extends Controller
         DecisionEngine $engine,
         GeminiService $gemini
     ) {
+        if ($shipment->isDelivered()) {
+            return response()->json([
+                'message' =>
+                    'This shipment has been delivered. Active optimizer and explanation endpoints are closed; use Completed Shipments for historical review.',
+            ], 409);
+        }
+
         $shipment->loadMissing(
             'harvest'
         );
