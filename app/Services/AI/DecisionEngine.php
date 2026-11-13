@@ -469,18 +469,20 @@ class DecisionEngine
     private function getRiskLevel(int $riskScore): string
     {
         return match (true) {
-            $riskScore >= 70 => 'High',
-            $riskScore >= 40 => 'Medium',
+            $riskScore >= 60 => 'High',
+            $riskScore >= 30 => 'Moderate',
             default => 'Low',
         };
     }
 
     private function getPriorityLevel(int $priorityScore): string
     {
+        // Keep user-facing priority labels aligned with the final three-band
+        // operational language. Immediate urgency remains available as a
+        // separate field when a shipment needs same-window escalation.
         return match (true) {
-            $priorityScore >= 80 => 'Critical',
             $priorityScore >= 60 => 'High',
-            $priorityScore >= 40 => 'Medium',
+            $priorityScore >= 40 => 'Moderate',
             default => 'Low',
         };
     }

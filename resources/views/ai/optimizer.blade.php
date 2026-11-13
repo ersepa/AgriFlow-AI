@@ -100,7 +100,7 @@
                     $statConfigs = [
                         ['Shipments', $totalShipments, null, 'bg-indigo-50/60 border-indigo-200/80 text-indigo-900'],
                         ['Freshness Safe', $freshnessSafeCount, null, 'bg-emerald-50/60 border-emerald-200/80 text-emerald-900'],
-                        ['High/Critical Risk', $highCount + $criticalCount, null, 'bg-rose-50/60 border-rose-200/80 text-rose-900'],
+                        ['High Risk', $highCount, null, 'bg-rose-50/60 border-rose-200/80 text-rose-900'],
                         ['Avg Route Score', $averageRouteScore . '/100', null, 'bg-cyan-50/60 border-cyan-200/80 text-cyan-900'],
                     ];
                 @endphp
@@ -174,7 +174,7 @@
                                 <span class="text-xs text-slate-400 font-bold">•</span>
                                 <span class="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm
                                     @if(str_contains(strtolower($result['priority_level']), 'high')) bg-rose-100 text-rose-800 border-rose-200
-                                    @elseif(str_contains(strtolower($result['priority_level']), 'medium')) bg-amber-100 text-amber-800 border-amber-200
+                                    @elseif(str_contains(strtolower($result['priority_level']), 'moderate')) bg-amber-100 text-amber-800 border-amber-200
                                     @else bg-emerald-100 text-emerald-800 border-emerald-200 @endif">
                                     {{ $result['priority_level'] }}
                                 </span>

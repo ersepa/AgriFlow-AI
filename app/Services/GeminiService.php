@@ -244,10 +244,12 @@ Return ONLY valid JSON:
 }
 
 Current system data:
-Total Shipments: {$data['totalShipments']}
+Recorded Shipments: {$data['totalShipments']}
+Active Shipments: {$data['activeShipments']}
 Delivered Shipments: {$data['delivered']}
-High-Risk Analyses: {$data['highRisk']}
-Average Operational Readiness: {$averageOperationalReadiness}/100
+Active High-Risk Shipments: {$data['activeHighRisk']}
+Active Critical Shipments: {$data['activeCritical']}
+Average Active Operational Readiness: {$averageOperationalReadiness}/100
 
 Rules:
 - Do not claim food-waste reduction, carbon savings, or efficiency improvement unless explicitly provided.

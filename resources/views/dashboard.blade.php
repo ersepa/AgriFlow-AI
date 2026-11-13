@@ -281,14 +281,14 @@
                                     $content = $wrapperStart . $inner . $wrapperEnd;
                                 }
                                 break;
-
                             case 'High Risk':
-                                $highRiskItems = \App\Models\AiAnalysis::where('risk_level', 'High')->with('shipment.harvest')->take(5)->get();
-                                if ($highRiskItems->isEmpty()) {
+                                if ($priorityActionShipments->isEmpty()) {
                                     $content = $wrapperStart . $emptyMsg . $wrapperEnd;
                                 } else {
-                                    $inner = "<p style='margin-bottom:8px'>Daftar risiko tinggi:</p><ul style='list-style: disc; margin-left: 20px;'>";
-                                    foreach ($highRiskItems as $h) { $inner .= "<li>Komoditas: <strong>" . ($h->shipment->harvest->commodity ?? 'N/A') . "</strong></li>"; }
+                                    $inner = "<p style='margin-bottom:8px'>Active High-risk shipments:</p><ul style='list-style: disc; margin-left: 20px;'>";
+                                    foreach ($priorityActionShipments->take(5) as $h) {
+                                        $inner .= "<li><strong>" . e($h['commodity']) . "</strong> — Risk " . e($h['risk']) . "/100 · Urgency " . e($h['urgency_level']) . "</li>";
+                                    }
                                     $inner .= "</ul>";
                                     $content = $wrapperStart . $inner . $wrapperEnd;
                                 }
@@ -330,15 +330,13 @@
                                 </h2>
 
                                 <p class="text-slate-600 mt-4 text-base leading-relaxed max-w-3xl">
-                                    AgriFlow AI continuously evaluated <strong>{{ $totalAnalyses }}</strong> shipment operations. 
-                                    @if($criticalOperationalCount)
-                                        🚨 <span class="font-bold text-rose-600">{{ $criticalOperationalCount }} critical shipment(s)</span> require immediate operational attention.
+                                    AgriFlow currently evaluates <strong>{{ $activeShipmentCount }}</strong> active shipment operation(s).
+                                    <strong>{{ $totalAnalyses }}</strong> analysis snapshot(s) are retained across active and completed shipments.
+                                    @if($highRisk)
+                                        🚨 <span class="font-bold text-rose-600">{{ $highRisk }} High-risk shipment(s)</span> require operational attention.
                                     @endif
-                                    @if($shipImmediately)
-                                        🚚 <span class="font-bold text-slate-800">{{ $shipImmediately }} shipment(s)</span> are ready for instant dispatch.
-                                    @endif
-                                    @if($optimizeRoute)
-                                        🛣️ <span class="font-bold text-slate-800">{{ $optimizeRoute }} route(s)</span> have optimization recommendations available.
+                                    @if($immediateAttentionCount)
+                                        <span class="font-bold text-slate-800">{{ $immediateAttentionCount }}</span> of them currently have <strong>Immediate</strong> urgency.
                                     @endif
                                     🌱 Current operational insights are generated from recorded shipment data and deterministic risk analysis.
                                 </p>
@@ -350,17 +348,17 @@
                                     </div>
 
                                     <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm">
-                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg Readiness</p>
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Avg Readiness</p>
                                         <p class="text-2xl font-black text-emerald-600 mt-1">{{ round($avgScore) }}%</p>
                                     </div>
 
                                     <div class="p-4 rounded-2xl bg-white/80 border border-slate-200/80 shadow-sm col-span-2 sm:col-span-1">
     <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-        Active Critical
+        Active High Risk
     </p>
 
     <p class="text-2xl font-black text-rose-600 mt-1">
-        {{ $criticalOperationalCount }}
+        {{ $highRisk }}
         <span class="text-xs text-slate-500 font-bold">
             shipment(s)
         </span>
@@ -601,7 +599,7 @@
 
             <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
                 <span class="text-slate-500">
-                    High-risk analysis share
+                    Active High-risk share
                 </span>
 
                 <span class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full">
@@ -610,27 +608,30 @@
             </div>
         </div>
 
-        {{-- 2. Critical Operational Shipments --}}
+        {{-- 2. Active High-Risk Shipments --}}
         <div class="agri-card p-6 agri-card-hover flex flex-col justify-between">
             <div>
                 <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                    Critical Shipments
+                    High-Risk Shipments
                 </span>
 
                 <div class="mt-6">
                     <p class="text-4xl font-black text-rose-600">
-                        {{ $criticalOperationalCount }}
+                        {{ $highRisk }}
                     </p>
 
                     <p class="text-xs text-slate-500 mt-2 leading-relaxed">
-                        Active shipments currently classified as Critical by the operational risk engine.
+                        Active shipments in the High operational risk band (60–100). Urgency is assessed separately.
                     </p>
                 </div>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-slate-100">
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                 <span class="text-xs font-bold text-slate-500">
-                    Requires operational attention when present
+                    Immediate urgency
+                </span>
+                <span class="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-bold">
+                    {{ $immediateAttentionCount }} shipment(s)
                 </span>
             </div>
         </div>
@@ -699,17 +700,16 @@
 
                 {{-- Left Column (8 cols): Priority Actions & Readiness --}}
                 <div class="lg:col-span-8 space-y-8">
-                    
                     {{-- Priority Actions Panel --}}
                     <div class="agri-card p-6">
-                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
                             <div>
                                 <h3 class="text-base font-black text-slate-900 uppercase tracking-wider">Priority Actions</h3>
-                                <p class="text-xs text-slate-500">High-risk shipment alerts requiring immediate operational dispatch</p>
+                                <p class="text-xs text-slate-500">Active High-risk shipments requiring operational attention; urgency is shown separately.</p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-full uppercase">{{ $criticalOperationalCount }} Critical</span>
-                                <a href="{{ route('ai-analysis.history') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                                <span class="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-full uppercase">{{ $highRisk }} High Risk</span>
+                                <a href="{{ route('ai-analysis.index') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
                                     <span>View All</span>
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                 </a>
@@ -717,15 +717,29 @@
                         </div>
 
                         <div class="max-h-80 overflow-y-auto pr-2 custom-scrollbar space-y-3">
-                            @foreach(\App\Models\AiAnalysis::where('risk_level', 'High')->with('shipment.harvest')->get() as $alert)
-                                <a href="{{ route('shipments.show', $alert->shipment_id) }}" class="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-slate-100/80 transition-all group">
-                                    <div>
-                                        <p class="font-bold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $alert->shipment->harvest->commodity ?? 'Commodity' }}</p>
-                                        <p class="text-xs text-slate-500 mt-0.5">{{ Str::limit($alert->recommendations, 70) }}</p>
+                            @forelse($priorityActionShipments as $alert)
+                                <a href="{{ route('shipments.show', $alert['shipment_id']) }}" class="flex items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-slate-100/80 transition-all group">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="font-bold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $alert['commodity'] }}</p>
+                                            <span class="px-2 py-0.5 rounded-lg bg-rose-100 text-rose-700 border border-rose-200 text-[9px] font-black uppercase tracking-wider">
+                                                High · {{ $alert['risk'] }}/100
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded-lg {{ $alert['urgency_level'] === 'Immediate' ? 'bg-slate-900 text-white' : 'bg-amber-100 text-amber-800' }} text-[9px] font-black uppercase tracking-wider">
+                                                {{ $alert['urgency_level'] }} Urgency
+                                            </span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-400 mt-1">{{ $alert['origin'] }} → {{ $alert['destination'] }}</p>
+                                        <p class="text-xs text-slate-500 mt-1.5">{{ \Illuminate\Support\Str::limit($alert['recommended_action'], 90) }}</p>
                                     </div>
-                                    <span class="text-indigo-600 font-bold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">View ➔</span>
+                                    <span class="shrink-0 text-indigo-600 font-bold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">View ➔</span>
                                 </a>
-                            @endforeach
+                            @empty
+                                <div class="py-10 text-center rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                                    <p class="font-bold text-sm text-emerald-700">No High-risk active shipments</p>
+                                    <p class="text-xs text-slate-500 mt-1">Current active operations do not require elevated intervention.</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
 
@@ -799,28 +813,33 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
-                                <p class="text-xs text-slate-500">Critical Shipments</p>
-                                <p class="text-2xl font-black text-rose-600 mt-1">{{ $criticalOperationalCount }}</p>
+                                <p class="text-xs text-slate-500">High-Risk Shipments</p>
+                                <p class="text-2xl font-black text-rose-600 mt-1">{{ $highRisk }}</p>
                             </div>
                             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
-                                <p class="text-xs text-slate-500">Route Optimization</p>
-                                <p class="text-2xl font-black text-teal-600 mt-1">{{ $optimizeRoute }} <span class="text-xs text-slate-400">Routes</span></p>
+                                <p class="text-xs text-slate-500">Immediate Attention</p>
+                                <p class="text-2xl font-black text-amber-600 mt-1">{{ $immediateAttentionCount }} <span class="text-xs text-slate-400">Shipments</span></p>
                             </div>
                             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">
-                                <p class="text-xs text-slate-500">Immediate Dispatch</p>
-                                <p class="text-2xl font-black text-amber-600 mt-1">{{ $shipImmediately }} <span class="text-xs text-slate-400">Shipments</span></p>
+                                <p class="text-xs text-slate-500">Active Shipments</p>
+                                <p class="text-2xl font-black text-teal-600 mt-1">{{ $activeShipmentCount }} <span class="text-xs text-slate-400">Shipments</span></p>
                             </div>
                         </div>
 
                         <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60">
                             <p class="text-xs text-emerald-800 font-extrabold uppercase tracking-wider mb-1">Operational Summary</p>
                             <p class="text-xs text-slate-700 leading-relaxed">
-                                @if($criticalOperationalCount >= 5)
-                                    Several shipments require immediate operational attention. Prioritize dispatch scheduling to reduce post-harvest loss exposure and improve logistics efficiency.
-                                @elseif($criticalOperationalCount >= 2)
-                                    The logistics network remains stable, but several shipments should be monitored to maintain operational performance.
+                                @if($highRisk > 0)
+                                    {{ $highRisk }} active shipment(s) are currently classified as High risk.
+                                    @if($immediateAttentionCount > 0)
+                                        {{ $immediateAttentionCount }} of them require immediate operational review based on urgency.
+                                    @else
+                                        Prioritize them within their current operational windows.
+                                    @endif
+                                @elseif($mediumRisk > 0)
+                                    No active shipment is High risk. Moderate-risk shipments should continue to be reviewed within their operational windows.
                                 @else
-                                    Current logistics performance is healthy. Continue monitoring shipment quality and optimize routes where possible.
+                                    Current active shipments are operating within Low-risk conditions under the available evidence.
                                 @endif
                             </p>
                         </div>
@@ -833,7 +852,7 @@
                     
                     {{-- Risk Distribution Chart --}}
                     <div class="agri-card p-6">
-                        <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider mb-4">Risk Distribution</h3>
+                        <h3 class="font-extrabold text-xs text-slate-400 uppercase tracking-wider mb-4">Active Risk Distribution</h3>
                         <div class="h-56"><canvas id="riskChart"></canvas></div>
                     </div>
 
@@ -845,31 +864,137 @@
                         </div>
                         <div class="h-56"><canvas id="shipmentStatusChart"></canvas></div>
                     </div>
+<div class="agri-card p-6 border border-slate-200">
 
-                    {{-- Critical Alert Box --}}
-                    @if($latestHighRisk)
-                        @php
-                            $text = $latestHighRisk->recommendations;
-                            $parts = explode('Explanation:', $text);
-                            $recommendation = $parts[0] ?? '';
-                            $explanation = isset($parts[1]) ? 'Explanation:' . $parts[1] : '';
-                        @endphp
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-600">
+                Recommended Operational Focus
+            </p>
 
-                        <div class="p-6 rounded-3xl bg-rose-50 border border-rose-200">
-                            <h3 class="font-black text-rose-700 text-sm mb-3 flex items-center gap-2">🚨 Critical Alert</h3>
-                            <div class="space-y-3 text-xs text-slate-700 leading-relaxed">
-                                <div>
-                                    <p class="font-extrabold text-rose-800 uppercase tracking-wider mb-1">Recommendations:</p>
-                                    <p>{{ str_replace('Recommendations:', '', $recommendation) }}</p>
-                                </div>
-                                @if($explanation)
-                                    <div class="pt-3 border-t border-rose-200">
-                                        <p class="italic text-slate-600">{{ $explanation }}</p>
-                                    </div>
-                                @endif
-                            </div>
+            <h3 class="mt-1 text-lg font-black text-slate-900">
+                @if($operationalFocusCount > 1)
+                    {{ $operationalFocusCount }} shipments require focused review
+                @elseif($operationalFocusCount === 1)
+                    1 shipment requires focused review
+                @else
+                    No immediate focus required
+                @endif
+            </h3>
+        </div>
+
+        @if($operationalFocusUrgency)
+            <span class="shrink-0 rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider
+                @if($operationalFocusUrgency === 'Immediate')
+                    bg-rose-100 text-rose-700
+                @elseif($operationalFocusUrgency === 'High')
+                    bg-orange-100 text-orange-700
+                @elseif($operationalFocusUrgency === 'Elevated')
+                    bg-amber-100 text-amber-700
+                @else
+                    bg-emerald-100 text-emerald-700
+                @endif
+            ">
+                {{ $operationalFocusUrgency }} Urgency
+            </span>
+        @endif
+    </div>
+
+    @if($operationalFocusShipments->isNotEmpty())
+
+        <div class="mt-5 space-y-3">
+
+            @foreach($operationalFocusShipments as $focus)
+
+                <a href="{{ route('shipments.show', $focus['shipment_id']) }}"
+                   class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 hover:bg-slate-100 transition">
+
+                    <div class="min-w-0">
+
+                        <div class="flex flex-wrap items-center gap-2">
+
+                            <p class="font-black text-sm text-slate-900">
+                                {{ $focus['commodity'] }}
+                            </p>
+
+                            <span class="rounded-lg bg-rose-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-700">
+                                {{ $focus['risk'] }}/100
+                            </span>
+
                         </div>
-                    @endif
+
+                        <p class="mt-1 text-[11px] text-slate-500">
+                            {{ $focus['origin'] }}
+                            →
+                            {{ $focus['destination'] }}
+                        </p>
+
+                    </div>
+
+                    <span class="text-xs font-bold text-indigo-600">
+                        View →
+                    </span>
+
+                </a>
+
+            @endforeach
+
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+
+            <p class="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">
+                Recommended Next Step
+            </p>
+
+            <p class="mt-2 text-xs leading-5 text-slate-600">
+
+                @if($highestActiveRiskScore >= 80)
+
+                    Review recorded shipment conditions and dispatch constraints
+                    for these highest-risk operations before lower-priority
+                    High-risk shipments.
+
+                @elseif($highestActiveRiskScore >= 60)
+
+                    Prioritize these High-risk shipments and review the
+                    recommended operational actions within their current
+                    shipment windows.
+
+                @elseif($highestActiveRiskScore >= 30)
+
+                    Monitor these Moderate-risk shipments and review emerging
+                    condition or deadline constraints.
+
+                @else
+
+                    Current active shipments remain within Low-risk conditions
+                    under the available operational evidence.
+
+                @endif
+
+            </p>
+
+        </div>
+
+        <a href="{{ route('ai-analysis.index') }}"
+           class="mt-5 inline-flex items-center gap-1 text-xs font-black text-indigo-600 hover:text-indigo-800">
+            Review Priority Actions →
+        </a>
+
+    @else
+
+        <div class="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+
+            <p class="text-sm font-bold text-emerald-700">
+                No active shipment currently requires focused operational review.
+            </p>
+
+        </div>
+
+    @endif
+
+</div>
 
                 </div>
 

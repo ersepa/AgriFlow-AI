@@ -56,7 +56,7 @@ class InterventionRecommendationService
 
         return [
             'engine' => 'AgriFlow Intervention Recommendation Engine',
-            'version' => 'step5.2.2-dry-decision-polish',
+            'version' => 'step10.4c-three-level-risk-v1',
             'actions' => $actions,
             'primary_action' => $actions[0]['action'] ?? 'Monitor shipment',
             'primary_reason' => $actions[0]['reason'] ?? 'Continue operational monitoring.',
@@ -66,7 +66,7 @@ class InterventionRecommendationService
                 $qualityPrediction,
                 $riskAssessment
             ),
-            'expected_outcome' => $this->expectedOutcome($severity),
+            'expected_outcome' => $this->expectedOutcome($severity, $urgency),
             'action_window' => $deadline,
             'intervention_status' => $riskAssessment['intervention_status'] ?? 'Routine monitoring',
 
@@ -106,15 +106,21 @@ class InterventionRecommendationService
 
     private function primaryAction(string $severity, string $urgency, string $deadline): array
     {
-        return match ($severity) {
-            'Critical' => [
+        // Risk level and urgency are intentionally separate. A shipment can
+        // remain in the High risk band while its urgency escalates to
+        // Immediate when hard freshness/transit constraints are present.
+        if ($urgency === 'Immediate') {
+            return [
                 'type' => 'primary',
                 'label' => 'Immediate operational action',
                 'action' => 'Escalate and review shipment immediately',
-                'reason' => 'Critical operational risk requires immediate review before additional delay is accepted.',
+                'reason' => 'High operational risk combined with severe freshness or transit constraints requires immediate review before additional delay is accepted.',
                 'window' => $deadline,
                 'priority' => 1,
-            ],
+            ];
+        }
+
+        return match ($severity) {
             'High' => [
                 'type' => 'primary',
                 'label' => 'Dispatch priority',
@@ -401,10 +407,13 @@ class InterventionRecommendationService
         );
     }
 
-    private function expectedOutcome(string $severity): string
+    private function expectedOutcome(string $severity, string $urgency): string
     {
+        if ($urgency === 'Immediate') {
+            return 'The actions are intended to prevent additional avoidable delay while the shipment is immediately reassessed.';
+        }
+
         return match ($severity) {
-            'Critical' => 'The actions are intended to prevent additional avoidable delay while the shipment is immediately reassessed.',
             'High' => 'The actions are intended to preserve the remaining operational freshness window and reduce avoidable handling or dispatch delay.',
             'Moderate' => 'The actions are intended to keep the shipment within its current operational window while preventing risk from escalating.',
             default => 'The actions are intended to maintain the current low-risk operating condition and preserve data quality for future reassessment.',

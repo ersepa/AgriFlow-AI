@@ -154,14 +154,6 @@ class AIOptimizerController extends Controller
         $totalShipments =
             $collection->count();
 
-        $criticalCount =
-            $collection
-                ->where(
-                    'risk_severity',
-                    'Critical'
-                )
-                ->count();
-
         $highCount =
             $collection
                 ->where(
@@ -243,7 +235,6 @@ class AIOptimizerController extends Controller
             compact(
                 'results',
                 'totalShipments',
-                'criticalCount',
                 'highCount',
                 'freshnessSafeCount',
                 'averageRouteScore',

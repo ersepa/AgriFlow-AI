@@ -87,7 +87,7 @@ it('returns low risk for strong freshness with large transit margin', function (
         ->and($result['intervention_required'])->toBeFalse();
 });
 
-it('forces critical operational risk when ETA exceeds the safe transit window', function () {
+it('keeps the risk level High while urgency becomes Immediate when ETA exceeds the safe transit window', function () {
     $service = app(OperationalRiskService::class);
 
     $result = $service->assess(
@@ -104,7 +104,7 @@ it('forces critical operational risk when ETA exceeds the safe transit window', 
     );
 
     expect($result['risk_score'])->toBeGreaterThanOrEqual(88)
-        ->and($result['risk_severity'])->toBe('Critical')
+        ->and($result['risk_severity'])->toBe('High')
         ->and($result['critical_override_applied'])->toBeTrue()
         ->and($result['urgency_level'])->toBe('Immediate');
 });

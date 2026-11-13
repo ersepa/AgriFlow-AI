@@ -1340,7 +1340,7 @@ class QualityPredictionService
             $quality >= 70 => 'Good',
             $quality >= 50 => 'At Risk',
             $quality >= 30 => 'Poor',
-            default => 'Critical',
+            default => 'Very Poor',
         };
     }
 

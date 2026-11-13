@@ -101,7 +101,7 @@ class OperationalRiskService
 
         return [
             'model_name' => 'AgriFlow Operational Risk Engine',
-            'model_version' => 'step5.2.2-dry-decision-polish',
+            'model_version' => 'step10.4c-three-level-risk-v1',
             'model_type' => 'deterministic_weighted_risk_model',
             'risk_score' => $finalScore,
             'base_risk_score' => $baseScore,
@@ -449,13 +449,13 @@ class OperationalRiskService
         if ($quality !== null && $quality < 30) {
             return [
                 'floor' => 85,
-                'reason' => 'Predicted operational arrival quality is critical.',
+                'reason' => 'Predicted operational arrival quality is severely degraded.',
             ];
         }
 
         return [
             'floor' => 0,
-            'reason' => 'No critical override required.',
+            'reason' => 'No safety-floor override required.',
         ];
     }
 
@@ -476,7 +476,7 @@ class OperationalRiskService
                 'rank' => 4,
                 'intervention_required' => true,
                 'dispatch_deadline' => 'Immediate operational review',
-                'reason' => 'Critical freshness or transit constraints require immediate intervention.',
+                'reason' => 'Severe freshness or transit constraints require immediate intervention.',
             ];
         }
 
@@ -518,8 +518,10 @@ class OperationalRiskService
 
     private function severity(int $score): string
     {
+        // Final competition semantics: the product exposes exactly three
+        // operational risk bands. Urgency remains a separate dimension, so
+        // a High-risk shipment may still require Immediate review.
         return match (true) {
-            $score >= 80 => 'Critical',
             $score >= 60 => 'High',
             $score >= 30 => 'Moderate',
             default => 'Low',

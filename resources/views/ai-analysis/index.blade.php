@@ -207,7 +207,7 @@
                             if($driver['impact'] >= 20){
                                 $barColor = 'bg-rose-500';
                                 $textColor = 'text-rose-400';
-                                $label = 'Critical';
+                                $label = 'Major';
                             }elseif($driver['impact'] >= 10){
                                 $barColor = 'bg-amber-500';
                                 $textColor = 'text-amber-400';

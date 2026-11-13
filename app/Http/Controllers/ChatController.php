@@ -168,12 +168,13 @@ Operational Risk Index adalah deterministic operational decision-support index.
 
 Operational Risk Index BUKAN spoilage probability dan BUKAN probabilitas kegagalan shipment.
 
-Kategori operasional:
+Kategori operasional final:
 
-- Low
-- Moderate
-- High
-- Critical
+- Low (0-29)
+- Moderate (30-59)
+- High (60-100)
+
+High-risk shipment dapat memiliki urgency High atau Immediate. Urgency adalah dimensi terpisah dari risk level.
 
 Risk engine juga dapat menghasilkan:
 

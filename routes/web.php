@@ -6,14 +6,14 @@
     use App\Http\Controllers\ShipmentController;
     use App\Http\Controllers\AiAnalysisController;
     use App\Models\Shipment;
-    use App\Services\GeminiService;
     use App\Models\AiAnalysis;
+    use App\Services\GeminiService;
     use App\Http\Controllers\AIOptimizerController;
     use App\Services\AI\DecisionEngine;
     use App\Services\EnvironmentalService;
-use App\Services\Sustainability\FreightCarbonEstimateService;
+    use App\Services\Sustainability\FreightCarbonEstimateService;
     use App\Http\Controllers\OperationalDigitalTwinController;
-use App\Http\Controllers\CompletedShipmentController;
+    use App\Http\Controllers\CompletedShipmentController;
 
 
 Route::get('/test-environment', function () {
@@ -170,331 +170,241 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
     
 
     Route::get('/dashboard', function () {
+    $totalHarvests = \App\Models\Harvest::count();
+    $totalWeight = \App\Models\Harvest::sum('weight');
 
-        $totalHarvests = \App\Models\Harvest::count();
-        $totalWeight = \App\Models\Harvest::sum('weight');
-        
-        $totalShipments = \App\Models\Shipment::count();
-        $deliveredShipments = \App\Models\Shipment::where('status', 'Delivered')->count();
-        
+    $totalShipments = \App\Models\Shipment::count();
+    $deliveredShipments = \App\Models\Shipment::where('status', 'Delivered')->count();
+    $totalAnalyses = AiAnalysis::count();
 
-        $mostRisky = \App\Models\AiAnalysis::select('shipment_id')
-        ->selectRaw('COUNT(*) as total')
-        ->groupBy('shipment_id')
-        ->orderByDesc('total')
-        ->first();
+    $engine = app(DecisionEngine::class);
 
-    $mostRiskyShipment = null;
+    // Dashboard operational KPIs are calculated from CURRENT ACTIVE
+    // shipments only. Historical AiAnalysis rows remain audit snapshots.
+    $activeShipments = \App\Models\Shipment::with('harvest')
+        ->whereIn('status', ['Harvested', 'Packed', 'In Transit'])
+        ->get();
 
-    if ($mostRisky) {
-        $mostRiskyShipment = \App\Models\Shipment::find($mostRisky->shipment_id);
-    }
+    $activeOperationalRows = $activeShipments
+        ->map(function ($shipment) use ($engine) {
+            return [
+                'shipment' => $shipment,
+                'analysis' => $engine->analyze($shipment),
+            ];
+        });
 
-        // AI DATA
-        $totalAnalyses = AiAnalysis::count();
+    $activeShipmentAnalyses = $activeOperationalRows->pluck('analysis');
+    $activeShipmentCount = $activeOperationalRows->count();
 
-        // 📊 RISK DATA (FIXED)
-        $lowRisk = AiAnalysis::where('risk_level', 'Low')->count();
-        $mediumRisk = AiAnalysis::where('risk_level', 'Medium')->count();
-        $highRisk = AiAnalysis::where('risk_level', 'High')->count();
+    // Final competition risk semantics: exactly three levels.
+    // Low 0-29, Moderate 30-59, High 60-100.
+    $lowRisk = $activeShipmentAnalyses
+        ->where('risk_severity', 'Low')
+        ->count();
 
-        $engine = app(DecisionEngine::class);
+    $mediumRisk = $activeShipmentAnalyses
+        ->where('risk_severity', 'Moderate')
+        ->count();
 
-        $activeShipments = \App\Models\Shipment::with('harvest')
-            ->whereIn('status', ['Harvested', 'Packed', 'In Transit'])
-            ->get();
+    $highRisk = $activeShipmentAnalyses
+        ->where('risk_severity', 'High')
+        ->count();
 
-        $activeShipmentAnalyses = $activeShipments
-            ->map(fn ($shipment) => $engine->analyze($shipment));
+    // Urgency is intentionally separate from risk level. A High-risk
+    // shipment can require Immediate review without introducing a fourth
+    // risk category.
+    $immediateAttentionCount = $activeShipmentAnalyses
+        ->where('urgency_level', 'Immediate')
+        ->count();
 
-        // Operational Readiness is deliberately simple and transparent:
-        // 100 - Operational Risk Index. It is not an ESG/LCA metric.
-        $avgScore = $activeShipmentAnalyses->isNotEmpty()
-            ? round($activeShipmentAnalyses->avg('operational_readiness_score'), 1)
-            : 0;
-
-        $greenImpactScore = round($avgScore, 0);
-
-        // Source-backed activity estimate across shipment mass x distance.
-        // This does not use the legacy distance-only carbon column values.
-        $freightCarbon = app(FreightCarbonEstimateService::class);
-        $currentCarbon = round(
-            \App\Models\Shipment::with('harvest')
-                ->get()
-                ->sum(fn ($shipment) =>
-                    $freightCarbon->estimateForShipment($shipment)['estimated_kg']
-                    ?? 0
-                ),
-            1
-        );
-
-        $aiService = new GeminiService();
-
-        $aiInsight = $aiService->generateDashboardInsight([
-            'totalShipments' => $totalShipments,
-            'delivered' => $deliveredShipments,
-            'highRisk' => $highRisk,
-            'avgOperationalReadiness' => $avgScore,
-        ]);
-
-$aiInsightText =
-    $aiInsight['insight']
-    ?? 'No insight available';
-
-$aiRecommendation =
-    $aiInsight['recommendation']
-    ?? '';
-
-    $latestHighRisk = \App\Models\AiAnalysis::where('risk_level', 'High')
-        ->latest()
-        ->with('shipment.harvest')
-        ->first();
-        // ==============================
-// AI Executive Summary
-// ==============================
-
-$highRiskAnalyses =
-    \App\Models\AiAnalysis::where(
-        'risk_level',
-        'High'
-    )->count();
-
-$optimizeRoute = \App\Models\AiAnalysis::where(
-    'recommendations',
-    'like',
-    '%Optimize route%'
-)->count();
-
-$shipImmediately = \App\Models\AiAnalysis::where(
-    'recommendations',
-    'like',
-    '%Ship immediately%'
-)->count();
-
-$engine = app(DecisionEngine::class);
-
-$highestPriorityShipment = \App\Models\Shipment::with('harvest')
-    ->whereIn('status', ['Harvested','Packed','In Transit'])
-    ->get()
-    ->sortByDesc(function($shipment) use ($engine){
-        return $engine->analyze($shipment)['priority_score'];
-    })
-    ->first();
-
-$operationalRecommendation = null;
-
-if ($highestPriorityShipment) {
-    $highestPriorityAnalysis = $engine->analyze($highestPriorityShipment);
-
-    $operationalRecommendation = [
-        'action' => $highestPriorityAnalysis['recommended_action'],
-        'reason' => $highestPriorityAnalysis['recommendation_reason'],
-        'dispatch_deadline' => $highestPriorityAnalysis['dispatch_deadline'],
-        'recommended_vehicle' => $highestPriorityAnalysis['recommended_vehicle'],
-        'recommended_storage' => $highestPriorityAnalysis['recommended_storage'],
-        'risk_score' => $highestPriorityAnalysis['risk_score'],
-        'priority_score' => $highestPriorityAnalysis['priority_score'],
-    ];
-}
-
-$dashboardShipments = \App\Models\Shipment::with('harvest')
-    ->whereIn('status', [
-        'Harvested',
-        'Packed',
-        'In Transit'
-    ])
-    ->get()
-    ->map(function ($shipment) use ($engine) {
-
-        $analysis = $engine->analyze($shipment);
-
-        return [
-
-            'commodity' => $shipment->harvest->commodity,
-
-            'origin' => $shipment->origin,
-            'destination' => $shipment->destination,
-
-            'origin_lat' => $shipment->origin_lat,
-            'origin_lng' => $shipment->origin_lng,
-
-            'destination_lat' => $shipment->destination_lat,
-            'destination_lng' => $shipment->destination_lng,
-
-            'status' => $shipment->status,
-
-            'distance' => round($shipment->distance_km ?? 0),
-
-            'priority' => $analysis['priority_score'],
-
-            'risk' => $analysis['risk_score'],
-
-            'priority_level' => $analysis['priority_level'],
-
-        ];
-    });
-    $statusHarvested = \App\Models\Shipment::where('status','Harvested')->count();
-
-$statusPacked = \App\Models\Shipment::where('status','Packed')->count();
-
-$statusTransit = \App\Models\Shipment::where('status','In Transit')->count();
-
-$statusDelivered = \App\Models\Shipment::where('status','Delivered')->count();
-
-/*
-|--------------------------------------------------------------------------
-| Environmental Intelligence
-|--------------------------------------------------------------------------
-*/
-
-$environmentService = new \App\Services\EnvironmentalService();
-
-$environment = $environmentService->getEnvironment(null);
-
-$engine = app(DecisionEngine::class);
-
-$highRiskShare = $totalAnalyses > 0
-    ? round(
-        ($highRisk / $totalAnalyses) * 100
-    )
-    : 0;
-
-// ==========================================
-// Observed Operational Metrics
-// ==========================================
-
-// Share of persisted analyses currently
-// classified as High risk.
-$highRiskShare = $totalAnalyses > 0
-    ? round(
-        ($highRisk / $totalAnalyses) * 100
-    )
-    : 0;
-
-// Observed delivery completion rate.
-$currentEfficiency = $totalShipments > 0
-    ? round(
-        (
-            $deliveredShipments
-            / $totalShipments
-        ) * 100
-    )
-    : 0;
-
-// Current operational risk uses the live active-shipment analyses above.
-$averageOperationalRisk =
-    $activeShipmentAnalyses->isNotEmpty()
-        ? round(
-            $activeShipmentAnalyses
-                ->avg('risk_score')
-        )
+    $avgScore = $activeShipmentAnalyses->isNotEmpty()
+        ? round($activeShipmentAnalyses->avg('operational_readiness_score'), 1)
         : 0;
 
-$criticalOperationalCount =
-    $activeShipmentAnalyses
+    $greenImpactScore = round($avgScore, 0);
+
+    $averageOperationalRisk = $activeShipmentAnalyses->isNotEmpty()
+        ? round($activeShipmentAnalyses->avg('risk_score'))
+        : 0;
+
+    $highRiskShare = $activeShipmentCount > 0
+        ? round(($highRisk / $activeShipmentCount) * 100)
+        : 0;
+
+    // Source-backed activity estimate across shipment mass x distance.
+    $freightCarbon = app(FreightCarbonEstimateService::class);
+    $currentCarbon = round(
+        \App\Models\Shipment::with('harvest')
+            ->get()
+            ->sum(fn ($shipment) =>
+                $freightCarbon->estimateForShipment($shipment)['estimated_kg'] ?? 0
+            ),
+        1
+    );
+
+    $dashboardShipments = $activeOperationalRows
+        ->map(function ($row) {
+            $shipment = $row['shipment'];
+            $analysis = $row['analysis'];
+
+            return [
+                'shipment_id' => $shipment->id,
+                'commodity' => $shipment->harvest?->commodity ?? 'Unknown',
+                'origin' => $shipment->origin,
+                'destination' => $shipment->destination,
+                'origin_lat' => $shipment->origin_lat,
+                'origin_lng' => $shipment->origin_lng,
+                'destination_lat' => $shipment->destination_lat,
+                'destination_lng' => $shipment->destination_lng,
+                'status' => $shipment->status,
+                'distance' => round($shipment->distance_km ?? 0),
+                'priority' => $analysis['priority_score'] ?? 0,
+                'priority_level' => $analysis['priority_level'] ?? 'Unknown',
+                'risk' => $analysis['risk_score'] ?? 0,
+                'risk_severity' => $analysis['risk_severity'] ?? 'Unknown',
+                'urgency_level' => $analysis['urgency_level'] ?? 'Routine',
+                'recommended_action' => $analysis['recommended_action']
+                    ?? 'Review current shipment conditions',
+            ];
+        })
+        ->values();
+
+        $highestActiveRiskScore = $dashboardShipments->isNotEmpty()
+    ? $dashboardShipments->max('risk')
+    : null;
+
+$operationalFocusShipments = $highestActiveRiskScore !== null
+    ? $dashboardShipments
         ->filter(
-            fn ($analysis) =>
-                (
-                    $analysis[
-                        'risk_severity'
-                    ]
-                    ?? null
-                ) === 'Critical'
+            fn ($shipment) =>
+                (int) ($shipment['risk'] ?? 0)
+                === (int) $highestActiveRiskScore
         )
-        ->count(); 
+        ->values()
+    : collect();
 
-$forecast = $environment['forecast'] ?? [];
-$weatherTrend = [];
+$operationalFocusCount =
+    $operationalFocusShipments->count();
 
-if (
-    $environment &&
-    isset($environment['weather']) &&
-    isset($forecast['time'])
-) {
+$operationalFocusUrgency =
+    $highestActiveRiskScore !== null
+        ? (
+            $highestActiveRiskScore >= 80
+                ? 'Immediate'
+                : (
+                    $highestActiveRiskScore >= 60
+                        ? 'High'
+                        : (
+                            $highestActiveRiskScore >= 30
+                                ? 'Elevated'
+                                : 'Normal'
+                        )
+                )
+        )
+        : null;
 
-    $now = now();
-    $startIndex = 0;
+    $priorityActionShipments = $dashboardShipments
+        ->where('risk_severity', 'High')
+        ->sortByDesc('risk')
+        ->values();
 
-    // Cari index waktu yang paling dekat dengan waktu sekarang
-    foreach ($forecast['time'] as $index => $time) {
+    $topHighRiskShipment = $priorityActionShipments->first();
 
-        if (\Carbon\Carbon::parse($time)->greaterThanOrEqualTo($now)) {
-            $startIndex = $index;
-            break;
+    // Counts shown in the dashboard insight are deterministic. LLM output is
+    // not allowed to redefine or summarize operational counts differently.
+    $aiInsightText = sprintf(
+        'AgriFlow is currently evaluating %d active shipment(s): %d High, %d Moderate, and %d Low. %d shipment(s) have completed the operational lifecycle.',
+        $activeShipmentCount,
+        $highRisk,
+        $mediumRisk,
+        $lowRisk,
+        $deliveredShipments
+    );
+
+    $statusHarvested = \App\Models\Shipment::where('status', 'Harvested')->count();
+    $statusPacked = \App\Models\Shipment::where('status', 'Packed')->count();
+    $statusTransit = \App\Models\Shipment::where('status', 'In Transit')->count();
+    $statusDelivered = $deliveredShipments;
+
+    $currentEfficiency = $totalShipments > 0
+        ? round(($deliveredShipments / $totalShipments) * 100)
+        : 0;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Environmental Intelligence
+    |--------------------------------------------------------------------------
+    */
+    $environmentService = new \App\Services\EnvironmentalService();
+    $environment = $environmentService->getEnvironment(null);
+
+    $forecast = $environment['forecast'] ?? [];
+    $weatherTrend = [];
+
+    if (
+        $environment
+        && isset($environment['weather'])
+        && isset($forecast['time'])
+    ) {
+        $now = now();
+        $startIndex = 0;
+
+        foreach ($forecast['time'] as $index => $time) {
+            if (\Carbon\Carbon::parse($time)->greaterThanOrEqualTo($now)) {
+                $startIndex = $index;
+                break;
+            }
+        }
+
+        for (
+            $i = $startIndex;
+            $i < min($startIndex + 6, count($forecast['time']));
+            $i++
+        ) {
+            $weatherTrend[] = [
+                'time' => \Carbon\Carbon::parse($forecast['time'][$i])->format('H:i'),
+                'temp' => $forecast['temperature_2m'][$i] ?? 0,
+                'humidity' => $forecast['relative_humidity_2m'][$i] ?? 0,
+                'wind' => $forecast['wind_speed_10m'][$i] ?? 0,
+                'rain' => $forecast['precipitation_probability'][$i] ?? 0,
+                'cloud' => $forecast['cloud_cover'][$i] ?? 0,
+            ];
         }
     }
 
-    // Ambil 6 jam ke depan
-    for (
-        $i = $startIndex;
-        $i < min($startIndex + 6, count($forecast['time']));
-        $i++
-    ) {
-
-        $weatherTrend[] = [
-
-            'time' => \Carbon\Carbon::parse($forecast['time'][$i])->format('H:i'),
-
-            'temp' => $forecast['temperature_2m'][$i] ?? 0,
-
-            'humidity' => $forecast['relative_humidity_2m'][$i] ?? 0,
-
-            'wind' => $forecast['wind_speed_10m'][$i] ?? 0,
-
-            'rain' => $forecast['precipitation_probability'][$i] ?? 0,
-
-            'cloud' => $forecast['cloud_cover'][$i] ?? 0,
-
-        ];
-    }
-}
-
-return view('dashboard', compact(
-    'totalHarvests',
-    'totalWeight',
-    'totalShipments',
-    'deliveredShipments',
-
-    'totalAnalyses',
-    'avgScore',
-
-    'lowRisk',
-    'mediumRisk',
-    'highRisk',
-
-    'mostRiskyShipment',
-
-    'aiInsight',
-    'aiInsightText',
-    'aiRecommendation',
-
-    'latestHighRisk',
-
-    'greenImpactScore',
-
-    'optimizeRoute',
-    'shipImmediately',
-
-    'operationalRecommendation',
-    'dashboardShipments',
-
-    'statusHarvested',
-    'statusPacked',
-    'statusTransit',
-    'statusDelivered',
-
-    'highRiskShare',
-    'averageOperationalRisk',
-    'criticalOperationalCount',
-
-    'currentCarbon',
-    'currentEfficiency',
-
-    'environment',
-    'weatherTrend',
-));
-
-    })->middleware(['auth'])->name('dashboard');
+    return view('dashboard', compact(
+        'totalHarvests',
+        'totalWeight',
+        'totalShipments',
+        'deliveredShipments',
+        'activeShipmentCount',
+        'totalAnalyses',
+        'avgScore',
+        'lowRisk',
+        'mediumRisk',
+        'highRisk',
+        'immediateAttentionCount',
+        'greenImpactScore',
+        'dashboardShipments',
+        'priorityActionShipments',
+        'topHighRiskShipment',
+        'statusHarvested',
+        'statusPacked',
+        'statusTransit',
+        'statusDelivered',
+        'highRiskShare',
+        'averageOperationalRisk',
+        'currentCarbon',
+        'currentEfficiency',
+        'aiInsightText',
+        'environment',
+        'weatherTrend',
+        'highestActiveRiskScore',
+        'operationalFocusShipments',
+        'operationalFocusCount',
+        'operationalFocusUrgency',
+    ));
+})->middleware(['auth'])->name('dashboard');
         Route::resource('harvests', HarvestController::class)
         ->middleware(['auth']);
 

@@ -30,8 +30,7 @@
                 </div>
 
                 <span class="inline-flex mt-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border
-                    {{ ($riskAssessment['risk_severity'] ?? '') === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : '' }}
-                    {{ ($riskAssessment['risk_severity'] ?? '') === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' : '' }}
+                    {{ ($riskAssessment['risk_severity'] ?? '') === 'High' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : '' }}
                     {{ ($riskAssessment['risk_severity'] ?? '') === 'Moderate' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : '' }}
                     {{ ($riskAssessment['risk_severity'] ?? '') === 'Low' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : '' }}
                 ">
@@ -66,7 +65,7 @@
 
         @if($riskAssessment['critical_override_applied'] ?? false)
             <div class="mt-5 bg-rose-500/10 border border-rose-500/30 rounded-2xl p-5">
-                <p class="text-[10px] uppercase font-black text-rose-300 tracking-widest">Critical Constraint Override</p>
+                <p class="text-[10px] uppercase font-black text-rose-300 tracking-widest">Safety Constraint Override</p>
                 <p class="text-sm text-rose-100 mt-2 leading-relaxed">{{ $riskAssessment['critical_override_reason'] }}</p>
             </div>
         @endif
