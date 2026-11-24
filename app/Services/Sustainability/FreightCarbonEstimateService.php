@@ -30,7 +30,7 @@ class FreightCarbonEstimateService
         'UK Department for Energy Security and Net Zero (DESNZ) — 2026 GHG Conversion Factors, Freighting goods';
 
     public const FACTOR_URL =
-        'https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2026';
+    'https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2026';
 
     public const FACTOR_SCOPE =
         'All HGV types, non-refrigerated, average laden; tank-to-wheel (TTW)';
@@ -40,18 +40,26 @@ class FreightCarbonEstimateService
         ?float $distanceKm
     ): array {
         if (
-            $weightKg === null
-            || $distanceKm === null
-            || $weightKg <= 0
-            || $distanceKm <= 0
-        ) {
-            return $this->unavailable();
-        }
+    $weightKg === null ||
+    $distanceKm === null ||
+    !is_finite($weightKg) ||
+    !is_finite($distanceKm) ||
+    $weightKg <= 0 ||
+    $distanceKm <= 0
+) {
+    return $this->unavailable();
+}
 
         $weightTonnes = $weightKg / 1000;
         $tonneKm = $weightTonnes * $distanceKm;
         $estimatedKg = $tonneKm
             * self::ROAD_FREIGHT_FACTOR_KG_CO2E_PER_TONNE_KM;
+        if (
+    !is_finite($tonneKm) ||
+    !is_finite($estimatedKg)
+) {
+    return $this->unavailable();
+}
 
         return [
             'estimated_kg' => round($estimatedKg, 2),

@@ -45,14 +45,14 @@ class ThreeLevelOperationalRiskContractTest extends TestCase
             $routeSource
         );
 
-        $this->assertStringContainsString(
-            'Active Risk Distribution',
-            $dashboardSource
-        );
-        $this->assertStringContainsString(
-            '{{ $highRisk }} High Risk',
-            $dashboardSource
-        );
+$this->assertStringContainsString(
+    'Sebaran Risiko Aktif',
+    $dashboardSource
+);
+$this->assertStringContainsString(
+    '{{ $highRisk }} Risiko Tinggi',
+    $dashboardSource
+);
         $this->assertStringNotContainsString(
             'Active Critical',
             $dashboardSource
@@ -82,9 +82,9 @@ class ThreeLevelOperationalRiskContractTest extends TestCase
             "if (\$urgency === 'Immediate')",
             $recommendationService
         );
-        $this->assertStringContainsString(
-            'High operational risk combined with severe freshness or transit constraints',
-            $recommendationService
-        );
+$this->assertStringContainsString(
+    'Risiko operasional tinggi yang disertai keterbatasan kesegaran atau waktu tempuh',
+    $recommendationService
+);
     }
 }

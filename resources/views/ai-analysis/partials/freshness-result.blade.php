@@ -3,249 +3,264 @@
     $predictionAvailable = $qualityPrediction['prediction_available'] ?? false;
     $isStorageStability = !empty($qualityPrediction['storage_stability_reference_available']);
 
-    $qualityAtDeparture = session('quality_at_departure');
     $qualityAtArrival = session('quality_at_arrival');
-    $qualityStatus = session('quality_status', 'Unavailable');
-    $qualityLoss = session('quality_loss_during_transit');
+    $rawQualityStatus = session('quality_status', 'Belum tersedia');
+    $qualityStatus = match ($rawQualityStatus) {
+        'Excellent' => 'Sangat Baik',
+        'Good' => 'Baik',
+        'At Risk' => 'Berisiko',
+        'Poor' => 'Kurang Baik',
+        'Very Poor' => 'Sangat Kurang',
+        'Unavailable', null, '' => 'Belum tersedia',
+        default => $rawQualityStatus,
+    };
+
+    $qualityStatusBadge = match ($rawQualityStatus) {
+        'Excellent', 'Good' => 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40',
+        'Fair', 'Moderate', 'Warning' => 'bg-amber-500/20 text-amber-200 border-amber-400/40',
+        'At Risk', 'Poor', 'Very Poor' => 'bg-rose-500/20 text-rose-200 border-rose-400/40',
+        default => 'bg-emerald-900/60 text-emerald-200 border-emerald-700/60',
+    };
+
     $remainingShelfLife = session('predicted_remaining_shelf_life_days');
-    $safeTransitWindow = session('safe_transit_window_hours');
-    $safeTransitStatus = session('safe_transit_status', 'Unavailable');
-    $temperatureAssessment = session('temperature_assessment', []);
-    $temperatureStatus = $temperatureAssessment['status'] ?? 'Not provided';
-    $dataConfidence = session('data_confidence', 0);
+    $shipmentData = session('shipment_data', []);
 
-    $expiryConstraintApplied = $qualityPrediction['expiry_constraint_applied'] ?? false;
-    $reconciliationStatus = $qualityPrediction['shelf_life_reconciliation_status'] ?? null;
-    $reconciliationMessage = $qualityPrediction['shelf_life_reconciliation_message'] ?? null;
+    $riskLevel = session('risk_level');
+    $riskLower = strtolower((string) $riskLevel);
+    $riskDisplayLevel = match (true) {
+        str_contains($riskLower, 'crit') => 'Kritis',
+        str_contains($riskLower, 'high') => 'Tinggi',
+        str_contains($riskLower, 'med') || str_contains($riskLower, 'mod') => 'Sedang',
+        str_contains($riskLower, 'low') => 'Rendah',
+        default => 'Tidak diketahui',
+    };
+    $riskIndex = (int) (session('risk_index_value') ?? 0);
 
-    $referenceQuality = $qualityPrediction['reference_quality_at_arrival'] ?? null;
-    $recordedFreshness = $qualityPrediction['recorded_freshness_index_at_arrival'] ?? null;
-    $referenceRemaining = $qualityPrediction['reference_remaining_shelf_life_at_arrival_days'] ?? null;
-    $recordedRemainingArrival = $qualityPrediction['recorded_remaining_at_arrival_days'] ?? null;
-    $recordedRemainingDepartureHours = $qualityPrediction['recorded_remaining_hours'] ?? null;
-    $recordedRemainingArrivalHours = $qualityPrediction['recorded_remaining_at_arrival_hours'] ?? null;
-    $plannedTransitHours = $qualityPrediction['planned_transit_hours'] ?? null;
-    $transitMarginHours = $qualityPrediction['transit_margin_hours'] ?? null;
+    // Perhitungan cincin progres kesegaran (keliling untuk r=34 adalah ~213.6)
+    $freshnessVal = $qualityAtArrival !== null ? max(0, min(100, (float) $qualityAtArrival)) : 0;
+    $circumference = 213.6;
+    $dashOffset = $circumference - ($circumference * $freshnessVal / 100);
 
-    $qualityTone = match (true) {
-        $qualityAtArrival === null => 'slate',
-        $qualityAtArrival >= 85 => 'emerald',
-        $qualityAtArrival >= 70 => 'cyan',
-        $qualityAtArrival >= 50 => 'amber',
-        default => 'rose',
+    $freshnessColor = match (true) {
+        !$predictionAvailable || $qualityAtArrival === null => 'text-emerald-200/70',
+        $qualityAtArrival >= 85 => 'text-emerald-300',
+        $qualityAtArrival >= 70 => 'text-emerald-300',
+        $qualityAtArrival >= 50 => 'text-amber-300',
+        default => 'text-rose-300',
+    };
+
+    $freshnessExplanation = match (true) {
+        $isStorageStability => 'Komoditas kering: skor kesegaran produk segar tidak berlaku. Pantau kadar air dan kelembapan penyimpanan.',
+        !$predictionAvailable || $qualityAtArrival === null => 'Skor kesegaran belum dapat dihitung dengan data panen saat ini.',
+        $qualityAtArrival >= 85 => 'Produk diperkirakan tiba dalam kondisi sangat baik dan siap dipasarkan.',
+        $qualityAtArrival >= 70 => 'Produk diperkirakan tiba dalam kondisi baik dengan penurunan alami yang wajar.',
+        $qualityAtArrival >= 50 => 'Penurunan kualitas produk diperkirakan terjadi selama perjalanan. Tangani dengan hati-hati.',
+        default => 'Penurunan kualitas yang cukup besar berisiko terjadi saat tiba tanpa penanganan segera.',
+    };
+
+    $riskTone = match (true) {
+        str_contains($riskLower, 'crit') => [
+            'badge' => 'bg-red-900/80 text-red-100 border-red-500/60',
+            'bar' => 'bg-gradient-to-r from-red-600 to-red-800',
+            'desc' => 'Indeks risiko pengiriman berada pada tingkat kritis. Penanganan segera sangat diperlukan untuk mencegah kerusakan.',
+        ],
+        str_contains($riskLower, 'high') => [
+            'badge' => 'bg-rose-500/20 text-rose-200 border-rose-400/40',
+            'bar' => 'bg-gradient-to-r from-orange-500 to-rose-600',
+            'desc' => 'Indeks risiko pengiriman berada pada tingkat tinggi. Perhatian segera diperlukan untuk mencegah penurunan mutu.',
+        ],
+        str_contains($riskLower, 'med') || str_contains($riskLower, 'mod') => [
+            'badge' => 'bg-amber-500/20 text-amber-200 border-amber-400/40',
+            'bar' => 'bg-gradient-to-r from-amber-300 to-orange-500',
+            'desc' => 'Indeks risiko pengiriman berada pada tingkat sedang. Tinjau faktor utama dan ikuti langkah di bawah ini.',
+        ],
+        default => [
+            'badge' => 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40',
+            'bar' => 'bg-gradient-to-r from-emerald-300 to-emerald-500',
+            'desc' => 'Indeks risiko pengiriman berada pada tingkat rendah. Kondisi pengiriman saat ini masih dalam batas aman.',
+        ],
+    };
+
+    $displayShelfLife = $remainingShelfLife ?? ($shipmentData['remaining_days'] ?? null);
+    $shelfLifeTone = match (true) {
+        $displayShelfLife === null => [
+            'pct' => 0,
+            'bar' => 'bg-teal-700/70',
+            'desc' => 'Data sisa masa simpan belum tersedia untuk pengiriman ini.',
+        ],
+        $displayShelfLife <= 1 => [
+            'pct' => 15,
+            'bar' => 'bg-gradient-to-r from-rose-400 to-rose-500',
+            'desc' => 'Sisa masa simpan sangat singkat saat tiba. Utamakan penjualan atau penanganan segera.',
+        ],
+        $displayShelfLife <= 3 => [
+            'pct' => 45,
+            'bar' => 'bg-gradient-to-r from-teal-300 to-amber-300',
+            'desc' => 'Sisa masa simpan terbatas saat tiba. Hindari segala bentuk penundaan pengiriman.',
+        ],
+        default => [
+            'pct' => 85,
+            'bar' => 'bg-gradient-to-r from-teal-300 to-cyan-400',
+            'desc' => 'Sisa masa simpan produk masih mencukupi untuk perjalanan yang direncanakan.',
+        ],
     };
 @endphp
 
-@if(!empty($qualityPrediction))
-    <div class="mb-8 bg-slate-800/60 border border-slate-700/80 rounded-3xl p-6 sm:p-8 relative overflow-hidden">
-        <div class="absolute -top-20 -right-20 w-52 h-52 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+<section aria-label="Kondisi Pengiriman" class="mb-8">
+    <div class="mb-4">
+        <h3 class="text-lg sm:text-xl font-black text-slate-900">Kondisi Pengiriman</h3>
+        <p class="text-sm text-slate-600 mt-0.5">Ringkasan perkiraan kualitas produk saat tiba, risiko pengiriman, dan sisa masa simpan.</p>
+    </div>
 
-        <div class="relative z-10">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 mb-6 pb-5 border-b border-slate-700">
-                <div>
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
-                        {{ $isStorageStability ? 'Storage-Stability Intelligence' : 'Freshness Intelligence' }}
-                    </p>
-                    <h2 class="text-2xl font-black text-white mt-1">
-                        {{ $isStorageStability ? 'Storage Condition at Arrival' : 'Operational Condition at Arrival' }}
-                    </h2>
-                    <p class="text-slate-400 text-xs mt-2 max-w-2xl leading-relaxed">
-                        @if($isStorageStability)
-                            Dry-commodity assessment based on recorded cargo moisture, relative humidity, transit context,
-                            and the recorded operational deadline. Fresh-produce Quality-at-Arrival is intentionally not generated.
-                        @else
-                            Conservative result combining commodity reference life, recorded expiry, harvest age, planned
-                            transit, and available recorded or scenario temperature conditions.
-                        @endif
-                    </p>
-                </div>
-
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+        {{-- Kartu 1: Skor Kesegaran (Hijau Zamrud Gelap) --}}
+        <div class="bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 border border-emerald-700/60 rounded-3xl p-6 flex flex-col h-full text-white shadow-sm">
+            {{-- 1. Judul & Status --}}
+            <div class="flex items-center justify-between gap-2 min-h-[28px]">
+                <p class="text-sm font-bold text-emerald-200">Skor Kesegaran</p>
                 @if($predictionAvailable && $qualityAtArrival !== null)
-                    <div class="sm:text-right">
-                        <div class="flex sm:justify-end items-end gap-2">
-                            <span class="text-5xl font-black text-white leading-none">
-                                {{ number_format($qualityAtArrival, 0) }}
-                            </span>
-                            <span class="text-sm font-black text-slate-500 mb-1">/100</span>
-                        </div>
-                        <span class="inline-flex mt-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
-                            {{ $qualityTone === 'emerald' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : '' }}
-                            {{ $qualityTone === 'cyan' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : '' }}
-                            {{ $qualityTone === 'amber' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : '' }}
-                            {{ $qualityTone === 'rose' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : '' }}
-                        ">
-                            {{ $qualityStatus }}
-                        </span>
-                    </div>
-                @else
-                    <span class="inline-flex px-3 py-2 rounded-lg bg-slate-900/60 text-slate-400 border border-slate-700 text-[10px] font-black uppercase tracking-widest">
-                        {{ $isStorageStability ? 'Quality score not applicable' : 'Prediction unavailable' }}
+                    <span class="px-3 py-1 rounded-full text-xs font-extrabold border {{ $qualityStatusBadge }}">
+                        {{ $qualityStatus }}
                     </span>
                 @endif
             </div>
 
-            @if($predictionAvailable)
-                @if($expiryConstraintApplied)
-                    <div class="mb-5 bg-amber-500/10 border border-amber-500/25 rounded-2xl p-5">
-                        <p class="text-[10px] uppercase tracking-widest font-black text-amber-400">
-                            Active Shelf-Life Constraint
-                        </p>
-                        <p class="text-sm font-black text-white mt-2">{{ $reconciliationStatus }}</p>
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">{{ $reconciliationMessage }}</p>
-                    </div>
-                @endif
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-700">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Arrival Quality</p>
-                        <p class="mt-2 text-2xl font-black text-white">
-                            {{ $qualityAtArrival !== null ? number_format($qualityAtArrival, 0) : '—' }}
-                            <span class="text-xs text-slate-500">/100</span>
-                        </p>
-                    </div>
-
-                    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-700">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Remaining Life at Arrival</p>
-                        <p class="mt-2 text-2xl font-black text-white">
-                            {{ $remainingShelfLife !== null ? number_format($remainingShelfLife, 2) : '—' }}
-                            <span class="text-xs text-slate-500">days</span>
-                        </p>
-                        @if($recordedRemainingArrivalHours !== null)
-                            <p class="text-[10px] uppercase font-bold text-slate-500 mt-2">
-                                ≈ {{ number_format($recordedRemainingArrivalHours, 1) }} h recorded time left
-                            </p>
-                        @endif
-                    </div>
-
-                    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-700">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Maximum Transit Window From Now</p>
-                        <p class="mt-2 text-2xl font-black text-white">
-                            {{ $safeTransitWindow !== null ? number_format($safeTransitWindow, 1) : '—' }}
-                            <span class="text-xs text-slate-500">hours</span>
-                        </p>
-                        <p class="text-[10px] uppercase font-bold text-slate-500 mt-2">{{ $safeTransitStatus }}</p>
-                    </div>
-
-                    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-700">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transit Margin</p>
-                        <p class="mt-2 text-2xl font-black {{ ($transitMarginHours ?? 0) < 0 ? 'text-rose-400' : 'text-cyan-400' }}">
-                            {{ $transitMarginHours !== null ? number_format($transitMarginHours, 1) : '—' }}
-                            <span class="text-xs opacity-70">hours</span>
-                        </p>
-                        <p class="text-[10px] uppercase font-bold text-slate-500 mt-2">
-                            Planned transit: {{ $plannedTransitHours !== null ? number_format($plannedTransitHours, 1) : '—' }} h
-                        </p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
-                    <div class="bg-slate-900/40 border border-slate-700 rounded-2xl p-5">
-                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Quality</p>
-                        <p class="text-xl font-black text-white mt-2">
-                            {{ $referenceQuality !== null ? number_format($referenceQuality, 0) : '—' }}/100
-                        </p>
-                    </div>
-
-                    <div class="bg-slate-900/40 border border-slate-700 rounded-2xl p-5">
-                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Recorded Freshness</p>
-                        <p class="text-xl font-black text-white mt-2">
-                            {{ $recordedFreshness !== null ? number_format($recordedFreshness, 0) : '—' }}/100
-                        </p>
-                    </div>
-
-                    <div class="bg-slate-900/40 border border-slate-700 rounded-2xl p-5">
-                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Temperature</p>
-                        <p class="text-lg font-black text-amber-400 mt-2">{{ $temperatureStatus }}</p>
-                        <p class="text-xs text-slate-500 mt-2">
-                            {{ str_replace('_', ' ', $qualityPrediction['temperature_basis'] ?? 'unknown') }}
-                        </p>
-                    </div>
-
-                    <div class="bg-slate-900/40 border border-slate-700 rounded-2xl p-5">
-                        <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Data Confidence</p>
-                        <p class="text-xl font-black text-white mt-2">{{ number_format($dataConfidence, 0) }}%</p>
-                        <p class="text-[10px] text-slate-500 mt-2">Input completeness, not model accuracy.</p>
-                    </div>
-                </div>
-
-                <details class="mt-5 group">
-                    <summary class="cursor-pointer list-none flex items-center justify-between gap-4 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700 rounded-xl px-5 py-4 transition-colors">
-                        <span class="text-xs font-black text-slate-300 uppercase tracking-widest">Prediction Details</span>
-                        <span class="text-cyan-400 text-sm group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 px-5 pt-5">
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Baseline Reference Life</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ isset($qualityPrediction['baseline_shelf_life_days']) ? number_format($qualityPrediction['baseline_shelf_life_days'], 1) . ' days' : 'Unavailable' }}
-                            </p>
+            {{-- 2. Angka Utama & Cincin Progres --}}
+            <div class="flex items-center justify-between gap-4 mt-4 min-h-[60px]">
+                <div>
+                    @if($predictionAvailable && $qualityAtArrival !== null)
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-4xl font-black text-white tracking-tight">{{ number_format($qualityAtArrival, 0) }}</span>
+                            <span class="text-sm font-bold text-emerald-200/80">/100</span>
                         </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Reference Remaining at Arrival</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ $referenceRemaining !== null ? number_format($referenceRemaining, 2) . ' days' : 'Unavailable' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Recorded Remaining Before Dispatch</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ $recordedRemainingDepartureHours !== null ? number_format($recordedRemainingDepartureHours, 1) . ' hours' : 'Unavailable' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Recorded Remaining at Arrival</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ $recordedRemainingArrival !== null ? number_format($recordedRemainingArrival, 2) . ' days' : 'Unavailable' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Harvest Age</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ isset($qualityPrediction['harvest_age_days']) ? number_format($qualityPrediction['harvest_age_days'], 2) . ' days' : 'Unavailable' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Effective Transit Age</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ isset($qualityPrediction['effective_transit_age_days']) ? number_format($qualityPrediction['effective_transit_age_days'], 2) . ' days' : 'Unavailable' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Departure Quality</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ $qualityAtDeparture !== null ? number_format($qualityAtDeparture, 0) . '/100' : 'Unavailable' }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-black text-slate-500 tracking-widest">Transit Quality Loss</p>
-                            <p class="text-sm font-bold text-slate-200 mt-1">
-                                {{ $qualityLoss !== null ? number_format($qualityLoss, 0) . ' pts' : 'Unavailable' }}
-                            </p>
-                        </div>
-                    </div>
-                </details>
-            @else
-                <div class="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
-                    @if($isStorageStability)
-                        <p class="text-sm font-bold text-amber-300">
-                            Fresh-produce arrival quality is not applicable to this storage-stability model.
-                        </p>
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            Use the dry-commodity Condition Intelligence assessment for cargo moisture and relative humidity.
-                            Missing values remain an explicit evidence gap; AgriFlow does not invent a quality score.
-                        </p>
                     @else
-                        <p class="text-sm font-bold text-amber-300">
-                            Freshness prediction is unavailable for this shipment.
-                        </p>
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            A validated fresh-produce commodity profile and usable harvest data are required before AgriFlow
-                            calculates arrival quality.
-                        </p>
+                        <p class="text-xl font-bold text-emerald-100">{{ $isStorageStability ? 'Penyimpanan Kering' : 'Belum Tersedia' }}</p>
                     @endif
                 </div>
+
+                <div class="relative w-14 h-14 shrink-0">
+                    <svg class="w-14 h-14 -rotate-90" viewBox="0 0 80 80">
+                        <defs>
+                            <linearGradient id="freshnessRingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#a7f3d0" />
+                                <stop offset="100%" stop-color="#34d399" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="40" cy="40" r="34" fill="none" stroke="currentColor" stroke-width="7" class="text-emerald-950/80" />
+                        @if($predictionAvailable && $qualityAtArrival !== null)
+                            <circle cx="40" cy="40" r="34" fill="none" stroke="url(#freshnessRingGrad)" stroke-width="7"
+                                    stroke-linecap="round"
+                                    stroke-dasharray="{{ $circumference }}"
+                                    stroke-dashoffset="{{ $dashOffset }}"
+                                    class="transition-all duration-700" />
+                        @endif
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 3. Progress Bar & 4. Keterangan Singkat --}}
+            @if($predictionAvailable && $qualityAtArrival !== null)
+                <div class="mt-4 h-3 rounded-full bg-emerald-950/90 border border-emerald-800/60 overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-emerald-200 via-emerald-300 to-emerald-400 transition-all duration-700"
+                         style="width: {{ max(0, min(100, $freshnessVal)) }}%;"></div>
+                </div>
+                <p class="text-xs text-emerald-100/80 leading-relaxed mt-2.5">
+                    Skor menunjukkan perkiraan kondisi kesegaran produk. Semakin tinggi nilainya, semakin baik kondisi produk.
+                </p>
             @endif
+
+            {{-- 5. Garis Pemisah & 6. Penjelasan Kondisi --}}
+            <div class="mt-auto pt-4">
+                <p class="text-sm text-emerald-50/90 leading-relaxed pt-4 border-t border-emerald-800/70">
+                    {{ $freshnessExplanation }}
+                </p>
+            </div>
+        </div>
+
+        {{-- Kartu 2: Tingkat Risiko Pengiriman (Biru Navy Gelap) --}}
+        <div class="bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 border border-blue-800/60 rounded-3xl p-6 flex flex-col h-full text-white shadow-sm">
+            {{-- 1. Judul & Badge --}}
+            <div class="flex items-center justify-between gap-2 min-h-[28px]">
+                <p class="text-sm font-bold text-blue-200">Tingkat Risiko Pengiriman</p>
+                <span class="px-3 py-1 rounded-full text-xs font-extrabold border {{ $riskTone['badge'] }}">
+                    {{ $riskDisplayLevel }}
+                </span>
+            </div>
+
+            {{-- 2. Angka Utama & Satuan --}}
+            <div class="flex items-center mt-4 min-h-[60px]">
+                <div class="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
+                    <span class="text-4xl font-black text-white tracking-tight">{{ $riskIndex }}</span>
+                    <span class="text-sm font-bold text-blue-200/80">/100 Indeks Risiko Operasional</span>
+                </div>
+            </div>
+
+            {{-- 3. Progress Bar & 4. Keterangan Singkat --}}
+            <div class="mt-4 h-3 rounded-full bg-slate-900/90 border border-blue-900/60 overflow-hidden">
+                <div class="h-full rounded-full {{ $riskTone['bar'] }} transition-all duration-700" style="width: {{ max(4, min(100, $riskIndex)) }}%;"></div>
+            </div>
+            <p class="text-xs text-blue-100/80 leading-relaxed mt-2.5">
+                Indeks menunjukkan tingkat risiko operasional pengiriman. Semakin rendah nilainya, semakin aman kondisi pengiriman.
+            </p>
+
+            {{-- 5. Garis Pemisah & 6. Penjelasan Kondisi --}}
+            <div class="mt-auto pt-4">
+                <p class="text-sm text-blue-50/90 leading-relaxed pt-4 border-t border-blue-900/70">
+                    {{ $riskTone['desc'] }}
+                </p>
+            </div>
+        </div>
+
+        {{-- Kartu 3: Sisa Masa Simpan (Teal Gelap) --}}
+        <div class="bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950 border border-teal-700/60 rounded-3xl p-6 flex flex-col h-full text-white shadow-sm">
+            {{-- 1. Judul & Ikon --}}
+            <div class="flex items-center justify-between gap-2 min-h-[28px]">
+                <p class="text-sm font-bold text-teal-200">Sisa Masa Simpan</p>
+                <svg class="w-5 h-5 text-teal-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+
+            {{-- 2. Angka Utama & Satuan --}}
+            <div class="flex items-center mt-4 min-h-[60px]">
+                <div class="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
+                    <span class="text-4xl font-black text-white tracking-tight">
+                        {{ $displayShelfLife !== null ? number_format((float) $displayShelfLife, 1, ',', '.') : '—' }}
+                    </span>
+                    <span class="text-sm font-bold text-teal-200/85">Hari Saat Tiba</span>
+                </div>
+            </div>
+
+            {{-- 3. Progress Bar & 4. Keterangan Singkat --}}
+            <div class="mt-4 h-3 rounded-full bg-teal-950/90 border border-teal-800/60 overflow-hidden">
+                <div class="h-full rounded-full {{ $shelfLifeTone['bar'] }} transition-all duration-700" style="width: {{ $shelfLifeTone['pct'] }}%;"></div>
+            </div>
+            <p class="text-xs text-teal-100/80 leading-relaxed mt-2.5">
+                Perkiraan sisa waktu layak simpan setelah produk tiba di tujuan berdasarkan rencana perjalanan.
+            </p>
+
+            {{-- 5. Garis Pemisah & 6. Penjelasan Kondisi --}}
+            <div class="mt-auto pt-4">
+                <p class="text-sm text-teal-50/90 leading-relaxed pt-4 border-t border-teal-800/70">
+                    {{ $shelfLifeTone['desc'] }}
+                </p>
+            </div>
         </div>
     </div>
-@endif
+
+    @if(!empty($qualityPrediction['expiry_constraint_applied']) && !empty($qualityPrediction['shelf_life_reconciliation_message']))
+        <div class="mt-4 bg-amber-50 border border-amber-300 rounded-2xl px-5 py-4 flex items-start gap-3">
+            <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <p class="text-sm text-amber-950 leading-relaxed">
+                <strong class="font-extrabold text-amber-900">Peringatan Kedaluwarsa:</strong> {{ $qualityPrediction['shelf_life_reconciliation_message'] }}
+            </p>
+        </div>
+    @endif
+</section>

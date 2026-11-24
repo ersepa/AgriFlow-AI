@@ -89,20 +89,20 @@ class DryCommodityDecisionPolishTest extends TestCase
                 ->pluck('action')
                 ->implode(' | ');
 
-        $this->assertStringContainsString(
-            'moisture',
-            strtolower($actions)
-        );
+$this->assertStringContainsString(
+    'kadar air',
+    strtolower($actions)
+);
 
-        $this->assertStringContainsString(
-            'relative humidity',
-            strtolower($actions)
-        );
+$this->assertStringContainsString(
+    'kelembapan',
+    strtolower($actions)
+);
 
-        $this->assertStringNotContainsString(
-            'verify cargo temperature',
-            strtolower($actions)
-        );
+$this->assertStringNotContainsString(
+    'periksa dan catat suhu',
+    strtolower($actions)
+);
 
         $this->assertSame(
             'storage_stability',
@@ -179,9 +179,9 @@ class DryCommodityDecisionPolishTest extends TestCase
                     ->implode(' ')
             );
 
-        $this->assertStringContainsString(
-            'not claimed as biological shelf life',
-            $text
-        );
+$this->assertStringContainsString(
+    'bukan klaim masa simpan biologis',
+    $text
+);
     }
 }

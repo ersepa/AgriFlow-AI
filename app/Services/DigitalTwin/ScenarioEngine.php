@@ -7,11 +7,11 @@ use App\Services\AI\DecisionEngine;
 use App\Services\Routing\FreshnessAwareRouteService;
 use App\Services\Sustainability\FreightCarbonEstimateService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class ScenarioEngine
 {
-    public const VERSION =
-        'step6.2-multi-scenario-comparison-v1';
+    public const VERSION = 'step6.2-multi-scenario-comparison-v1';
 
     public function __construct(
         private readonly DecisionEngine $decisionEngine,
@@ -21,28 +21,17 @@ class ScenarioEngine
     ) {
     }
 
-    public function baseline(
-        Shipment $shipment
-    ): array {
+    public function baseline(Shipment $shipment): array
+    {
         $this->assertOperationallyActive($shipment);
-
         $shipment->loadMissing('harvest');
 
-        $analysis =
-            $this->decisionEngine->analyze(
-                $shipment
-            );
-
-        $route =
-            $this->freshnessRoutes
-                ->assessCurrentRoute(
-                    $shipment,
-                    $analysis
-                );
+        $analysis = $this->decisionEngine->analyze($shipment);
+        $route = $this->freshnessRoutes->assessCurrentRoute($shipment, $analysis);
 
         return $this->snapshot(
             shipment: $shipment,
-            name: 'Current Plan',
+            name: 'Rencana Saat Ini',
             input: [
                 'route_rank' => 0,
                 'delay_hours' => 0.0,
@@ -52,151 +41,64 @@ class ScenarioEngine
             route: $route,
             carbon: $this->carbonEstimate(
                 $shipment,
-                (float) (
-                    $shipment->distance_km
-                    ?? 0
-                ),
+                is_numeric($shipment->distance_km) ? (float) $shipment->distance_km : null,
                 $analysis
             ),
-            evidence: $this->evidenceCoverage(
-                $analysis,
-                []
-            ),
+            evidence: $this->evidenceCoverage($analysis, [], $route),
             notes: [
-                'Baseline uses the shipment data currently stored in AgriFlow.',
-                'Vehicle choice is metadata only unless a validated condition input or emission factor is explicitly available.',
+                'Baseline menggunakan data pengiriman yang saat ini tersimpan di AgriFlow.',
+                'Pilihan kendaraan hanya berupa metadata perencanaan kecuali data kondisi atau faktor emisi khusus tersedia.',
             ]
         );
     }
 
-    public function simulate(
-        Shipment $shipment,
-        array $input
-    ): array {
+    public function simulate(Shipment $shipment, array $input): array
+    {
         $this->assertOperationallyActive($shipment);
+        $this->assertValidScenarioInput($input);
 
         $shipment->loadMissing('harvest');
 
-        $routeCandidate =
-            $this->resolveRoute(
-                $shipment,
-                (int) (
-                    $input['route_rank']
-                    ?? 0
-                )
-            );
+        $routeCandidate = $this->resolveRoute($shipment, (int) ($input['route_rank'] ?? 0));
+        $delayHours = max(0, (float) ($input['delay_hours'] ?? 0));
 
-        $delayHours =
-            max(
-                0,
-                (float) (
-                    $input['delay_hours']
-                    ?? 0
-                )
-            );
+        $scenarioShipment = clone $shipment;
+        $scenarioShipment->setRelation('harvest', $shipment->harvest);
+        $scenarioShipment->distance_km = $routeCandidate['distance_km'];
 
-        $scenarioShipment =
-            clone $shipment;
+        $baseDuration = $routeCandidate['duration_hours'] ?? null;
 
-        $scenarioShipment->setRelation(
-            'harvest',
-            $shipment->harvest
-        );
+        $scenarioShipment->duration_hours = is_numeric($baseDuration)
+            ? round((float) $baseDuration + $delayHours, 4)
+            : null;
 
-        $scenarioShipment->distance_km =
-            $routeCandidate['distance_km'];
+        $conditionScenario = $this->conditionScenario($input);
 
-        /*
-         * The scenario duration is explicit:
-         * actual/planned route duration + user-selected delay.
-         * No hidden "-10% optimized route" modifier exists.
-         */
-        $scenarioShipment->duration_hours =
-            round(
-                (float) $routeCandidate['duration_hours']
-                + $delayHours,
-                4
-            );
+        $analysis = $this->decisionEngine->analyze($scenarioShipment, $conditionScenario);
+        $route = $this->freshnessRoutes->assessCurrentRoute($scenarioShipment, $analysis);
 
-        $conditionScenario =
-            $this->conditionScenario(
-                $input
-            );
+        $route['candidate_label'] = $routeCandidate['label'];
+        $route['candidate_rank'] = $routeCandidate['rank'];
+        $route['base_route_duration_hours'] = is_numeric($routeCandidate['duration_hours'] ?? null)
+            ? round((float) $routeCandidate['duration_hours'], 2)
+            : null;
+        $route['scenario_delay_hours'] = round($delayHours, 2);
+        $route['scenario_total_duration_hours'] = is_numeric($scenarioShipment->duration_hours)
+            ? round((float) $scenarioShipment->duration_hours, 2)
+            : null;
 
-        /*
-         * Vehicle is intentionally NOT passed to DecisionEngine.
-         * Step 6 does not allow a vehicle label to directly change
-         * risk, quality, operational readiness, or carbon.
-         */
-        $analysis =
-            $this->decisionEngine->analyze(
-                $scenarioShipment,
-                $conditionScenario
-            );
-
-        $route =
-            $this->freshnessRoutes
-                ->assessCurrentRoute(
-                    $scenarioShipment,
-                    $analysis
-                );
-
-        $route['candidate_label'] =
-            $routeCandidate['label'];
-
-        $route['candidate_rank'] =
-            $routeCandidate['rank'];
-
-        $route['base_route_duration_hours'] =
-            round(
-                (float) $routeCandidate[
-                    'duration_hours'
-                ],
-                2
-            );
-
-        $route['scenario_delay_hours'] =
-            round(
-                $delayHours,
-                2
-            );
-
-        $route['scenario_total_duration_hours'] =
-            round(
-                (float) $scenarioShipment
-                    ->duration_hours,
-                2
-            );
-
-        $evidence =
-            $this->evidenceCoverage(
-                $analysis,
-                $input
-            );
-
-        $notes =
-            $this->scenarioNotes(
-                $analysis,
-                $input
-            );
+        $evidence = $this->evidenceCoverage($analysis, $input, $routeCandidate);
+        $notes = $this->scenarioNotes($analysis, $input);
 
         return $this->snapshot(
             shipment: $scenarioShipment,
-            name: (string) (
-                $input['name']
-                ?? 'Scenario'
-            ),
-            input: $this->inputSnapshot(
-                $input,
-                $routeCandidate
-            ),
+            name: (string) ($input['name'] ?? 'Skenario'),
+            input: $this->inputSnapshot($input, $routeCandidate),
             analysis: $analysis,
             route: $route,
             carbon: $this->carbonEstimate(
                 $shipment,
-                (float) $routeCandidate[
-                    'distance_km'
-                ],
+                is_numeric($routeCandidate['distance_km'] ?? null) ? (float) $routeCandidate['distance_km'] : null,
                 $analysis
             ),
             evidence: $evidence,
@@ -204,353 +106,149 @@ class ScenarioEngine
         );
     }
 
-    public function compareOne(
-        Shipment $shipment,
-        array $input
-    ): array {
-        $baseline =
-            $this->baseline(
-                $shipment
-            );
+    public function compareOne(Shipment $shipment, array $input): array
+    {
+        $baseline = $this->baseline($shipment);
+        $scenario = $this->simulate($shipment, $input);
+        $scenario['delta'] = $this->comparison->delta($baseline, $scenario);
+        $comparison = $this->comparison->compare($baseline, [$scenario]);
 
-        $scenario =
-            $this->simulate(
-                $shipment,
-                $input
-            );
-
-        $scenario['delta'] =
-            $this->comparison->delta(
-                $baseline,
-                $scenario
-            );
-
-        $comparison =
-            $this->comparison->compare(
-                $baseline,
-                [$scenario]
-            );
-
-        /*
-         * Return the baseline-aware evaluation with the scenario so the UI
-         * and stored snapshot carry the same decision semantics.
-         */
-        $evaluatedScenario =
-            $comparison[
-                'best_available_scenario'
-            ] ?? $scenario;
-
-        $evaluatedScenario['delta'] =
-            $scenario['delta'];
+        $evaluatedScenario = $comparison['best_available_scenario'] ?? $scenario;
+        $evaluatedScenario['delta'] = $scenario['delta'];
 
         return [
-            'engine_version' =>
-                self::VERSION,
-            'baseline' =>
-                $baseline,
-            'scenario' =>
-                $evaluatedScenario,
-            'comparison' =>
-                $comparison,
+            'engine_version' => self::VERSION,
+            'baseline' => $baseline,
+            'scenario' => $evaluatedScenario,
+            'comparison' => $comparison,
         ];
     }
 
-    public function compareMany(
-        Shipment $shipment,
-        array $scenarioInputs
-    ): array {
-        $baseline =
-            $this->baseline(
-                $shipment
-            );
-
-        $scenarioInputs =
-            array_values(
-                array_slice(
-                    $scenarioInputs,
-                    0,
-                    3
-                )
-            );
-
-        $scenarios = [];
-
-        foreach (
-            $scenarioInputs
-            as $index => $input
-        ) {
-            $input['name'] =
-                trim(
-                    (string) (
-                        $input['name']
-                        ?? ''
-                    )
-                )
-                ?: (
-                    'Scenario '
-                    . chr(65 + $index)
-                );
-
-            $scenario =
-                $this->simulate(
-                    $shipment,
-                    $input
-                );
-
-            $scenario['delta'] =
-                $this->comparison->delta(
-                    $baseline,
-                    $scenario
-                );
-
-            $scenarios[] =
-                $scenario;
-        }
-
-        $comparison =
-            $this->comparison->compare(
-                $baseline,
-                $scenarios
-            );
-
-        $ranked =
-            $comparison[
-                'ranked_scenarios'
-            ] ?? [];
-
-        $ranked = array_map(
-            function (
-                array $scenario
-            ) use ($scenarios): array {
-                $matched =
-                    collect($scenarios)
-                        ->first(
-                            fn (
-                                array $candidate
-                            ): bool =>
-                                ($candidate['name'] ?? null)
-                                ===
-                                ($scenario['name'] ?? null)
-                        );
-
-                if ($matched) {
-                    $scenario['delta'] =
-                        $matched['delta']
-                        ?? null;
-                }
-
-                return $scenario;
-            },
-            $ranked
-        );
-
-        $comparison[
-            'ranked_scenarios'
-        ] = $ranked;
-
-        $averageCoverage =
-            count($scenarios) > 0
-                ? (int) round(
-                    collect($scenarios)
-                        ->avg(
-                            fn (
-                                array $scenario
-                            ) =>
-                                $scenario[
-                                    'evidence'
-                                ]['percent']
-                                ?? 0
-                        )
-                )
-                : 0;
-
-        return [
-            'engine_version' =>
-                self::VERSION,
-            'baseline' =>
-                $baseline,
-            'scenarios' =>
-                $scenarios,
-            'comparison' =>
-                $comparison,
-            'decision_table' =>
-                $this->comparison
-                    ->decisionTable(
-                        $baseline,
-                        $scenarios
-                    ),
-            'average_evidence_coverage' =>
-                $averageCoverage,
-        ];
-    }
-
-    public function routeOptions(
-        Shipment $shipment
-    ): array {
+    public function compareMany(Shipment $shipment, array $scenarioInputs): array
+    {
         $this->assertOperationallyActive($shipment);
 
+        if (count($scenarioInputs) < 1 || count($scenarioInputs) > 3) {
+            throw new \InvalidArgumentException(
+                'Perbandingan harus berisi antara 1 hingga 3 skenario.'
+            );
+        }
+
+        $scenarioInputs = array_values($scenarioInputs);
+        $scenarioNames = [];
+
+        foreach ($scenarioInputs as $index => $input) {
+            if (!is_array($input)) {
+                throw new \InvalidArgumentException(
+                    'Setiap data skenario harus berupa array yang valid.'
+                );
+            }
+
+            $this->assertValidScenarioInput($input);
+
+            $input['name'] = trim((string) ($input['name'] ?? ''))
+                ?: ('Skenario ' . chr(65 + $index));
+
+            if (in_array($input['name'], $scenarioNames, true)) {
+                throw new \InvalidArgumentException(
+                    'Nama setiap skenario harus berbeda.'
+                );
+            }
+
+            $scenarioNames[] = $input['name'];
+            $scenarioInputs[$index] = $input;
+        }
+
+        $baseline = $this->baseline($shipment);
+        $scenarios = [];
+
+        foreach ($scenarioInputs as $input) {
+            $scenario = $this->simulate($shipment, $input);
+            $scenario['delta'] = $this->comparison->delta($baseline, $scenario);
+            $scenarios[] = $scenario;
+        }
+
+        $comparison = $this->comparison->compare($baseline, $scenarios);
+        $ranked = $comparison['ranked_scenarios'] ?? [];
+        $comparison['ranked_scenarios'] = $ranked;
+
+        $averageCoverage = count($scenarios) > 0
+            ? (int) round(collect($scenarios)->avg(fn (array $scenario) => $scenario['evidence']['percent'] ?? 0))
+            : 0;
+
+        return [
+            'engine_version' => self::VERSION,
+            'baseline' => $baseline,
+            'scenarios' => $scenarios,
+            'comparison' => $comparison,
+            'decision_table' => $this->comparison->decisionTable($baseline, $scenarios),
+            'average_evidence_coverage' => $averageCoverage,
+        ];
+    }
+
+    public function routeOptions(Shipment $shipment): array
+    {
+        $this->assertOperationallyActive($shipment);
         $shipment->loadMissing('harvest');
 
-        $optimization =
-            $this->freshnessRoutes
-                ->optimize(
-                    $shipment
-                );
+        $optimization = $this->freshnessRoutes->optimize($shipment);
 
         return array_values(
             array_map(
                 fn (array $candidate): array => [
-                    'rank' =>
-                        (int) (
-                            $candidate['rank']
-                            ?? 0
-                        ),
-                    'label' =>
-                        (string) (
-                            $candidate['label']
-                            ?? 'Route'
-                        ),
-                    'distance_km' =>
-                        round(
-                            (float) (
-                                $candidate[
-                                    'distance_km'
-                                ] ?? 0
-                            ),
-                            2
-                        ),
-                    'duration_hours' =>
-                        round(
-                            (float) (
-                                $candidate[
-                                    'duration_hours'
-                                ] ?? 0
-                            ),
-                            2
-                        ),
-                    'freshness_feasibility' =>
-                        $candidate[
-                            'freshness_feasibility'
-                        ] ?? null,
-                    'route_score' =>
-                        $candidate[
-                            'route_score'
-                        ] ?? null,
+                    'rank' => (int) ($candidate['rank'] ?? 0),
+                    'label' => (string) ($candidate['label'] ?? 'Rute'),
+                    'distance_km' => is_numeric($candidate['distance_km'] ?? null) ? round((float) $candidate['distance_km'], 2) : null,
+                    'duration_hours' => is_numeric($candidate['duration_hours'] ?? null) ? round((float) $candidate['duration_hours'], 2) : null,
+                    'freshness_feasibility' => $candidate['freshness_feasibility'] ?? null,
+                    'route_score' => $candidate['route_score'] ?? null,
                 ],
-                $optimization['candidates']
-                    ?? []
+                $optimization['candidates'] ?? []
             )
         );
     }
 
-    private function resolveRoute(
-        Shipment $shipment,
-        int $rank
-    ): array {
+    private function resolveRoute(Shipment $shipment, int $rank): array
+    {
         if ($rank <= 0) {
             return [
                 'rank' => 0,
-                'label' => 'Current Route',
-                'distance_km' =>
-                    (float) (
-                        $shipment->distance_km
-                        ?? 0
-                    ),
-                'duration_hours' =>
-                    (float) (
-                        $shipment->duration_hours
-                        ?? 0
-                    ),
+                'label' => 'Rute Saat Ini',
+                'distance_km' => is_numeric($shipment->distance_km) ? (float) $shipment->distance_km : null,
+                'duration_hours' => is_numeric($shipment->duration_hours) ? (float) $shipment->duration_hours : null,
             ];
         }
 
-        $options =
-            $this->routeOptions(
-                $shipment
-            );
-
-        $candidate =
-            collect($options)
-                ->firstWhere(
-                    'rank',
-                    $rank
-                );
+        $options = $this->routeOptions($shipment);
+        $candidate = collect($options)->firstWhere('rank', $rank);
 
         if (!$candidate) {
             throw new \InvalidArgumentException(
-                'The selected route candidate is no longer available. Refresh the Digital Twin and try again.'
+                'Kandidat rute yang dipilih sudah tidak tersedia. Muat ulang halaman Digital Twin dan coba lagi.'
             );
         }
 
         return $candidate;
     }
 
-    private function conditionScenario(
-        array $input
-    ): array {
+    private function conditionScenario(array $input): array
+    {
         $scenario = [];
 
-        if (
-            array_key_exists(
-                'temperature_c',
-                $input
-            )
-            && $input[
-                'temperature_c'
-            ] !== null
-            && $input[
-                'temperature_c'
-            ] !== ''
-        ) {
-            $scenario['temperature'] =
-                (float) $input[
-                    'temperature_c'
-                ];
+        if (array_key_exists('temperature_c', $input) && $input['temperature_c'] !== null && $input['temperature_c'] !== '') {
+            $scenario['temperature'] = (float) $input['temperature_c'];
         }
 
-        if (
-            array_key_exists(
-                'moisture_percent',
-                $input
-            )
-            && $input[
-                'moisture_percent'
-            ] !== null
-            && $input[
-                'moisture_percent'
-            ] !== ''
-        ) {
-            $scenario['moisture_percent'] =
-                (float) $input[
-                    'moisture_percent'
-                ];
+        if (array_key_exists('moisture_percent', $input) && $input['moisture_percent'] !== null && $input['moisture_percent'] !== '') {
+            $scenario['moisture_percent'] = (float) $input['moisture_percent'];
         }
 
-        if (
-            array_key_exists(
-                'relative_humidity_percent',
-                $input
-            )
-            && $input[
-                'relative_humidity_percent'
-            ] !== null
-            && $input[
-                'relative_humidity_percent'
-            ] !== ''
-        ) {
-            $scenario[
-                'relative_humidity_percent'
-            ] =
-                (float) $input[
-                    'relative_humidity_percent'
-                ];
+        if (array_key_exists('relative_humidity_percent', $input) && $input['relative_humidity_percent'] !== null && $input['relative_humidity_percent'] !== '') {
+            $scenario['relative_humidity_percent'] = (float) $input['relative_humidity_percent'];
         }
 
         if (!empty($input['storage_horizon'])) {
-            $scenario['storage_horizon'] =
-                (string) $input[
-                    'storage_horizon'
-                ];
+            $scenario['storage_horizon'] = (string) $input['storage_horizon'];
         }
 
         return $scenario;
@@ -558,240 +256,111 @@ class ScenarioEngine
 
     private function carbonEstimate(
         Shipment $originalShipment,
-        float $scenarioDistanceKm,
+        ?float $scenarioDistanceKm,
         array $analysis
     ): array {
-        $estimate = $this->freightCarbon->estimateForShipment(
-            $originalShipment,
-            max(0, $scenarioDistanceKm)
-        );
+        if ($scenarioDistanceKm === null) {
+            $estimate = $this->freightCarbon->estimateForShipment($originalShipment);
+        } else {
+            $estimate = $this->freightCarbon->estimateForShipment($originalShipment, max(0, $scenarioDistanceKm));
+        }
 
         $estimate['vehicle_factor_applied'] = false;
         $estimate['scenario_note'] =
-            'Digital Twin uses the same explicit tonne-km freight factor for baseline and scenarios. Vehicle labels do not change carbon without a validated vehicle/fuel-specific factor.';
+            'Digital Twin menggunakan faktor emisi ton-km yang sama untuk rencana saat ini dan skenario alternatif.';
 
         return $estimate;
     }
 
     private function evidenceCoverage(
         array $analysis,
-        array $input
+        array $input,
+        ?array $routeCandidate = null
     ): array {
+        $routeEvidenceAvailable =
+            $routeCandidate !== null
+            && is_numeric($routeCandidate['distance_km'] ?? null)
+            && (float) $routeCandidate['distance_km'] > 0
+            && is_numeric($routeCandidate['duration_hours'] ?? null)
+            && (float) $routeCandidate['duration_hours'] > 0;
+
         $modelType =
-            $analysis[
-                'quality_prediction'
-            ][
-                'condition_model_type'
-            ]
-            ?? $analysis[
-                'commodity_profile'
-            ][
-                'quality_model_type'
-            ]
+            $analysis['quality_prediction']['condition_model_type']
+            ?? $analysis['commodity_profile']['quality_model_type']
             ?? null;
 
         $checks = [
-            'commodity_profile' =>
-                (bool) (
-                    $analysis[
-                        'commodity_profile_found'
-                    ] ?? false
-                ),
-            'route' => true,
-            'operational_deadline' =>
-                (
-                    $analysis[
-                        'quality_prediction'
-                    ][
-                        'recorded_expiry_window_hours'
-                    ] ?? null
-                ) !== null
-                || (
-                    $analysis[
-                        'remaining_days'
-                    ] ?? null
-                ) !== null,
+            'commodity_profile' => (bool) ($analysis['commodity_profile_found'] ?? false),
+            'route' => $routeEvidenceAvailable,
+            'operational_deadline' => ($analysis['quality_prediction']['recorded_expiry_window_hours'] ?? null) !== null
+                || ($analysis['remaining_days'] ?? null) !== null,
         ];
 
-        if (
-            $modelType ===
-                'storage_stability'
-        ) {
-            $checks['cargo_moisture'] =
-                isset(
-                    $input[
-                        'moisture_percent'
-                    ]
-                )
-                && $input[
-                    'moisture_percent'
-                ] !== '';
-
-            $checks['relative_humidity'] =
-                isset(
-                    $input[
-                        'relative_humidity_percent'
-                    ]
-                )
-                && $input[
-                    'relative_humidity_percent'
-                ] !== '';
+        if ($modelType === 'storage_stability') {
+            $checks['cargo_moisture'] = isset($input['moisture_percent']) && $input['moisture_percent'] !== '';
+            $checks['relative_humidity'] = isset($input['relative_humidity_percent']) && $input['relative_humidity_percent'] !== '';
         } else {
-            $checks['cargo_temperature'] =
-                isset(
-                    $input[
-                        'temperature_c'
-                    ]
-                )
-                && $input[
-                    'temperature_c'
-                ] !== '';
+            $checks['cargo_temperature'] = isset($input['temperature_c']) && $input['temperature_c'] !== '';
         }
 
-        $available =
-            count(
-                array_filter(
-                    $checks
-                )
-            );
-
-        $total =
-            max(
-                1,
-                count($checks)
-            );
+        $available = count(array_filter($checks));
+        $total = max(1, count($checks));
 
         return [
-            'percent' =>
-                (int) round(
-                    $available
-                    / $total
-                    * 100
-                ),
-            'available_inputs' =>
-                $available,
-            'total_inputs' =>
-                $total,
-            'checks' =>
-                $checks,
-            'label' =>
-                'Scenario Evidence Coverage',
-            'is_accuracy_metric' =>
-                false,
+            'percent' => (int) round($available / $total * 100),
+            'available_inputs' => $available,
+            'total_inputs' => $total,
+            'checks' => $checks,
+            'label' => 'Cakupan Data Pendukung Skenario',
+            'is_accuracy_metric' => false,
         ];
     }
 
-    private function scenarioNotes(
-        array $analysis,
-        array $input
-    ): array {
+    private function scenarioNotes(array $analysis, array $input): array
+    {
         $notes = [
-            'Scenario calculations are deterministic. This is not Monte Carlo simulation and not a statistical probability forecast.',
-            'LLM output is not used to calculate risk, condition, route feasibility, transit margin, or carbon.',
-            'Vehicle selection is planning metadata only; it does not apply hidden risk, readiness, or carbon bonuses.',
+            'Perhitungan skenario bersifat deterministik, bukan simulasi Monte Carlo atau prediksi probabilitas statistik.',
+            'Output AI bahasa tidak digunakan untuk menghitung risiko, kondisi produk, kelayakan rute, waktu cadangan, atau emisi karbon.',
+            'Pilihan kendaraan hanya berupa metadata perencanaan dan tidak memberikan bonus risiko atau karbon secara tersembunyi.',
         ];
 
-        $modelType =
-            $analysis[
-                'quality_prediction'
-            ][
-                'condition_model_type'
-            ]
-            ?? null;
+        $modelType = $analysis['quality_prediction']['condition_model_type'] ?? null;
 
         if (
-            $modelType ===
-                'storage_stability'
+            $modelType === 'storage_stability'
             && (
-                empty(
-                    $input[
-                        'moisture_percent'
-                    ]
-                )
-                || empty(
-                    $input[
-                        'relative_humidity_percent'
-                    ]
-                )
+                !array_key_exists('moisture_percent', $input)
+                || $input['moisture_percent'] === null
+                || $input['moisture_percent'] === ''
+                || !array_key_exists('relative_humidity_percent', $input)
+                || $input['relative_humidity_percent'] === null
+                || $input['relative_humidity_percent'] === ''
             )
         ) {
-            $notes[] =
-                'Dry-commodity storage stability is evidence-limited when cargo moisture or RH telemetry is missing.';
+            $notes[] = 'Penilaian stabilitas penyimpanan komoditas kering terbatas jika data kadar air atau kelembapan belum diisi.';
         }
 
-        if (
-            ($input['vehicle'] ?? null)
-                === 'refrigerated_truck'
-            && !isset(
-                $input[
-                    'temperature_c'
-                ]
-            )
-        ) {
-            $notes[] =
-                'Selecting Refrigerated Truck does not imply a cargo temperature. Enter a scenario temperature to evaluate temperature-sensitive fresh produce.';
+        if (($input['vehicle'] ?? null) === 'refrigerated_truck' && !isset($input['temperature_c'])) {
+            $notes[] = 'Memilih Truk Berpendingin tidak otomatis menetapkan suhu muatan. Masukkan suhu skenario untuk mengevaluasi komoditas segar.';
         }
 
         return $notes;
     }
 
-    private function inputSnapshot(
-        array $input,
-        array $routeCandidate
-    ): array {
+    private function inputSnapshot(array $input, array $routeCandidate): array
+    {
         return [
-            'name' =>
-                (string) (
-                    $input['name']
-                    ?? 'Scenario'
-                ),
-            'route_rank' =>
-                $routeCandidate['rank'],
-            'route_label' =>
-                $routeCandidate['label'],
-            'route_distance_km' =>
-                round(
-                    (float) $routeCandidate[
-                        'distance_km'
-                    ],
-                    2
-                ),
-            'route_duration_hours' =>
-                round(
-                    (float) $routeCandidate[
-                        'duration_hours'
-                    ],
-                    2
-                ),
-            'delay_hours' =>
-                round(
-                    (float) (
-                        $input['delay_hours']
-                        ?? 0
-                    ),
-                    2
-                ),
-            'vehicle' =>
-                (string) (
-                    $input['vehicle']
-                    ?? 'standard_truck'
-                ),
-            'temperature_c' =>
-                $input[
-                    'temperature_c'
-                ] ?? null,
-            'moisture_percent' =>
-                $input[
-                    'moisture_percent'
-                ] ?? null,
-            'relative_humidity_percent' =>
-                $input[
-                    'relative_humidity_percent'
-                ] ?? null,
-            'storage_horizon' =>
-                $input[
-                    'storage_horizon'
-                ] ?? null,
+            'name' => (string) ($input['name'] ?? 'Skenario'),
+            'route_rank' => $routeCandidate['rank'],
+            'route_label' => $routeCandidate['label'],
+            'route_distance_km' => is_numeric($routeCandidate['distance_km'] ?? null) ? round((float) $routeCandidate['distance_km'], 2) : null,
+            'route_duration_hours' => is_numeric($routeCandidate['duration_hours'] ?? null) ? round((float) $routeCandidate['duration_hours'], 2) : null,
+            'delay_hours' => round((float) ($input['delay_hours'] ?? 0), 2),
+            'vehicle' => (string) ($input['vehicle'] ?? 'standard_truck'),
+            'temperature_c' => $input['temperature_c'] ?? null,
+            'moisture_percent' => $input['moisture_percent'] ?? null,
+            'relative_humidity_percent' => $input['relative_humidity_percent'] ?? null,
+            'storage_horizon' => $input['storage_horizon'] ?? null,
         ];
     }
 
@@ -807,89 +376,65 @@ class ScenarioEngine
     ): array {
         return [
             'name' => $name,
-            'engine_version' =>
-                self::VERSION,
-            'simulated_at' =>
-                Carbon::now()
-                    ->toIso8601String(),
+            'engine_version' => self::VERSION,
+            'simulated_at' => Carbon::now()->toIso8601String(),
             'shipment' => [
-                'id' =>
-                    $shipment->id,
-                'commodity' =>
-                    $shipment->harvest?->commodity
-                    ?? 'Unknown',
-                'origin' =>
-                    $shipment->origin,
-                'destination' =>
-                    $shipment->destination,
-                'status' =>
-                    $shipment->status,
+                'id' => $shipment->id,
+                'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
+                'origin' => $shipment->origin,
+                'destination' => $shipment->destination,
+                'status' => $shipment->status,
             ],
-            'input' =>
-                $input,
-            'analysis' =>
-                $analysis,
-            'route' =>
-                $route,
-            'carbon' =>
-                $carbon,
-            'evidence' =>
-                $evidence,
-            'notes' =>
-                $notes,
-            'provenance' =>
-                $this->provenance(
-                    $analysis
-                ),
+            'input' => $input,
+            'analysis' => $analysis,
+            'route' => $route,
+            'carbon' => $carbon,
+            'evidence' => $evidence,
+            'notes' => $notes,
+            'provenance' => $this->provenance($analysis),
         ];
     }
 
-    private function provenance(
-        array $analysis
-    ): array {
+    private function provenance(array $analysis): array
+    {
         return [
-            'engine' =>
-                self::VERSION,
+            'engine' => self::VERSION,
             'commodity_profile' => [
-                'name' =>
-                    $analysis[
-                        'commodity_profile'
-                    ]['name']
-                    ?? null,
-                'source_name' =>
-                    $analysis[
-                        'commodity_profile'
-                    ]['source_name']
-                    ?? null,
-                'source_url' =>
-                    $analysis[
-                        'commodity_profile'
-                    ]['source_url']
-                    ?? null,
+                'name' => $analysis['commodity_profile']['name'] ?? null,
+                'source_name' => $analysis['commodity_profile']['source_name'] ?? null,
+                'source_url' => $analysis['commodity_profile']['source_url'] ?? null,
             ],
-            'route_provider' =>
-                'OpenRouteService / HeiGIT via AgriFlow server-side RouteService',
-            'risk_model' =>
-                $analysis[
-                    'risk_assessment'
-                ]['model_version']
-                ?? 'AgriFlow Operational Risk Engine',
-            'quality_model' =>
-                $analysis[
-                    'quality_prediction'
-                ]['model_version']
-                ?? null,
-            'calculation_type' =>
-                'deterministic_decision_support',
+            'route_provider' => 'OpenRouteService / HeiGIT melalui RouteService AgriFlow',
+            'risk_model' => $analysis['risk_assessment']['model_version'] ?? 'AgriFlow Operational Risk Engine',
+            'quality_model' => $analysis['quality_prediction']['model_version'] ?? null,
+            'calculation_type' => 'deterministic_decision_support',
         ];
     }
+
     private function assertOperationallyActive(Shipment $shipment): void
     {
         if ($shipment->isDelivered()) {
             throw new \InvalidArgumentException(
-                'Digital Twin simulation is closed for delivered shipments. Historical scenarios remain available for review.'
+                'Simulasi Digital Twin telah ditutup untuk pengiriman yang sudah selesai. Riwayat skenario tetap dapat ditinjau.'
             );
         }
     }
 
+    private function assertValidScenarioInput(array $input): void
+    {
+        $validator = Validator::make($input, [
+            'name' => ['nullable', 'string', 'max:120'],
+            'route_rank' => ['nullable', 'integer', 'min:0', 'max:3'],
+            'delay_hours' => ['nullable', 'numeric', 'min:0', 'max:168'],
+            'vehicle' => ['required', 'in:standard_truck,refrigerated_truck,electric_truck'],
+            'temperature_c' => ['nullable', 'numeric', 'min:-20', 'max:60'],
+            'moisture_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'relative_humidity_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'storage_horizon' => ['nullable', 'in:short_term,long_term'],
+        ]);
+
+        if ($validator->fails()) {
+            throw new \InvalidArgumentException($validator->errors()->first());
+        }
+    }
 }

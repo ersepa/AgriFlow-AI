@@ -95,14 +95,13 @@ class CommodityProfileService
                 'severity' => 'unknown',
                 'temperature_c' => null,
                 'risk_modifier' => 0,
-                'message' => 'No recorded or scenario cargo temperature was provided.',
+                'message' => 'Suhu muatan tercatat atau skenario belum diisi.',
             ];
         }
 
         if (
             $profile
-            && ($profile->quality_model_type ?? null)
-                === 'storage_stability'
+            && ($profile->quality_model_type ?? null) === 'storage_stability'
             && (
                 $profile->optimal_temp_min === null
                 || $profile->optimal_temp_max === null
@@ -114,8 +113,7 @@ class CommodityProfileService
                 'severity' => 'unknown',
                 'temperature_c' => round($temperatureC, 1),
                 'risk_modifier' => 0,
-                'message' =>
-                    'This dry-commodity profile is driven by validated moisture/RH storage evidence. No exact cargo-temperature threshold is asserted from the current source set.',
+                'message' => 'Profil komoditas kering ini dinilai berdasarkan data kadar air dan kelembapan. Tidak ada batas suhu muatan khusus dari sumber acuan saat ini.',
             ];
         }
 
@@ -130,12 +128,14 @@ class CommodityProfileService
                 'severity' => 'unknown',
                 'temperature_c' => round($temperatureC, 1),
                 'risk_modifier' => 0,
-                'message' => 'AgriFlow has no validated temperature profile for this commodity yet, so no temperature benefit or penalty is applied.',
+                'message' => 'AgriFlow belum memiliki profil suhu tervalidasi untuk komoditas ini, sehingga tidak ada penyesuaian risiko suhu yang diterapkan.',
             ];
         }
 
         $min = (float) $profile->optimal_temp_min;
         $max = (float) $profile->optimal_temp_max;
+        $rangeText = $this->formatRange($min, $max, '°C');
+        $commodityLabel = $profile->local_name ?: $profile->name;
 
         $chilling = $profile->chilling_threshold_c !== null
             ? (float) $profile->chilling_threshold_c
@@ -156,11 +156,10 @@ class CommodityProfileService
                 'temperature_c' => round($temperatureC, 1),
                 'risk_modifier' => -6,
                 'message' => sprintf(
-                    '%.1f°C is inside the %.1f–%.1f°C reference range for %s.',
+                    'Suhu %.1f°C berada dalam batas acuan %s untuk %s.',
                     $temperatureC,
-                    $min,
-                    $max,
-                    $profile->local_name ?: $profile->name
+                    $rangeText,
+                    $commodityLabel
                 ),
             ];
         }
@@ -179,10 +178,10 @@ class CommodityProfileService
                 'temperature_c' => round($temperatureC, 1),
                 'risk_modifier' => $modifier,
                 'message' => sprintf(
-                    '%.1f°C is below the %.1f°C chilling threshold used by the validated %s profile.',
+                    'Suhu %.1f°C berada di bawah batas aman dingin %.1f°C untuk %s dan berisiko menyebabkan kerusakan dingin.',
                     $temperatureC,
                     $chilling,
-                    $profile->local_name ?: $profile->name
+                    $commodityLabel
                 ),
             ];
         }
@@ -201,11 +200,10 @@ class CommodityProfileService
                 'temperature_c' => round($temperatureC, 1),
                 'risk_modifier' => $modifier,
                 'message' => sprintf(
-                    '%.1f°C is below the %.1f–%.1f°C reference range for %s.',
+                    'Suhu %.1f°C berada di bawah batas acuan %s untuk %s.',
                     $temperatureC,
-                    $min,
-                    $max,
-                    $profile->local_name ?: $profile->name
+                    $rangeText,
+                    $commodityLabel
                 ),
             ];
         }
@@ -225,11 +223,10 @@ class CommodityProfileService
             'temperature_c' => round($temperatureC, 1),
             'risk_modifier' => $modifier,
             'message' => sprintf(
-                '%.1f°C is above the %.1f–%.1f°C reference range for %s and can accelerate deterioration.',
+                'Suhu %.1f°C berada di atas batas acuan %s untuk %s dan dapat mempercepat penurunan kesegaran.',
                 $temperatureC,
-                $min,
-                $max,
-                $profile->local_name ?: $profile->name
+                $rangeText,
+                $commodityLabel
             ),
         ];
     }
@@ -252,58 +249,46 @@ class CommodityProfileService
     public function storageRecommendation(?CommodityProfile $profile): string
     {
         if (!$profile) {
-            return 'Verify commodity-specific storage requirements';
+            return 'Periksa kebutuhan penyimpanan khusus untuk komoditas ini';
         }
 
-        if (
-            ($profile->quality_model_type ?? null)
-                === 'storage_stability'
-        ) {
+        if (($profile->quality_model_type ?? null) === 'storage_stability') {
             $parts = [];
 
-            if (
-                $profile->safe_moisture_short_term_max_percent
-                !== null
-            ) {
+            if ($profile->safe_moisture_short_term_max_percent !== null) {
                 $parts[] = sprintf(
-                    'Moisture ≤ %.1f%% for short-term storage guidance',
+                    'Kadar air ≤ %.1f%% untuk panduan penyimpanan jangka pendek',
                     (float) $profile->safe_moisture_short_term_max_percent
                 );
             }
 
-            if (
-                $profile->safe_moisture_long_term_max_percent
-                !== null
-            ) {
+            if ($profile->safe_moisture_long_term_max_percent !== null) {
                 $parts[] = sprintf(
-                    'Moisture ≤ %.1f%% for longer storage guidance',
+                    'Kadar air ≤ %.1f%% untuk panduan penyimpanan jangka panjang',
                     (float) $profile->safe_moisture_long_term_max_percent
                 );
             }
 
-            if (
-                $profile->safe_relative_humidity_max_percent
-                !== null
-            ) {
+            if ($profile->safe_relative_humidity_max_percent !== null) {
                 $parts[] = sprintf(
-                    'RH ≤ %.0f%% where the cited source supports this limit',
+                    'Kelembapan ≤ %.0f%% sesuai batas acuan',
                     (float) $profile->safe_relative_humidity_max_percent
                 );
             }
 
             return $parts !== []
                 ? implode('; ', $parts)
-                : 'Verify dry-commodity moisture and humidity conditions';
+                : 'Periksa kondisi kadar air dan kelembapan untuk komoditas kering';
         }
 
         if (
             $profile->optimal_temp_min === null
             || $profile->optimal_temp_max === null
         ) {
-            return 'Verify commodity-specific storage requirements';
+            return 'Periksa kebutuhan penyimpanan khusus untuk komoditas ini';
         }
 
-        $temp = $this->formatRange(
+        $temp = 'Suhu ' . $this->formatRange(
             (float) $profile->optimal_temp_min,
             (float) $profile->optimal_temp_max,
             '°C'
@@ -315,10 +300,10 @@ class CommodityProfileService
             $profile->optimal_humidity_min !== null
             && $profile->optimal_humidity_max !== null
         ) {
-            $humidity = '; ' . $this->formatRange(
+            $humidity = '; Kelembapan ' . $this->formatRange(
                 (float) $profile->optimal_humidity_min,
                 (float) $profile->optimal_humidity_max,
-                '% RH'
+                '%'
             );
         }
 
@@ -333,43 +318,33 @@ class CommodityProfileService
     ): array {
         if (
             !$profile
-            || ($profile->quality_model_type ?? null)
-                !== 'storage_stability'
+            || ($profile->quality_model_type ?? null) !== 'storage_stability'
         ) {
             return [
                 'applicable' => false,
                 'status' => 'Not applicable',
                 'severity' => 'unknown',
-                'message' =>
-                    'Storage-stability assessment is only used for validated dry-commodity profiles.',
+                'message' => 'Penilaian stabilitas penyimpanan hanya digunakan untuk profil komoditas kering yang tervalidasi.',
             ];
         }
 
-        $moistureLimit =
-            $storageHorizon === 'long_term'
-                ? $profile->safe_moisture_long_term_max_percent
-                : $profile->safe_moisture_short_term_max_percent;
+        $moistureLimit = $storageHorizon === 'long_term'
+            ? $profile->safe_moisture_long_term_max_percent
+            : $profile->safe_moisture_short_term_max_percent;
 
-        $rhLimit =
-            $profile->safe_relative_humidity_max_percent;
+        $rhLimit = $profile->safe_relative_humidity_max_percent;
 
-        if (
-            $moisturePercent === null
-            && $relativeHumidityPercent === null
-        ) {
+        if ($moisturePercent === null && $relativeHumidityPercent === null) {
             return [
                 'applicable' => true,
                 'available' => false,
                 'status' => 'Storage condition evidence required',
                 'severity' => 'unknown',
                 'moisture_percent' => null,
-                'moisture_limit_percent' =>
-                    $moistureLimit,
+                'moisture_limit_percent' => $moistureLimit,
                 'relative_humidity_percent' => null,
-                'relative_humidity_limit_percent' =>
-                    $rhLimit,
-                'message' =>
-                    'Validated storage thresholds exist, but recorded cargo moisture/RH condition was not provided. AgriFlow does not fabricate a condition score.',
+                'relative_humidity_limit_percent' => $rhLimit,
+                'message' => 'Standar penyimpanan tersedia, tetapi data kadar air atau kelembapan muatan belum dicatat. AgriFlow tidak membuat skor kondisi buatan.',
             ];
         }
 
@@ -381,7 +356,7 @@ class CommodityProfileService
             && $moisturePercent > $moistureLimit
         ) {
             $breaches[] = sprintf(
-                'moisture %.1f%% exceeds the %.1f%% reference limit',
+                'kadar air %.1f%% melebihi batas acuan %.1f%%',
                 $moisturePercent,
                 $moistureLimit
             );
@@ -393,7 +368,7 @@ class CommodityProfileService
             && $relativeHumidityPercent > $rhLimit
         ) {
             $breaches[] = sprintf(
-                'RH %.1f%% exceeds the %.1f%% reference limit',
+                'kelembapan %.1f%% melebihi batas acuan %.1f%%',
                 $relativeHumidityPercent,
                 $rhLimit
             );
@@ -407,13 +382,9 @@ class CommodityProfileService
                 'severity' => 'high',
                 'moisture_percent' => $moisturePercent,
                 'moisture_limit_percent' => $moistureLimit,
-                'relative_humidity_percent' =>
-                    $relativeHumidityPercent,
-                'relative_humidity_limit_percent' =>
-                    $rhLimit,
-                'message' => ucfirst(
-                    implode('; ', $breaches)
-                ) . '.',
+                'relative_humidity_percent' => $relativeHumidityPercent,
+                'relative_humidity_limit_percent' => $rhLimit,
+                'message' => ucfirst(implode('; ', $breaches)) . '.',
             ];
         }
 
@@ -424,12 +395,9 @@ class CommodityProfileService
             'severity' => 'low',
             'moisture_percent' => $moisturePercent,
             'moisture_limit_percent' => $moistureLimit,
-            'relative_humidity_percent' =>
-                $relativeHumidityPercent,
-            'relative_humidity_limit_percent' =>
-                $rhLimit,
-            'message' =>
-                'Recorded storage condition does not exceed the validated limits currently stored for this commodity.',
+            'relative_humidity_percent' => $relativeHumidityPercent,
+            'relative_humidity_limit_percent' => $rhLimit,
+            'message' => 'Kondisi penyimpanan tercatat masih berada dalam batas acuan untuk komoditas ini.',
         ];
     }
 
@@ -463,10 +431,6 @@ class CommodityProfileService
                         continue;
                     }
 
-                    /*
-                     * First validated profile wins if an alias collision somehow
-                     * reaches production. Dataset tests should prevent collisions.
-                     */
                     if (!$index->has($key)) {
                         $index->put($key, $profile);
                     }
@@ -480,7 +444,7 @@ class CommodityProfileService
     {
         return [
             'found' => false,
-            'name' => 'Unknown',
+            'name' => 'Tidak diketahui',
             'local_name' => null,
             'category' => null,
             'commodity_class' => null,
@@ -501,11 +465,11 @@ class CommodityProfileService
             'safe_relative_humidity_max_percent' => null,
             'reference_storage_max_months' => null,
             'storage_science_note' => null,
-            'storage_recommendation' => 'Verify commodity-specific storage requirements',
+            'storage_recommendation' => 'Periksa kebutuhan penyimpanan khusus untuk komoditas ini',
             'source_references' => [],
             'source_name' => null,
             'source_url' => null,
-            'notes' => 'No matching validated commodity profile is available. AgriFlow deliberately avoids inventing storage parameters.',
+            'notes' => 'Profil komoditas tervalidasi belum tersedia. AgriFlow tidak mengarang parameter penyimpanan.',
         ];
     }
 

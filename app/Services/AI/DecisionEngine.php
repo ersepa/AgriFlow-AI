@@ -10,26 +10,6 @@ use App\Services\Sustainability\FreightCarbonEstimateService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-/**
- * AgriFlow Decision Engine
- *
- * Single source of truth for shipment operational intelligence.
- *
- * Orchestrates commodity condition, quality/storage stability, operational
- * risk, source-backed freight carbon estimation, and recommendations. The
- * risk inputs rather than a post-hoc guardrail:
- * - baseline reference shelf life / storage limits from the commodity knowledge base
- * - harvest age
- * - temperature-aware effective transit aging
- * - chilling penalties for sensitive commodities
- * - predicted remaining shelf life at arrival
- * - Quality-at-Arrival and Safe Transit Window
- *
- * IMPORTANT:
- * This is NOT a statistical spoilage probability model and NOT ML.
- * It is a transparent deterministic decision-support model. Carbon is an
- * activity-based CO2e estimate with explicit source metadata, not a measured value.
- */
 class DecisionEngine
 {
     public function __construct(
@@ -51,7 +31,7 @@ class DecisionEngine
 
                 return array_merge($analysis, [
                     'shipment' => $shipment,
-                    'commodity' => $shipment->harvest?->commodity ?? 'Unknown',
+                    'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
                     'origin' => $shipment->origin,
                     'destination' => $shipment->destination,
                     'origin_lat' => $shipment->origin_lat,
@@ -78,18 +58,13 @@ class DecisionEngine
             $scenario
         );
 
-        $temperatureAssessment =
-            $qualityPrediction['temperature_assessment'];
+        $temperatureAssessment = $qualityPrediction['temperature_assessment'];
 
-        // Step 3.2 uses the precise recorded time window from the quality
-        // model instead of flooring calendar days to an integer.
         $remainingDays = (float) (
             $qualityPrediction['recorded_remaining_days']
             ?? $this->remainingShelfLifeDays($shipment)
         );
 
-        // Step 4: freshness-aware operational risk assessment.
-        // The dedicated service owns the risk model; DecisionEngine orchestrates it.
         $riskAssessment = $this->operationalRisk->assess(
             $shipment,
             $commodityProfile,
@@ -99,7 +74,6 @@ class DecisionEngine
 
         $riskScore = $riskAssessment['risk_score'];
 
-        // Backwards-compatible numeric component map for older consumers.
         $riskComponents = collect($riskAssessment['components'])
             ->mapWithKeys(
                 fn (array $component, string $key) => [
@@ -114,25 +88,11 @@ class DecisionEngine
             $remainingDays
         );
 
-        // Carbon is an activity-based estimate, not a hidden distance-only
-        // constant and not a measured emissions inventory.
-        $carbonEstimate = $this->freightCarbon->estimateForShipment(
-            $shipment
-        );
+        $carbonEstimate = $this->freightCarbon->estimateForShipment($shipment);
         $carbonKg = $carbonEstimate['estimated_kg'];
 
-        // Credibility rule: do not combine risk and carbon with arbitrary
-        // weights and call the result "sustainability". Operational readiness
-        // is only the direct complement of the current Operational Risk Index.
-        $operationalReadinessScore = $this->clamp(
-            100 - $riskScore,
-            0,
-            100
-        );
+        $operationalReadinessScore = $this->clamp(100 - $riskScore, 0, 100);
 
-        // Step 4.2: deterministic multi-action intervention plan.
-        // LLMs may explain this plan elsewhere, but do not generate or replace
-        // the core operational actions.
         $recommendationPlan = $this->interventionRecommendations->recommend(
             $shipment,
             $commodityProfile,
@@ -142,7 +102,6 @@ class DecisionEngine
         );
 
         return [
-            // Core operational outputs
             'risk_score' => $riskScore,
             'risk_index' => $riskScore,
             'risk_level' => $riskAssessment['risk_level'],
@@ -159,101 +118,51 @@ class DecisionEngine
             'priority_score' => $priorityScore,
             'priority_level' => $this->getPriorityLevel($priorityScore),
 
-            // Environmental / readiness outputs. Legacy keys are retained
-            // only so older controllers and DB columns do not break.
-            'carbon_score' => $carbonKg, // legacy compatibility key
+            'carbon_score' => $carbonKg,
             'carbon_kg' => $carbonKg,
             'carbon_estimate' => $carbonEstimate,
             'carbon_impact_score' => null,
             'operational_readiness_score' => $operationalReadinessScore,
-            'operational_readiness_basis' =>
-                '100 minus Operational Risk Index; no carbon weighting applied',
-            'sustainability_score' => $operationalReadinessScore, // legacy DB/API alias
+            'operational_readiness_basis' => '100 dikurangi Indeks Risiko Operasional; tanpa pembobotan karbon',
+            'sustainability_score' => $operationalReadinessScore,
             'efficiency_score' => null,
 
-            // Agriculture intelligence
             'commodity_profile_found' => $commodityProfile !== null,
             'commodity_profile' => $profileSummary,
             'temperature_assessment' => $temperatureAssessment,
-            'condition_assessment' =>
-                $qualityPrediction['condition_assessment']
-                ?? null,
+            'condition_assessment' => $qualityPrediction['condition_assessment'] ?? null,
 
-            // Quality-at-Arrival intelligence (Step 3)
             'quality_prediction' => $qualityPrediction,
             'quality_at_departure' => $qualityPrediction['quality_at_departure'],
             'quality_at_arrival' => $qualityPrediction['quality_at_arrival'],
             'quality_status' => $qualityPrediction['quality_status'],
             'quality_loss_during_transit' => $qualityPrediction['quality_loss_during_transit'],
-            // Operational values after Step 3.1 reconciliation.
-            'predicted_remaining_shelf_life_days' =>
-                $qualityPrediction['remaining_shelf_life_at_arrival_days'],
-            'reference_remaining_shelf_life_days' =>
-                $qualityPrediction['reference_remaining_shelf_life_at_arrival_days']
-                ?? null,
-            'recorded_remaining_shelf_life_days' =>
-                $qualityPrediction['recorded_remaining_at_arrival_days']
-                ?? null,
-            'recorded_remaining_hours' =>
-                $qualityPrediction['recorded_remaining_hours']
-                ?? null,
-            'recorded_remaining_at_arrival_hours' =>
-                $qualityPrediction['recorded_remaining_at_arrival_hours']
-                ?? null,
-            'recorded_freshness_at_departure' =>
-                $qualityPrediction['recorded_freshness_index_at_departure']
-                ?? null,
-            'recorded_freshness_at_arrival' =>
-                $qualityPrediction['recorded_freshness_index_at_arrival']
-                ?? null,
-            'reference_quality_at_departure' =>
-                $qualityPrediction['reference_quality_at_departure']
-                ?? null,
-            'reference_quality_at_arrival' =>
-                $qualityPrediction['reference_quality_at_arrival']
-                ?? null,
-            'expiry_constraint_applied' =>
-                $qualityPrediction['expiry_constraint_applied']
-                ?? false,
-            'shelf_life_reconciliation_status' =>
-                $qualityPrediction['shelf_life_reconciliation_status']
-                ?? 'Unknown',
-            'shelf_life_reconciliation_message' =>
-                $qualityPrediction['shelf_life_reconciliation_message']
-                ?? null,
-            'shelf_life_discrepancy_days' =>
-                $qualityPrediction['shelf_life_discrepancy_days']
-                ?? null,
-            'safe_transit_window_hours' =>
-                $qualityPrediction['safe_transit_window_hours'],
-            'reference_safe_transit_window_hours' =>
-                $qualityPrediction['reference_safe_transit_window_hours']
-                ?? null,
-            'recorded_expiry_window_hours' =>
-                $qualityPrediction['recorded_expiry_window_hours']
-                ?? null,
-            'planned_transit_hours' =>
-                $qualityPrediction['planned_transit_hours']
-                ?? null,
-            'transit_margin_hours' =>
-                $qualityPrediction['transit_margin_hours']
-                ?? null,
-            'safe_transit_status' =>
-                $qualityPrediction['safe_transit_status'],
+            'predicted_remaining_shelf_life_days' => $qualityPrediction['remaining_shelf_life_at_arrival_days'],
+            'reference_remaining_shelf_life_days' => $qualityPrediction['reference_remaining_shelf_life_at_arrival_days'] ?? null,
+            'recorded_remaining_shelf_life_days' => $qualityPrediction['recorded_remaining_at_arrival_days'] ?? null,
+            'recorded_remaining_hours' => $qualityPrediction['recorded_remaining_hours'] ?? null,
+            'recorded_remaining_at_arrival_hours' => $qualityPrediction['recorded_remaining_at_arrival_hours'] ?? null,
+            'recorded_freshness_at_departure' => $qualityPrediction['recorded_freshness_index_at_departure'] ?? null,
+            'recorded_freshness_at_arrival' => $qualityPrediction['recorded_freshness_index_at_arrival'] ?? null,
+            'reference_quality_at_departure' => $qualityPrediction['reference_quality_at_departure'] ?? null,
+            'reference_quality_at_arrival' => $qualityPrediction['reference_quality_at_arrival'] ?? null,
+            'expiry_constraint_applied' => $qualityPrediction['expiry_constraint_applied'] ?? false,
+            'shelf_life_reconciliation_status' => $qualityPrediction['shelf_life_reconciliation_status'] ?? 'Tidak diketahui',
+            'shelf_life_reconciliation_message' => $qualityPrediction['shelf_life_reconciliation_message'] ?? null,
+            'shelf_life_discrepancy_days' => $qualityPrediction['shelf_life_discrepancy_days'] ?? null,
+            'safe_transit_window_hours' => $qualityPrediction['safe_transit_window_hours'],
+            'reference_safe_transit_window_hours' => $qualityPrediction['reference_safe_transit_window_hours'] ?? null,
+            'recorded_expiry_window_hours' => $qualityPrediction['recorded_expiry_window_hours'] ?? null,
+            'planned_transit_hours' => $qualityPrediction['planned_transit_hours'] ?? null,
+            'transit_margin_hours' => $qualityPrediction['transit_margin_hours'] ?? null,
+            'safe_transit_status' => $qualityPrediction['safe_transit_status'],
 
-            // Context
             'remaining_days' => round(max(0, $remainingDays), 2),
             'remaining_hours' => $qualityPrediction['recorded_remaining_hours'] ?? null,
-            'data_confidence' => $this->calculateDataConfidence(
-                $shipment,
-                $commodityProfile,
-                $qualityPrediction
-            ),
+            'data_confidence' => $this->calculateDataConfidence($shipment, $commodityProfile, $qualityPrediction),
             'risk_components' => $riskComponents,
-            'explainability' => $this->riskExplainability(
-                $riskAssessment
-            ),
-            // Prescriptive outputs
+            'explainability' => $this->riskExplainability($riskAssessment),
+
             'recommendation_plan' => $recommendationPlan,
             'recommended_actions' => $recommendationPlan['actions'],
             'recommended_action' => $recommendationPlan['primary_action'],
@@ -263,9 +172,7 @@ class DecisionEngine
             'recommended_vehicle' => $recommendationPlan['recommended_vehicle'],
             'recommended_storage' => $recommendationPlan['recommended_storage'],
 
-            // Backwards-compatible key now powered by QualityPredictionService.
-            'estimated_arrival_quality' =>
-                $qualityPrediction['quality_at_arrival'],
+            'estimated_arrival_quality' => $qualityPrediction['quality_at_arrival'],
             'food_waste_level' => $riskAssessment['risk_level'],
         ];
     }
@@ -322,6 +229,7 @@ class DecisionEngine
             $commodityProfile !== null,
             filled($shipment->harvest?->harvest_date),
             filled($shipment->harvest?->expiry_date),
+            filled($shipment->harvest?->weight),
             ($qualityPrediction['baseline_shelf_life_days'] ?? null) !== null,
             filled($shipment->origin),
             filled($shipment->destination),
@@ -334,10 +242,6 @@ class DecisionEngine
         $complete = count(array_filter($checks));
         $score = (int) round(($complete / count($checks)) * 100);
 
-        // When neither a scenario override nor a recorded shipment temperature is
-        // available, the fresh-produce model uses a neutral reference assumption.
-        // Keep the result usable, but reduce evidence coverage because cargo
-        // temperature is unknown.
         if (($qualityPrediction['temperature_basis'] ?? '') === 'reference_neutral_fallback') {
             $score -= 8;
         }
@@ -362,8 +266,6 @@ class DecisionEngine
                 return [
                     'title' => $component['title'],
                     'icon' => $iconMap[$component['icon'] ?? ''] ?? '•',
-                    // Existing Blade expects an "impact" number. In Step 4
-                    // this is weighted contribution points to the 0–100 index.
                     'impact' => $component['contribution'],
                     'pressure_score' => $component['score'],
                     'weight' => $component['weight'],
@@ -391,14 +293,14 @@ class DecisionEngine
         );
 
         $recommendedVehicle = $commodityProfile?->temperature_control_recommended
-            ? 'Temperature-controlled vehicle'
-            : 'Standard vehicle; preserve recommended storage conditions';
+            ? 'Kendaraan berpendingin (suhu terkontrol)'
+            : 'Kendaraan standar; jaga kondisi penyimpanan sesuai acuan';
 
         if ($remainingDays <= 0) {
             return [
-                'action' => 'Escalate shipment immediately',
-                'reason' => 'The recorded shelf life has been reached or exceeded. The shipment requires immediate operational review.',
-                'dispatch_deadline' => 'Immediate review',
+                'action' => 'Segera tinjau dan eskalasi pengiriman',
+                'reason' => 'Batas masa simpan tercatat telah tercapai atau terlewati. Pengiriman memerlukan penanganan segera.',
+                'dispatch_deadline' => 'Tinjauan segera',
                 'recommended_vehicle' => $recommendedVehicle,
                 'recommended_storage' => $storage,
             ];
@@ -406,9 +308,9 @@ class DecisionEngine
 
         if ($temperatureProblem && ($temperatureAssessment['severity'] ?? '') === 'high') {
             return [
-                'action' => 'Correct transport temperature before dispatch',
+                'action' => 'Perbaiki suhu pengiriman sebelum berangkat',
                 'reason' => $temperatureAssessment['message'],
-                'dispatch_deadline' => 'Before dispatch',
+                'dispatch_deadline' => 'Sebelum keberangkatan',
                 'recommended_vehicle' => $recommendedVehicle,
                 'recommended_storage' => $storage,
             ];
@@ -416,9 +318,9 @@ class DecisionEngine
 
         if ($riskScore >= 70 || $remainingDays <= 2) {
             return [
-                'action' => 'Dispatch immediately',
-                'reason' => 'Short remaining shelf life and/or high operational risk makes delay undesirable.',
-                'dispatch_deadline' => 'Within 6 hours',
+                'action' => 'Kirim segera tanpa penundaan',
+                'reason' => 'Sisa masa simpan yang singkat dan/atau risiko operasional yang tinggi membuat penundaan sangat berisiko.',
+                'dispatch_deadline' => 'Dalam 6 jam',
                 'recommended_vehicle' => $recommendedVehicle,
                 'recommended_storage' => $storage,
             ];
@@ -426,9 +328,9 @@ class DecisionEngine
 
         if ($temperatureProblem) {
             return [
-                'action' => 'Adjust commodity transport conditions',
+                'action' => 'Sesuaikan kondisi suhu pengangkutan komoditas',
                 'reason' => $temperatureAssessment['message'],
-                'dispatch_deadline' => 'Before or during dispatch',
+                'dispatch_deadline' => 'Sebelum atau saat keberangkatan',
                 'recommended_vehicle' => $recommendedVehicle,
                 'recommended_storage' => $storage,
             ];
@@ -436,9 +338,9 @@ class DecisionEngine
 
         if ($riskScore >= 50 || ($shipment->distance_km ?? 0) >= 300) {
             return [
-                'action' => 'Review route and storage conditions',
-                'reason' => 'The shipment has meaningful transport exposure and should be checked against its commodity-specific storage profile.',
-                'dispatch_deadline' => 'Today',
+                'action' => 'Tinjau rute dan kondisi penyimpanan',
+                'reason' => 'Pengiriman memiliki paparan perjalanan yang cukup tinggi dan perlu disesuaikan dengan standar penyimpanan komoditas.',
+                'dispatch_deadline' => 'Hari ini',
                 'recommended_vehicle' => $recommendedVehicle,
                 'recommended_storage' => $storage,
             ];
@@ -446,25 +348,24 @@ class DecisionEngine
 
         if ($riskScore >= 30) {
             return [
-                'action' => 'Prioritize shipment',
-                'reason' => 'The shipment is currently manageable but should be processed ahead of lower-risk cargo.',
-                'dispatch_deadline' => 'Within 24 hours',
+                'action' => 'Prioritaskan pengiriman',
+                'reason' => 'Kondisi pengiriman saat ini masih terkendali, namun sebaiknya diproses lebih dulu dibanding muatan berisiko rendah.',
+                'dispatch_deadline' => 'Dalam 24 jam',
                 'recommended_vehicle' => $recommendedVehicle,
                 'recommended_storage' => $storage,
             ];
         }
 
         return [
-            'action' => 'Monitor shipment',
+            'action' => 'Pantau pengiriman',
             'reason' => $commodityProfile
-                ? 'Current operational exposure is low and the commodity profile is available for storage guidance.'
-                : 'Current operational exposure is low, but the commodity is not yet present in AgriFlow’s validated knowledge base.',
-            'dispatch_deadline' => 'Flexible',
+                ? 'Tingkat risiko operasional saat ini rendah dan profil komoditas tersedia sebagai panduan penyimpanan.'
+                : 'Tingkat risiko operasional saat ini rendah, namun profil komoditas belum tersedia di basis data AgriFlow.',
+            'dispatch_deadline' => 'Fleksibel',
             'recommended_vehicle' => $recommendedVehicle,
             'recommended_storage' => $storage,
         ];
     }
-
 
     private function getRiskLevel(int $riskScore): string
     {
@@ -477,9 +378,6 @@ class DecisionEngine
 
     private function getPriorityLevel(int $priorityScore): string
     {
-        // Keep user-facing priority labels aligned with the final three-band
-        // operational language. Immediate urgency remains available as a
-        // separate field when a shipment needs same-window escalation.
         return match (true) {
             $priorityScore >= 60 => 'High',
             $priorityScore >= 40 => 'Moderate',
@@ -490,10 +388,10 @@ class DecisionEngine
     private function displayVehicle(string $vehicle): string
     {
         return match (strtolower($vehicle)) {
-            'cold', 'refrigerated', 'refrigerated truck' => 'Refrigerated Truck',
-            'ship' => 'Ship',
-            'plane' => 'Plane',
-            default => 'Standard Truck',
+            'cold', 'refrigerated', 'refrigerated truck' => 'Truk Berpendingin',
+            'ship' => 'Kapal',
+            'plane' => 'Pesawat',
+            default => 'Truk Standar',
         };
     }
 

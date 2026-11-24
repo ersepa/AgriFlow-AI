@@ -8,6 +8,7 @@ use App\Services\GeminiService;
 use App\Services\RouteService;
 use App\Services\Routing\FreshnessAwareRouteService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class AIOptimizerController extends Controller
 {
@@ -15,7 +16,12 @@ class AIOptimizerController extends Controller
         DecisionEngine $engine,
         FreshnessAwareRouteService $freshnessRoutes
     ) {
+        abort_unless(Auth::check(), 401);
+
         $shipments = Shipment::with('harvest')
+            ->whereHas('harvest', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
             ->whereIn('status', [
                 'Harvested',
                 'Packed',
@@ -30,205 +36,75 @@ class AIOptimizerController extends Controller
                 $engine,
                 $freshnessRoutes
             ) {
-                $analysis = $engine->analyze(
-                    $shipment
-                );
+                $analysis = $engine->analyze($shipment);
 
-                $routeAssessment =
-                    $freshnessRoutes
-                        ->assessCurrentRoute(
-                            $shipment,
-                            $analysis
-                        );
+                $routeAssessment = $freshnessRoutes->assessCurrentRoute(
+                    $shipment,
+                    $analysis
+                );
 
                 return [
-                    'shipment' =>
-                        $shipment,
-
-                    'commodity' =>
-                        $shipment
-                            ->harvest
-                            ?->commodity
-                        ?? 'Unknown',
-
-                    'origin' =>
-                        $shipment->origin,
-
-                    'destination' =>
-                        $shipment->destination,
-
-                    'origin_lat' =>
-                        $shipment->origin_lat,
-
-                    'origin_lng' =>
-                        $shipment->origin_lng,
-
-                    'destination_lat' =>
-                        $shipment->destination_lat,
-
-                    'destination_lng' =>
-                        $shipment->destination_lng,
-
-                    'priority_score' =>
-                        $analysis[
-                            'priority_score'
-                        ],
-
-                    'priority_level' =>
-                        $analysis[
-                            'priority_level'
-                        ],
-
-                    'risk_score' =>
-                        $analysis[
-                            'risk_score'
-                        ],
-
-                    'risk_severity' =>
-                        $analysis[
-                            'risk_severity'
-                        ]
-                        ?? (
-                            $analysis[
-                                'risk_level'
-                            ]
-                            ?? 'Unknown'
-                        ),
-
-                    'sustainability_score' =>
-                        $analysis[
-                            'sustainability_score'
-                        ],
-
-                    'quality_at_arrival' =>
-                        $analysis[
-                            'quality_at_arrival'
-                        ]
-                        ?? null,
-
-                    'quality_status' =>
-                        $analysis[
-                            'quality_status'
-                        ]
-                        ?? 'Unavailable',
-
-                    'transit_margin_hours' =>
-                        $analysis[
-                            'transit_margin_hours'
-                        ]
-                        ?? null,
-
-                    'safe_transit_status' =>
-                        $analysis[
-                            'safe_transit_status'
-                        ]
-                        ?? 'Unavailable',
-
-                    'route_assessment' =>
-                        $routeAssessment,
-
-                    'freshness_route_score' =>
-                        $routeAssessment[
-                            'route_score'
-                        ]
-                        ?? null,
-
-                    'freshness_feasibility' =>
-                        $routeAssessment[
-                            'freshness_feasibility'
-                        ]
-                        ?? 'Unavailable',
-
-                    'delay_tolerance_hours' =>
-                        $routeAssessment[
-                            'delay_tolerance_hours'
-                        ]
-                        ?? null,
+                    'shipment' => $shipment,
+                    'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
+                    'origin' => $shipment->origin,
+                    'destination' => $shipment->destination,
+                    'origin_lat' => $shipment->origin_lat,
+                    'origin_lng' => $shipment->origin_lng,
+                    'destination_lat' => $shipment->destination_lat,
+                    'destination_lng' => $shipment->destination_lng,
+                    'priority_score' => $analysis['priority_score'],
+                    'priority_level' => $analysis['priority_level'],
+                    'risk_score' => $analysis['risk_score'],
+                    'risk_severity' => $analysis['risk_severity'] ?? ($analysis['risk_level'] ?? 'Tidak diketahui'),
+                    'sustainability_score' => $analysis['sustainability_score'],
+                    'quality_at_arrival' => $analysis['quality_at_arrival'] ?? null,
+                    'quality_status' => $analysis['quality_status'] ?? 'Belum tersedia',
+                    'transit_margin_hours' => $analysis['transit_margin_hours'] ?? null,
+                    'safe_transit_status' => $analysis['safe_transit_status'] ?? 'Belum tersedia',
+                    'route_assessment' => $routeAssessment,
+                    'freshness_route_score' => $routeAssessment['route_score'] ?? null,
+                    'freshness_feasibility' => $routeAssessment['freshness_feasibility'] ?? 'Belum tersedia',
+                    'delay_tolerance_hours' => $routeAssessment['delay_tolerance_hours'] ?? null,
                 ];
             })
-            ->sortByDesc(
-                'priority_score'
-            )
+            ->sortByDesc('priority_score')
             ->values();
 
-        $totalShipments =
-            $collection->count();
+        $totalShipments = $collection->count();
 
-        $highCount =
-            $collection
-                ->where(
-                    'risk_severity',
-                    'High'
-                )
-                ->count();
+        $highCount = $collection
+            ->where('risk_severity', 'High')
+            ->count();
 
-        $freshnessSafeCount =
-            $collection
-                ->where(
-                    'freshness_feasibility',
-                    'Safe'
-                )
-                ->count();
+        $freshnessSafeCount = $collection
+            ->where('freshness_feasibility', 'Safe')
+            ->count();
 
-        $routeScores =
-            $collection
-                ->pluck(
-                    'freshness_route_score'
-                )
-                ->filter(
-                    fn ($value) =>
-                        $value !== null
-                );
+        $routeScores = $collection
+            ->pluck('freshness_route_score')
+            ->filter(fn ($value) => $value !== null);
 
-        $averageRouteScore =
-            $routeScores->isNotEmpty()
-                ? round(
-                    $routeScores->avg(),
-                    1
-                )
-                : 0;
+        $averageRouteScore = $routeScores->isNotEmpty()
+            ? round($routeScores->avg(), 1)
+            : 0;
 
-        $averageSustainability =
-            $totalShipments > 0
-                ? round(
-                    $collection->avg(
-                        'sustainability_score'
-                    ),
-                    1
-                )
-                : 0;
+        $averageSustainability = $totalShipments > 0
+            ? round($collection->avg('sustainability_score'), 1)
+            : 0;
 
-        $page =
-            (int) request()->get(
-                'page',
-                1
-            );
-
+        $page = (int) request()->get('page', 1);
         $perPage = 3;
 
-        $results =
-            new LengthAwarePaginator(
-                $collection
-                    ->forPage(
-                        $page,
-                        $perPage
-                    )
-                    ->values(),
-
-                $collection->count(),
-
-                $perPage,
-
-                $page,
-
-                [
-                    'path' =>
-                        request()->url(),
-
-                    'query' =>
-                        request()->query(),
-                ]
-            );
+        $results = new LengthAwarePaginator(
+            $collection->forPage($page, $perPage)->values(),
+            $collection->count(),
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
 
         return view(
             'ai.optimizer',
@@ -243,47 +119,34 @@ class AIOptimizerController extends Controller
         );
     }
 
-    /**
-     * Step 5 on-demand route comparison.
-     *
-     * Real alternatives are requested only when supported by the route
-     * provider. Otherwise the current route is assessed without fabricated
-     * alternatives.
-     */
     public function freshnessRoutes(
         Shipment $shipment,
         FreshnessAwareRouteService $freshnessRoutes
     ) {
+        $this->ensureShipmentOwnership($shipment);
+
         if ($shipment->isDelivered()) {
             return response()->json([
-                'message' =>
-                    'This shipment has been delivered. Active optimizer and explanation endpoints are closed; use Completed Shipments for historical review.',
+                'message' => 'Pengiriman ini sudah selesai dikirim. Fitur optimasi aktif telah ditutup; silakan gunakan menu Pengiriman Selesai untuk meninjau riwayat.',
             ], 409);
         }
 
-        $shipment->loadMissing(
-            'harvest'
-        );
+        $shipment->loadMissing('harvest');
 
         return response()->json(
-            $freshnessRoutes->optimize(
-                $shipment
-            )
+            $freshnessRoutes->optimize($shipment)
         );
     }
 
-    /**
-     * Server-side route geometry endpoint.
-     * Keeps ORS_API_KEY out of Blade/JavaScript.
-     */
     public function routeGeometry(
         Shipment $shipment,
         RouteService $routes
     ) {
+        $this->ensureShipmentOwnership($shipment);
+
         if ($shipment->isDelivered()) {
             return response()->json([
-                'message' =>
-                    'This shipment has been delivered. Active optimizer and explanation endpoints are closed; use Completed Shipments for historical review.',
+                'message' => 'Pengiriman ini sudah selesai dikirim. Fitur optimasi aktif telah ditutup; silakan gunakan menu Pengiriman Selesai untuk meninjau riwayat.',
             ], 409);
         }
 
@@ -295,228 +158,96 @@ class AIOptimizerController extends Controller
         ) {
             return response()->json(
                 [
-                    'message' =>
-                        'Route coordinates are incomplete.',
+                    'message' => 'Koordinat rute pengiriman belum lengkap.',
                 ],
                 422
             );
         }
 
-        $route =
-            $routes->getRoute(
-                [
-                    'lat' =>
-                        (float) $shipment
-                            ->origin_lat,
+        $route = $routes->getRoute(
+            [
+                'lat' => (float) $shipment->origin_lat,
+                'lon' => (float) $shipment->origin_lng,
+            ],
+            [
+                'lat' => (float) $shipment->destination_lat,
+                'lon' => (float) $shipment->destination_lng,
+            ]
+        );
 
-                    'lon' =>
-                        (float) $shipment
-                            ->origin_lng,
-                ],
-                [
-                    'lat' =>
-                        (float) $shipment
-                            ->destination_lat,
-
-                    'lon' =>
-                        (float) $shipment
-                            ->destination_lng,
-                ]
-            );
-
-        $feature =
-            $route[
-                'features'
-            ][0]
-            ?? null;
+        $feature = $route['features'][0] ?? null;
 
         if (!$feature) {
             return response()->json(
                 [
-                    'message' =>
-                        'Routing provider did not return a usable route.',
+                    'message' => 'Penyedia layanan rute belum dapat mengembalikan rute yang dapat digunakan.',
                 ],
                 502
             );
         }
 
         return response()->json([
-            'geometry' =>
-                $feature[
-                    'geometry'
-                ]['coordinates']
-                ?? [],
-
-            'summary' =>
-                $feature[
-                    'properties'
-                ]['summary']
-                ?? [],
+            'geometry' => $feature['geometry']['coordinates'] ?? [],
+            'summary' => $feature['properties']['summary'] ?? [],
         ]);
     }
 
-    /**
-     * LLM explanation endpoint.
-     *
-     * DecisionEngine remains the source of truth for operational decisions.
-     * GeminiService only explains the deterministic result.
-     */
     public function explain(
         Shipment $shipment,
         DecisionEngine $engine,
         GeminiService $gemini
     ) {
+        $this->ensureShipmentOwnership($shipment);
         if ($shipment->isDelivered()) {
             return response()->json([
-                'message' =>
-                    'This shipment has been delivered. Active optimizer and explanation endpoints are closed; use Completed Shipments for historical review.',
+                'message' => 'Pengiriman ini sudah selesai dikirim. Fitur optimasi dan penjelasan aktif telah ditutup; silakan gunakan menu Pengiriman Selesai untuk meninjau riwayat.',
             ], 409);
         }
 
-        $shipment->loadMissing(
-            'harvest'
-        );
+        $shipment->loadMissing('harvest');
 
-        $analysis =
-            $engine->analyze(
-                $shipment
-            );
+        $analysis = $engine->analyze($shipment);
 
-        $result =
-            $gemini
-                ->generateShipmentExplanation([
-                    'commodity' =>
-                        $shipment
-                            ->harvest
-                            ?->commodity
-                        ?? 'Unknown',
-
-                    'origin' =>
-                        $shipment->origin,
-
-                    'destination' =>
-                        $shipment->destination,
-
-                    'status' =>
-                        $shipment->status,
-
-                    'remaining_days' =>
-                        $analysis[
-                            'remaining_days'
-                        ]
-                        ?? 0,
-
-                    'distance' =>
-                        $shipment
-                            ->distance_km
-                        ?? 0,
-
-                    'risk_score' =>
-                        $analysis[
-                            'risk_score'
-                        ],
-
-                    'priority_score' =>
-                        $analysis[
-                            'priority_score'
-                        ],
-
-                    'sustainability_score' =>
-                        $analysis[
-                            'sustainability_score'
-                        ],
-
-                    'recommended_action' =>
-                        $analysis[
-                            'recommended_action'
-                        ]
-                        ?? null,
-
-                    'recommendation_reason' =>
-                        $analysis[
-                            'recommendation_reason'
-                        ]
-                        ?? null,
-                ]);
+        $result = $gemini->generateShipmentExplanation([
+            'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
+            'origin' => $shipment->origin,
+            'destination' => $shipment->destination,
+            'status' => $shipment->status,
+            'remaining_days' => $analysis['remaining_days'] ?? 0,
+            'distance' => $shipment->distance_km ?? 0,
+            'risk_score' => $analysis['risk_score'],
+            'priority_score' => $analysis['priority_score'],
+            'sustainability_score' => $analysis['sustainability_score'],
+            'recommended_action' => $analysis['recommended_action'] ?? null,
+            'recommendation_reason' => $analysis['recommendation_reason'] ?? null,
+        ]);
 
         if (!$result) {
             return response()->json([
-                'recommendation' =>
-                    $analysis[
-                        'recommended_action'
-                    ]
-                    ?? 'Review shipment',
-
-                'decision_reason' =>
-                    $analysis[
-                        'recommendation_reason'
-                    ]
-                    ?? 'No explanation available.',
-
-                'conclusion' =>
-                    $analysis[
-                        'expected_outcome'
-                    ]
-                    ?? 'Use the deterministic AgriFlow decision outputs as the operational source of truth.',
-
-                'data_confidence' =>
-                    $analysis[
-                        'data_confidence'
-                    ]
-                    ?? 0,
+                'recommendation' => $analysis['recommended_action'] ?? 'Tinjau kondisi pengiriman',
+                'decision_reason' => $analysis['recommendation_reason'] ?? 'Belum ada alasan penilaian yang tersedia.',
+                'conclusion' => $analysis['expected_outcome'] ?? 'Gunakan hasil penilaian AgriFlow sebagai acuan utama operasional.',
+                'data_confidence' => $analysis['data_confidence'] ?? 0,
             ]);
         }
 
         return response()->json([
-            /*
-             * IMPORTANT:
-             * Recommendation always comes from DecisionEngine.
-             * The LLM cannot replace the operational decision.
-             */
-            'recommendation' =>
-                $analysis[
-                    'recommended_action'
-                ]
-                ?? 'Review shipment',
-
-            /*
-             * LLM may explain the existing deterministic decision.
-             */
-            'decision_reason' =>
-                $result[
-                    'decision_reason'
-                ]
-                ?? (
-                    $analysis[
-                        'recommendation_reason'
-                    ]
-                    ?? 'No explanation available.'
-                ),
-
-            /*
-             * LLM may summarize the expected operational outcome,
-             * but deterministic engine output remains the fallback.
-             */
-            'conclusion' =>
-                $result[
-                    'conclusion'
-                ]
-                ?? (
-                    $analysis[
-                        'expected_outcome'
-                    ]
-                    ?? 'Review the deterministic operational assessment.'
-                ),
-
-            /*
-             * Input completeness from DecisionEngine.
-             * This is not model accuracy.
-             */
-            'data_confidence' =>
-                $analysis[
-                    'data_confidence'
-                ]
-                ?? 0,
+            'recommendation' => $analysis['recommended_action'] ?? 'Tinjau kondisi pengiriman',
+            'decision_reason' => $result['decision_reason'] ?? ($analysis['recommendation_reason'] ?? 'Belum ada alasan penilaian yang tersedia.'),
+            'conclusion' => $result['conclusion'] ?? ($analysis['expected_outcome'] ?? 'Tinjau kembali hasil penilaian operasional yang tersedia.'),
+            'data_confidence' => $analysis['data_confidence'] ?? 0,
         ]);
+    }
+
+    private function ensureShipmentOwnership(Shipment $shipment): void
+    {
+        abort_unless(Auth::check(), 401);
+
+        abort_unless(
+            $shipment->harvest()
+                ->where('user_id', Auth::id())
+                ->exists(),
+            404
+        );
     }
 }

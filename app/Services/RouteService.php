@@ -14,8 +14,8 @@ class RouteService
     public function __construct()
     {
         $this->baseUrl = rtrim(
-            (string) env(
-                'ORS_BASE_URL',
+            (string) config(
+                'services.ors.base_url',
                 'https://api.heigit.org/openrouteservice'
             ),
             '/'
@@ -26,33 +26,47 @@ class RouteService
         array $start,
         array $end
     ): array {
+        if (
+            !$this->hasValidCoordinates($start) ||
+            !$this->hasValidCoordinates($end)
+        ) {
+            Log::warning('ORS received invalid route coordinates.');
+
+            return [];
+        }
+
+        $startLat = (float) $start['lat'];
+        $startLon = (float) $start['lon'];
+        $endLat = (float) $end['lat'];
+        $endLon = (float) $end['lon'];
+
         $cacheKey = sprintf(
-            'ors-route:%s:%s:%s:%s',
-            $start['lat'],
-            $start['lon'],
-            $end['lat'],
-            $end['lon']
+            'ors-route:%.8F:%.8F:%.8F:%.8F',
+            $startLat,
+            $startLon,
+            $endLat,
+            $endLon
         );
 
         $cached = Cache::get($cacheKey);
 
         if (
-            is_array($cached)
-            && !empty($cached['features'])
+            is_array($cached) &&
+            !empty($cached['features'])
         ) {
-            return $cached;
+            $cached = $this->normalizeFeatureCollection($cached);
+
+            if ($cached !== []) {
+                return $cached;
+            }
+
+            Cache::forget($cacheKey);
         }
 
         $response = $this->request([
             'coordinates' => [
-                [
-                    (float) $start['lon'],
-                    (float) $start['lat'],
-                ],
-                [
-                    (float) $end['lon'],
-                    (float) $end['lat'],
-                ],
+                [$startLon, $startLat],
+                [$endLon, $endLat],
             ],
         ]);
 
@@ -60,18 +74,14 @@ class RouteService
             return [];
         }
 
-        $data = $response->json();
+        $data = $this->normalizeFeatureCollection(
+            $response->json()
+        );
 
-        if (
-            !is_array($data)
-            || empty($data['features'])
-        ) {
+        if ($data === []) {
             Log::warning(
-                'ORS returned a successful response without route features.',
-                [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]
+                'ORS returned an invalid or empty route FeatureCollection.',
+                ['status' => $response->status()]
             );
 
             return [];
@@ -91,41 +101,50 @@ class RouteService
         array $end,
         int $targetCount = 3
     ): array {
-        $targetCount = max(
-            1,
-            min(3, $targetCount)
-        );
+        if (
+            !$this->hasValidCoordinates($start) ||
+            !$this->hasValidCoordinates($end)
+        ) {
+            Log::warning(
+                'ORS received invalid alternative route coordinates.'
+            );
+
+            return [];
+        }
+
+        $targetCount = max(1, min(3, $targetCount));
+
+        $startLat = (float) $start['lat'];
+        $startLon = (float) $start['lon'];
+        $endLat = (float) $end['lat'];
+        $endLon = (float) $end['lon'];
 
         $cacheKey = sprintf(
-            'ors-alt:%s:%s:%s:%s:%d',
-            $start['lat'],
-            $start['lon'],
-            $end['lat'],
-            $end['lon'],
+            'ors-alt:%.8F:%.8F:%.8F:%.8F:%d',
+            $startLat,
+            $startLon,
+            $endLat,
+            $endLon,
             $targetCount
         );
 
         $cached = Cache::get($cacheKey);
 
-        if (
-            is_array($cached)
-            && !empty($cached)
-        ) {
-            return $cached;
+        if (is_array($cached) && !empty($cached)) {
+            $validCached = $this->filterValidFeatures($cached);
+
+            if ($validCached !== []) {
+                return $validCached;
+            }
+
+            Cache::forget($cacheKey);
         }
 
         $response = $this->request([
             'coordinates' => [
-                [
-                    (float) $start['lon'],
-                    (float) $start['lat'],
-                ],
-                [
-                    (float) $end['lon'],
-                    (float) $end['lat'],
-                ],
+                [$startLon, $startLat],
+                [$endLon, $endLat],
             ],
-
             'alternative_routes' => [
                 'target_count' => $targetCount,
                 'weight_factor' => 1.4,
@@ -137,16 +156,20 @@ class RouteService
             return [];
         }
 
-        $features = $response->json(
-            'features',
-            []
-        );
+        $features = $response->json('features', []);
 
         if (!is_array($features)) {
+            Log::warning(
+                'ORS returned an invalid alternative routes structure.',
+                ['status' => $response->status()]
+            );
+
             return [];
         }
 
-        if (!empty($features)) {
+        $features = $this->filterValidFeatures($features);
+
+        if ($features !== []) {
             Cache::put(
                 $cacheKey,
                 $features,
@@ -157,38 +180,167 @@ class RouteService
         return $features;
     }
 
-    private function request(
-        array $payload
-    ): ?Response {
-        $apiKey = env('ORS_API_KEY');
+    private function hasValidCoordinates(array $coordinates): bool
+    {
+        if (
+            !isset($coordinates['lat'], $coordinates['lon']) ||
+            !is_numeric($coordinates['lat']) ||
+            !is_numeric($coordinates['lon'])
+        ) {
+            return false;
+        }
 
-        if (!$apiKey) {
-            Log::error(
-                'ORS_API_KEY is missing.'
-            );
+        $lat = (float) $coordinates['lat'];
+        $lon = (float) $coordinates['lon'];
+
+        return is_finite($lat) &&
+            is_finite($lon) &&
+            $lat >= -90 &&
+            $lat <= 90 &&
+            $lon >= -180 &&
+            $lon <= 180;
+    }
+
+    private function normalizeFeatureCollection(mixed $data): array
+    {
+        if (
+            !is_array($data) ||
+            ($data['type'] ?? null) !== 'FeatureCollection' ||
+            !isset($data['features']) ||
+            !is_array($data['features'])
+        ) {
+            return [];
+        }
+
+        $features = $this->filterValidFeatures($data['features']);
+
+        if ($features === []) {
+            return [];
+        }
+
+        $data['features'] = $features;
+
+        return $data;
+    }
+
+    private function filterValidFeatures(array $features): array
+    {
+        return array_values(array_filter(
+            $features,
+            fn ($feature) => $this->isValidRouteFeature($feature)
+        ));
+    }
+
+    private function isValidRouteFeature(mixed $feature): bool
+    {
+        if (
+            !is_array($feature) ||
+            ($feature['type'] ?? null) !== 'Feature' ||
+            !isset($feature['geometry']) ||
+            !is_array($feature['geometry'])
+        ) {
+            return false;
+        }
+
+        $geometry = $feature['geometry'];
+        $type = $geometry['type'] ?? null;
+        $coordinates = $geometry['coordinates'] ?? null;
+
+        if (!is_array($coordinates)) {
+            return false;
+        }
+
+        if ($type === 'LineString') {
+            return $this->hasValidLineCoordinates($coordinates);
+        }
+
+        if ($type === 'MultiLineString') {
+            if ($coordinates === []) {
+                return false;
+            }
+
+            foreach ($coordinates as $line) {
+                if (
+                    !is_array($line) ||
+                    !$this->hasValidLineCoordinates($line)
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function hasValidLineCoordinates(array $coordinates): bool
+    {
+        if (count($coordinates) < 2) {
+            return false;
+        }
+
+        foreach ($coordinates as $position) {
+            if (
+                !is_array($position) ||
+                !isset($position[0], $position[1]) ||
+                !is_numeric($position[0]) ||
+                !is_numeric($position[1])
+            ) {
+                return false;
+            }
+
+            $lon = (float) $position[0];
+            $lat = (float) $position[1];
+
+            if (
+                !is_finite($lon) ||
+                !is_finite($lat) ||
+                $lon < -180 ||
+                $lon > 180 ||
+                $lat < -90 ||
+                $lat > 90
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function request(array $payload): ?Response
+    {
+        $apiKey = trim(
+            (string) config('services.ors.api_key', '')
+        );
+
+        if ($apiKey === '') {
+            Log::error('ORS API key is missing.');
 
             return null;
         }
 
-        $url =
-            $this->baseUrl
-            . '/v2/directions/'
-            . 'driving-car/geojson';
+        $url = $this->baseUrl . '/v2/directions/driving-car/geojson';
 
-        $response = Http::withHeaders([
-            'Authorization' => $apiKey,
-            'Content-Type' => 'application/json',
-
-            // Important:
-            // This matches the direct Tinker request
-            // that successfully returned HTTP 200.
-            'Accept' => 'application/geo+json',
-        ])
-            ->timeout(20)
-            ->post(
-                $url,
-                $payload
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/geo+json',
+            ])
+                ->timeout(20)
+                ->post($url, $payload);
+        } catch (\Throwable $e) {
+            Log::error(
+                'ORS route request encountered an exception.',
+                [
+                    'url' => $url,
+                    'message' => $e->getMessage(),
+                ]
             );
+
+            return null;
+        }
 
         if (!$response->successful()) {
             Log::error(
@@ -196,7 +348,6 @@ class RouteService
                 [
                     'url' => $url,
                     'status' => $response->status(),
-                    'body' => $response->body(),
                 ]
             );
 

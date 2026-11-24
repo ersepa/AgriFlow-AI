@@ -57,12 +57,29 @@ class InterventionRecommendationServiceTest extends TestCase
             ]
         );
 
-        $this->assertCount(3, $result['actions']);
-        $this->assertSame('Process ahead of lower-risk cargo and review within 24 hours', $result['actions'][0]['action']);
-        $this->assertSame('Protect the recorded shelf-life window from additional delay', $result['actions'][1]['action']);
-        $this->assertSame('Verify cargo temperature before dispatch when possible', $result['actions'][2]['action']);
-        $this->assertSame('Monitor', $result['intervention_status']);
-        $this->assertNotSame($result['decision_rationale'], $result['expected_outcome']);
+$this->assertCount(3, $result['actions']);
+
+$this->assertSame(
+    'Utamakan pengiriman ini dibanding muatan berisiko rendah dan periksa ulang dalam 24 jam',
+    $result['actions'][0]['action']
+);
+
+$this->assertSame(
+    'Jaga batas masa simpan tercatat dari penundaan tambahan',
+    $result['actions'][1]['action']
+);
+
+$this->assertSame(
+    'Periksa dan catat suhu muatan sebelum berangkat bila memungkinkan',
+    $result['actions'][2]['action']
+);
+
+$this->assertSame('Pantau', $result['intervention_status']);
+
+$this->assertNotSame(
+    $result['decision_rationale'],
+    $result['expected_outcome']
+);
     }
 
     public function test_handling_guidance_uses_actual_step2_profile_field_names(): void
@@ -95,17 +112,23 @@ class InterventionRecommendationServiceTest extends TestCase
             [
                 'risk_severity' => 'Moderate',
                 'urgency_level' => 'Elevated',
-                'dispatch_deadline' => 'Within 24 hours',
+                'dispatch_deadline' => 'Dalam 24 jam',
                 'intervention_status' => 'Monitor',
                 'top_drivers' => [['title' => 'Shelf-Life Pressure']],
             ],
             ['status' => 'Not provided']
         );
 
-        $this->assertSame('Temperature-controlled transport recommended', $result['recommended_vehicle']);
+        $this->assertSame(
+    'Disarankan menggunakan transportasi berpendingin (suhu terkontrol)',
+    $result['recommended_vehicle']
+);
         $this->assertSame('10.0–12.5°C', $result['recommended_temperature_range']);
         $this->assertSame('95–95% RH', $result['recommended_humidity_range']);
-        $this->assertStringContainsString('Below 10.0°C', $result['chilling_threshold']);
+        $this->assertStringContainsString(
+    'Suhu di bawah 10.0°C',
+    $result['chilling_threshold']
+);
         $this->assertSame('10.0–12.5°C; 95–95% RH', $result['recommended_storage']);
         $this->assertSame('UC Davis Produce Facts', $result['reference_source_name']);
     }
@@ -128,7 +151,7 @@ class InterventionRecommendationServiceTest extends TestCase
             [
                 'risk_severity' => 'High',
                 'urgency_level' => 'High',
-                'dispatch_deadline' => 'Within 6 hours',
+                'dispatch_deadline' => 'Dalam 6 jam',
                 'intervention_status' => 'Required',
                 'top_drivers' => [
                     ['title' => 'Arrival Quality Pressure'],
@@ -137,7 +160,11 @@ class InterventionRecommendationServiceTest extends TestCase
             ['status' => 'Not provided']
         );
 
-        $this->assertSame('Prioritize dispatch within the high-urgency window', $result['primary_action']);
-        $this->assertSame('Within 6 hours', $result['action_window']);
+$this->assertSame(
+    'Prioritaskan keberangkatan dalam rentang waktu mendesak',
+    $result['primary_action']
+);
+
+$this->assertSame('Dalam 6 jam', $result['action_window']);
     }
 }

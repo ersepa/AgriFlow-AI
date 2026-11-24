@@ -1,4 +1,4 @@
-    <?php
+<?php
 
     use App\Http\Controllers\ProfileController;
     use Illuminate\Support\Facades\Route;
@@ -14,20 +14,7 @@
     use App\Services\Sustainability\FreightCarbonEstimateService;
     use App\Http\Controllers\OperationalDigitalTwinController;
     use App\Http\Controllers\CompletedShipmentController;
-
-
-Route::get('/test-environment', function () {
-
-    $shipment = \App\Models\Shipment::whereNotNull('origin_lat')
-        ->whereNotNull('origin_lng')
-        ->latest()
-        ->first();
-
-    $service = new \App\Services\EnvironmentalService();
-
-    return $service->getEnvironment($shipment);
-
-});
+    use Illuminate\Support\Facades\Auth;
 
     Route::get('/', function () {
         return view('welcome');
@@ -135,8 +122,19 @@ Route::get(
     ->middleware(['auth'])
     ->name('ai-analysis.show');
 
-    Route::delete('/ai-analysis/bulk-destroy', [AiAnalysisController::class, 'bulkDestroy'])->name('ai-analysis.bulk-destroy');
-    Route::delete('/ai-analysis/truncate', [AiAnalysisController::class, 'truncate'])->name('ai-analysis.truncate');
+Route::delete(
+    '/ai-analysis/bulk-destroy',
+    [AiAnalysisController::class, 'bulkDestroy']
+)
+    ->middleware('auth')
+    ->name('ai-analysis.bulk-destroy');
+
+Route::delete(
+    '/ai-analysis/truncate',
+    [AiAnalysisController::class, 'truncate']
+)
+    ->middleware('auth')
+    ->name('ai-analysis.truncate');
 
     Route::post('/chat', [App\Http\Controllers\ChatController::class, 'chat'])->middleware('auth');
 
@@ -152,36 +150,51 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
     Route::post('/ai-analysis/{shipment}', [AiAnalysisController::class, 'analyze'])
         ->middleware(['auth'])
         ->name('ai.analysis.run');
-
-    Route::get('/test-ai', function () {
-
-        $shipment = Shipment::with('harvest')->first();
-
-        $service = new GeminiService();
-
-        return $service->analyzeShipment([
-            'commodity' => $shipment->harvest->commodity,
-            'origin' => $shipment->origin,
-            'destination' => $shipment->destination,
-            'status' => $shipment->status,
-        ]);
-
-    });
     
 
-    Route::get('/dashboard', function () {
-    $totalHarvests = \App\Models\Harvest::count();
-    $totalWeight = \App\Models\Harvest::sum('weight');
+Route::get('/dashboard', function () {
+    $userId = Auth::id();
 
-    $totalShipments = \App\Models\Shipment::count();
-    $deliveredShipments = \App\Models\Shipment::where('status', 'Delivered')->count();
-    $totalAnalyses = AiAnalysis::count();
+    /*
+     * Every dashboard query must be scoped to the authenticated user.
+     * Shipment ownership is inherited through its harvest.
+     */
+    $ownedHarvests = function () use ($userId) {
+        return \App\Models\Harvest::query()
+            ->where('user_id', $userId);
+    };
+
+    $ownedShipments = function () use ($userId) {
+        return \App\Models\Shipment::query()
+            ->whereHas('harvest', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            });
+    };
+
+    $ownedAnalyses = function () use ($userId) {
+        return AiAnalysis::query()
+            ->whereHas('shipment.harvest', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            });
+    };
+
+    $totalHarvests = $ownedHarvests()->count();
+    $totalWeight = $ownedHarvests()->sum('weight');
+
+    $totalShipments = $ownedShipments()->count();
+
+    $deliveredShipments = $ownedShipments()
+        ->where('status', 'Delivered')
+        ->count();
+
+    $totalAnalyses = $ownedAnalyses()->count();
 
     $engine = app(DecisionEngine::class);
 
     // Dashboard operational KPIs are calculated from CURRENT ACTIVE
     // shipments only. Historical AiAnalysis rows remain audit snapshots.
-    $activeShipments = \App\Models\Shipment::with('harvest')
+    $activeShipments = $ownedShipments()
+        ->with('harvest')
         ->whereIn('status', ['Harvested', 'Packed', 'In Transit'])
         ->get();
 
@@ -233,14 +246,15 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
 
     // Source-backed activity estimate across shipment mass x distance.
     $freightCarbon = app(FreightCarbonEstimateService::class);
-    $currentCarbon = round(
-        \App\Models\Shipment::with('harvest')
-            ->get()
-            ->sum(fn ($shipment) =>
-                $freightCarbon->estimateForShipment($shipment)['estimated_kg'] ?? 0
-            ),
-        1
-    );
+$currentCarbon = round(
+    $ownedShipments()
+        ->with('harvest')
+        ->get()
+        ->sum(fn ($shipment) =>
+            $freightCarbon->estimateForShipment($shipment)['estimated_kg'] ?? 0
+        ),
+    1
+);
 
     $dashboardShipments = $activeOperationalRows
         ->map(function ($row) {
@@ -249,7 +263,7 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
 
             return [
                 'shipment_id' => $shipment->id,
-                'commodity' => $shipment->harvest?->commodity ?? 'Unknown',
+                'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
                 'origin' => $shipment->origin,
                 'destination' => $shipment->destination,
                 'origin_lat' => $shipment->origin_lat,
@@ -264,7 +278,7 @@ Route::delete('/ai-analysis/history/{id}', [AiAnalysisController::class, 'destro
                 'risk_severity' => $analysis['risk_severity'] ?? 'Unknown',
                 'urgency_level' => $analysis['urgency_level'] ?? 'Routine',
                 'recommended_action' => $analysis['recommended_action']
-                    ?? 'Review current shipment conditions',
+                    ?? 'Tinjau kondisi pengiriman saat ini',
             ];
         })
         ->values();
@@ -312,19 +326,28 @@ $operationalFocusUrgency =
 
     // Counts shown in the dashboard insight are deterministic. LLM output is
     // not allowed to redefine or summarize operational counts differently.
-    $aiInsightText = sprintf(
-        'AgriFlow is currently evaluating %d active shipment(s): %d High, %d Moderate, and %d Low. %d shipment(s) have completed the operational lifecycle.',
-        $activeShipmentCount,
-        $highRisk,
-        $mediumRisk,
-        $lowRisk,
-        $deliveredShipments
-    );
+$aiInsightText = sprintf(
+    'AgriFlow sedang memantau %d pengiriman aktif: %d berisiko tinggi, %d berisiko sedang, dan %d berisiko rendah. Sebanyak %d pengiriman telah menyelesaikan seluruh proses operasional.',
+    $activeShipmentCount,
+    $highRisk,
+    $mediumRisk,
+    $lowRisk,
+    $deliveredShipments
+);
 
-    $statusHarvested = \App\Models\Shipment::where('status', 'Harvested')->count();
-    $statusPacked = \App\Models\Shipment::where('status', 'Packed')->count();
-    $statusTransit = \App\Models\Shipment::where('status', 'In Transit')->count();
-    $statusDelivered = $deliveredShipments;
+$statusHarvested = $ownedShipments()
+    ->where('status', 'Harvested')
+    ->count();
+
+$statusPacked = $ownedShipments()
+    ->where('status', 'Packed')
+    ->count();
+
+$statusTransit = $ownedShipments()
+    ->where('status', 'In Transit')
+    ->count();
+
+$statusDelivered = $deliveredShipments;
 
     $currentEfficiency = $totalShipments > 0
         ? round(($deliveredShipments / $totalShipments) * 100)

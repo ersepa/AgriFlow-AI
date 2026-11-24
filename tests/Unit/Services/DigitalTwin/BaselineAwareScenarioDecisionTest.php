@@ -47,10 +47,10 @@ class BaselineAwareScenarioDecisionTest extends TestCase
             $result['preferred_option']
         );
 
-        $this->assertSame(
-            'Recommended over Current Plan',
-            $result['decision_status']
-        );
+$this->assertSame(
+    'Lebih Direkomendasikan',
+    $result['decision_status']
+);
     }
 
     public function test_safe_scenario_with_higher_risk_is_not_recommended(): void
@@ -93,15 +93,15 @@ class BaselineAwareScenarioDecisionTest extends TestCase
             $result['preferred_option']
         );
 
-        $this->assertSame(
-            'Viable but Not Recommended',
-            $result['decision_status']
-        );
+$this->assertSame(
+    'Layak, Namun Tidak Disarankan',
+    $result['decision_status']
+);
 
-        $this->assertStringContainsString(
-            '32/100 to 47/100',
-            $result['decision_reason']
-        );
+$this->assertStringContainsString(
+    'dari 32/100 menjadi 47/100',
+    $result['decision_reason']
+);
     }
 
     public function test_identical_scenario_is_only_a_viable_alternative(): void
@@ -139,10 +139,10 @@ class BaselineAwareScenarioDecisionTest extends TestCase
             $result['decision_type']
         );
 
-        $this->assertSame(
-            'Viable Alternative',
-            $result['decision_status']
-        );
+$this->assertSame(
+    'Alternatif Setara',
+    $result['decision_status']
+);
 
         $this->assertSame(
             'current_plan',

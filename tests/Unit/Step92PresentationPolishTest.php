@@ -12,18 +12,20 @@ class Step92PresentationPolishTest extends TestCase
             resource_path('views/shipments/show.blade.php')
         );
 
-        $this->assertStringContainsString(
-            'Storage-Stability Intelligence',
-            $shipmentView
-        );
-        $this->assertStringContainsString(
-            'Quality score not applicable',
-            $shipmentView
-        );
-        $this->assertStringContainsString(
-            'Historical snapshots preserve the assessment generated at that time.',
-            $shipmentView
-        );
+$this->assertStringContainsString(
+    'pemantauan stabilitas penyimpanan kering',
+    $shipmentView
+);
+
+$this->assertStringContainsString(
+    'Kadar Air (%)',
+    $shipmentView
+);
+
+$this->assertStringContainsString(
+    'Riwayat Analisis',
+    $shipmentView
+);
         $this->assertStringNotContainsString(
             "explode('-',",
             $shipmentView

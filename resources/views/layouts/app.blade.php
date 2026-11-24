@@ -242,101 +242,190 @@
             <span class="font-bold text-sm tracking-tight" x-text="message"></span>
         </div>
 
-        {{-- Floating AI Assistant Bubble --}}
-        <div id="chatBubble" onclick="toggleChat()" 
-             class="fixed bottom-6 right-6 bg-gradient-to-br from-indigo-600 to-indigo-700 p-4 rounded-2xl shadow-xl shadow-indigo-600/30 cursor-pointer hover:scale-105 transition-all duration-300 z-50 border border-indigo-400/30">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+{{-- Floating AI Assistant Bubble --}}
+        <button type="button"
+                id="chatBubble"
+                onclick="toggleChat()"
+                aria-label="Buka Asisten AgriFlow"
+                class="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 p-4 rounded-2xl shadow-xl shadow-emerald-600/30 cursor-pointer hover:scale-105 transition-all duration-300 z-50 border border-emerald-400/40 text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
             </svg>
-        </div>
-
-       {{-- Jendela Chat (Desain Clean & Adaptive Dark/Light Mode) --}}
-<div id="chatWindow"
-    class="fixed bottom-4 right-4 sm:bottom-20 sm:right-6 md:right-8
-    w-[calc(100vw-2rem)] sm:w-96
-    h-[70vh] sm:h-[500px] max-h-[700px]
-    bg-white dark:bg-slate-900 rounded-3xl
-    shadow-[0_20px_50px_-10px_rgba(15,23,42,0.15)] dark:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)]
-    border border-slate-200/90 dark:border-slate-800
-    overflow-hidden hidden z-50
-    transition-all duration-300 ease-in-out
-    flex flex-col">
-
-    <!-- Header Chat -->
-    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 text-white font-bold flex justify-between items-center border-b border-slate-800 dark:border-slate-800/80">
-        <div class="flex items-center gap-3">
-            <div class="relative flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-400/30 text-indigo-300 text-xs">
-                🤖
-                <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-900"></span>
-            </div>
-            <div>
-                <h4 class="text-xs font-black tracking-wide leading-none">Asisten Logistik AI</h4>
-                <p class="text-[10px] text-slate-400 font-semibold mt-1 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Online • AgriFlow Engine
-                </p>
-            </div>
-        </div>
-
-        <button onclick="toggleChat()" class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 dark:hover:bg-slate-800/60 rounded-xl transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
-    </div>
 
-    <!-- Body Chat -->
-    <div id="chatBody"
-        class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#f8fafc] dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-b border-slate-200 dark:border-slate-800 custom-scrollbar">
-        
-        {{-- Pesan AI --}}
-        <div class="text-left flex gap-2.5 items-start">
-            <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                🤖
+        {{-- Jendela Chat Asisten AgriFlow --}}
+        <div id="chatWindow"
+             class="fixed bottom-20 right-4 sm:bottom-24 sm:right-6
+             w-[calc(100vw-2rem)] sm:w-[400px]
+             h-[72vh] sm:h-[540px] max-h-[680px]
+             bg-white rounded-3xl
+             shadow-[0_24px_60px_-12px_rgba(15,23,42,0.22)]
+             border border-emerald-200/80
+             overflow-hidden hidden z-50
+             transition-all duration-300 ease-in-out
+             flex flex-col">
+
+            {{-- Header Chat --}}
+            <div class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 p-4 text-white flex justify-between items-center border-b border-emerald-600/50 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 border border-white/20 text-white shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                        </svg>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-emerald-800"></span>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-black tracking-tight leading-none">Asisten AgriFlow</h4>
+                        <p class="text-xs text-emerald-100 font-medium mt-1 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                            Siap membantu
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button"
+                        onclick="toggleChat()"
+                        aria-label="Tutup Asisten AgriFlow"
+                        class="p-2 text-emerald-100 hover:text-white hover:bg-white/15 rounded-xl transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
-            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 rounded-2xl rounded-tl-sm shadow-sm text-slate-600 dark:text-slate-300 text-xs font-medium max-w-[85%] leading-relaxed">
-                Halo! Ada yang bisa dibantu mengenai data pengiriman, kondisi cuaca rute, atau analisis risiko hari ini?
+
+            {{-- Body Chat --}}
+            <div id="chatBody"
+                 class="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-emerald-50/40 via-slate-50 to-white text-slate-800 text-sm leading-relaxed custom-scrollbar">
+
+                {{-- Sapaan Awal --}}
+                <div class="flex gap-2.5 items-start">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                        </svg>
+                    </div>
+                    <div class="bg-white border border-emerald-200/80 p-3.5 rounded-2xl rounded-tl-sm shadow-2xs text-slate-800 text-sm font-medium max-w-[85%] leading-relaxed">
+                        Halo! Saya Asisten AgriFlow. Ada yang bisa saya bantu mengenai hasil panen, pengiriman, atau analisis risiko hari ini?
+                    </div>
+                </div>
+
+                {{-- Saran Pertanyaan Awal --}}
+                <div id="chatSuggestions" class="pl-10 flex flex-wrap gap-2">
+                    <button type="button" onclick="sendQuickQuestion('Bagaimana kondisi hasil panen saya?')"
+                            class="text-left px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-colors">
+                        Bagaimana kondisi hasil panen saya?
+                    </button>
+                    <button type="button" onclick="sendQuickQuestion('Jelaskan risiko pengiriman saya.')"
+                            class="text-left px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-colors">
+                        Jelaskan risiko pengiriman saya.
+                    </button>
+                    <button type="button" onclick="sendQuickQuestion('Apa rekomendasi AI untuk pengiriman?')"
+                            class="text-left px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-colors">
+                        Apa rekomendasi AI untuk pengiriman?
+                    </button>
+                    <button type="button" onclick="sendQuickQuestion('Bagaimana cara menjaga kualitas produk?')"
+                            class="text-left px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-colors">
+                        Bagaimana cara menjaga kualitas produk?
+                    </button>
+                </div>
+            </div>
+
+            {{-- Input Chat --}}
+            <div class="p-3.5 bg-white border-t border-slate-200/80 flex gap-2 items-center shrink-0">
+                <input id="chatInput"
+                       type="text"
+                       placeholder="Tulis pertanyaan kamu..."
+                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); sendMessage(); }"
+                       class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500 transition-all">
+
+                <button type="button"
+                        id="chatSendBtn"
+                        onclick="sendMessage()"
+                        aria-label="Kirim pesan"
+                        class="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
             </div>
         </div>
-
-    </div>
-
-    <!-- Input Chat -->
-    <div class="p-3 bg-white dark:bg-slate-900 flex gap-2 items-center">
-        <input id="chatInput"
-            type="text"
-            placeholder="Tanya sesuatu..."
-            class="flex-1 px-3.5 py-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:focus:ring-indigo-400/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all">
-
-        <button onclick="sendMessage()"
-            class="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-3 rounded-xl text-xs font-extrabold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-all shadow-md shadow-indigo-600/20 dark:shadow-indigo-500/10 flex items-center justify-center shrink-0">
-            Kirim
-        </button>
-    </div>
-</div>
 
         {{-- Script Handlers --}}
         <script>
+        let isChatSending = false;
+
         function toggleChat() {
             const chatWindow = document.getElementById('chatWindow');
             chatWindow.classList.toggle('hidden');
+            if (!chatWindow.classList.contains('hidden')) {
+                setTimeout(() => document.getElementById('chatInput')?.focus(), 100);
+            }
+        }
+
+        function escapeChatHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/\n/g, '<br>');
+        }
+
+        function sendQuickQuestion(text) {
+            const input = document.getElementById('chatInput');
+            if (!input || isChatSending) return;
+            input.value = text;
+            sendMessage();
         }
 
         async function sendMessage() {
+            if (isChatSending) return;
+
             const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('chatSendBtn');
             const chatBody = document.getElementById('chatBody');
+            const suggestions = document.getElementById('chatSuggestions');
             const message = input.value.trim();
 
             if (!message) return;
 
-            // Tampilkan pesan user
-            chatBody.innerHTML += `
-                <div class="text-right mb-2">
-                    <span class="bg-indigo-600 text-white p-3 rounded-2xl text-xs font-medium inline-block shadow-sm max-w-[80%] text-left">
-                        ${message}
-                    </span>
-                </div>
-            `;
+            isChatSending = true;
+            input.disabled = true;
+            if (sendBtn) sendBtn.disabled = true;
+            if (suggestions) suggestions.classList.add('hidden');
 
-            input.value = "";
+            // Tampilkan pesan pengguna (Hijau Emerald)
+            chatBody.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-end">
+                    <div class="bg-emerald-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm text-sm font-medium shadow-sm max-w-[82%] leading-relaxed">
+                        ${escapeChatHtml(message)}
+                    </div>
+                </div>
+            `);
+
+            input.value = '';
+
+            // Indikator loading mengetik
+            const typingId = 'chatTyping-' + Date.now();
+            chatBody.insertAdjacentHTML('beforeend', `
+                <div id="${typingId}" class="flex gap-2.5 items-start">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                        </svg>
+                    </div>
+                    <div class="bg-white border border-emerald-200/80 px-4 py-3 rounded-2xl rounded-tl-sm shadow-2xs text-slate-600 text-xs font-semibold flex items-center gap-2">
+                        <span class="inline-flex gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style="animation-delay:0.15s"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" style="animation-delay:0.3s"></span>
+                        </span>
+                        <span>Sedang menyiapkan jawaban...</span>
+                    </div>
+                </div>
+            `);
+
             chatBody.scrollTop = chatBody.scrollHeight;
 
             try {
@@ -344,35 +433,61 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        message: message
-                    })
+                    body: JSON.stringify({ message: message })
                 });
 
-                const data = await response.json();
+                document.getElementById(typingId)?.remove();
 
-                chatBody.innerHTML += `
-                    <div class="text-left mb-2">
-                        <span class="bg-white border border-slate-200/80 p-3 rounded-2xl text-xs font-medium inline-block shadow-sm text-slate-700 max-w-[85%]">
-                            ${data.reply ?? "AI tidak memberikan jawaban."}
-                        </span>
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (_) {
+                    data = {};
+                }
+
+                const replyText = data.reply
+                    ?? (response.ok
+                        ? 'Maaf, asisten belum dapat menyiapkan jawaban.'
+                        : 'Maaf, asisten sedang mengalami kendala. Silakan coba kembali beberapa saat lagi.');
+
+                const isError = !response.ok;
+                const bubbleStyle = isError
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-white border-emerald-200/80 text-slate-800';
+
+                chatBody.insertAdjacentHTML('beforeend', `
+                    <div class="flex gap-2.5 items-start">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                            </svg>
+                        </div>
+                        <div class="${bubbleStyle} border px-4 py-3 rounded-2xl rounded-tl-sm shadow-2xs text-sm font-medium max-w-[85%] leading-relaxed">
+                            ${escapeChatHtml(replyText)}
+                        </div>
                     </div>
-                `;
-
+                `);
             } catch (error) {
                 console.error(error);
-                chatBody.innerHTML += `
-                    <div class="text-left mb-2">
-                        <span class="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-2xl text-xs font-bold inline-block">
-                            Gagal menghubungi AI. Sila coba lagi.
-                        </span>
+                document.getElementById(typingId)?.remove();
+                chatBody.insertAdjacentHTML('beforeend', `
+                    <div class="flex gap-2.5 items-start">
+                        <div class="w-8 h-8 rounded-xl bg-rose-100 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">!</div>
+                        <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-2xl rounded-tl-sm text-sm font-semibold max-w-[85%] leading-relaxed">
+                            Maaf, koneksi ke asisten terputus. Silakan periksa jaringan dan coba kembali.
+                        </div>
                     </div>
-                `;
+                `);
+            } finally {
+                isChatSending = false;
+                input.disabled = false;
+                if (sendBtn) sendBtn.disabled = false;
+                input.focus();
+                chatBody.scrollTop = chatBody.scrollHeight;
             }
-
-            chatBody.scrollTop = chatBody.scrollHeight;
         }
 
         function toggleSidebar() {

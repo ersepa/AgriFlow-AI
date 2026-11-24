@@ -125,7 +125,7 @@ it('keeps the score explicitly non-probabilistic and exposes weighted components
     expect($result['model_type'])->toBe('deterministic_weighted_risk_model')
         ->and($result['components'])->toHaveCount(7)
         ->and(array_sum(array_column($result['components'], 'weight')))->toBe(100)
-        ->and($result['limitations'][0])->toContain('not a spoilage probability');
+        ->and($result['limitations'][0])->toContain('bukan probabilitas pembusukan statistik');
 });
 
 it('treats moderate risk as monitoring rather than mandatory intervention', function () {
@@ -150,5 +150,5 @@ it('treats moderate risk as monitoring rather than mandatory intervention', func
 expect($result['risk_severity'])->toBe('Moderate')
     ->and($result['urgency_level'])->toBe('Elevated')
     ->and($result['intervention_required'])->toBeFalse()
-    ->and($result['dispatch_deadline'])->toBe('Within 24 hours');
+    ->and($result['dispatch_deadline'])->toBe('Dalam 24 jam');
 });

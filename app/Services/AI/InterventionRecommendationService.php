@@ -5,14 +5,6 @@ namespace App\Services\AI;
 use App\Models\CommodityProfile;
 use App\Models\Shipment;
 
-/**
- * AgriFlow Intervention Recommendation Engine - Step 4.3
- *
- * Produces deterministic operational actions from Step 3.2 freshness
- * intelligence and Step 4 operational risk. Handling guidance is sourced
- * from the validated commodity profile; it is recommendation/reference
- * guidance, not a regulatory transport mandate.
- */
 class InterventionRecommendationService
 {
     public function recommend(
@@ -24,16 +16,13 @@ class InterventionRecommendationService
     ): array {
         $severity = $riskAssessment['risk_severity'] ?? 'Low';
         $urgency = $riskAssessment['urgency_level'] ?? 'Routine';
-        $deadline = $riskAssessment['dispatch_deadline'] ?? 'Flexible';
+        $deadline = $riskAssessment['dispatch_deadline'] ?? 'Fleksibel';
+        $interventionRequired = (bool) ($riskAssessment['intervention_required'] ?? false);
         $remainingDays = $qualityPrediction['remaining_shelf_life_at_arrival_days'] ?? null;
         $marginHours = $qualityPrediction['transit_margin_hours'] ?? null;
         $safeStatus = $qualityPrediction['safe_transit_status'] ?? 'Unknown';
         $expiryConstraint = (bool) ($qualityPrediction['expiry_constraint_applied'] ?? false);
         $temperatureStatus = $temperatureAssessment['status'] ?? 'Not provided';
-
-        $isDryCommodity =
-            ($profile?->quality_model_type ?? null)
-                === 'storage_stability';
 
         $actions = [
             $this->primaryAction($severity, $urgency, $deadline),
@@ -58,8 +47,8 @@ class InterventionRecommendationService
             'engine' => 'AgriFlow Intervention Recommendation Engine',
             'version' => 'step10.4c-three-level-risk-v1',
             'actions' => $actions,
-            'primary_action' => $actions[0]['action'] ?? 'Monitor shipment',
-            'primary_reason' => $actions[0]['reason'] ?? 'Continue operational monitoring.',
+            'primary_action' => $actions[0]['action'] ?? 'Pantau kondisi pengiriman',
+            'primary_reason' => $actions[0]['reason'] ?? 'Lanjutkan pemantauan operasional secara berkala.',
             'decision_rationale' => $this->decisionRationale(
                 $severity,
                 $urgency,
@@ -68,9 +57,10 @@ class InterventionRecommendationService
             ),
             'expected_outcome' => $this->expectedOutcome($severity, $urgency),
             'action_window' => $deadline,
-            'intervention_status' => $riskAssessment['intervention_status'] ?? 'Routine monitoring',
+            'intervention_status' => $interventionRequired
+                ? 'Perlu intervensi'
+                : 'Pantau',
 
-            // Step 4.3 enriched handling guidance.
             'recommended_vehicle' => $this->recommendedVehicle($profile),
             'recommended_storage' => $this->storageSummary($profile),
             'recommended_temperature_range' => $this->temperatureRange($profile),
@@ -81,40 +71,25 @@ class InterventionRecommendationService
             'reference_source_name' => $profile?->source_name,
             'reference_source_url' => $profile?->source_url,
 
-            // Step 5.2.2 dry-commodity guidance.
-            'quality_model_type' =>
-                $profile?->quality_model_type,
-            'commodity_class' =>
-                $profile?->commodity_class,
-            'safe_moisture_short_term_max_percent' =>
-                $profile?->safe_moisture_short_term_max_percent,
-            'safe_moisture_long_term_max_percent' =>
-                $profile?->safe_moisture_long_term_max_percent,
-            'safe_relative_humidity_max_percent' =>
-                $profile?->safe_relative_humidity_max_percent,
-            'reference_storage_max_months' =>
-                $profile?->reference_storage_max_months,
-            'storage_science_note' =>
-                $profile?->storage_science_note,
-            'storage_evidence_status' =>
-                $this->storageEvidenceStatus(
-                    $profile,
-                    $qualityPrediction
-                ),
+            'quality_model_type' => $profile?->quality_model_type,
+            'commodity_class' => $profile?->commodity_class,
+            'safe_moisture_short_term_max_percent' => $profile?->safe_moisture_short_term_max_percent,
+            'safe_moisture_long_term_max_percent' => $profile?->safe_moisture_long_term_max_percent,
+            'safe_relative_humidity_max_percent' => $profile?->safe_relative_humidity_max_percent,
+            'reference_storage_max_months' => $profile?->reference_storage_max_months,
+            'storage_science_note' => $profile?->storage_science_note,
+            'storage_evidence_status' => $this->storageEvidenceStatus($profile, $qualityPrediction),
         ];
     }
 
     private function primaryAction(string $severity, string $urgency, string $deadline): array
     {
-        // Risk level and urgency are intentionally separate. A shipment can
-        // remain in the High risk band while its urgency escalates to
-        // Immediate when hard freshness/transit constraints are present.
         if ($urgency === 'Immediate') {
             return [
                 'type' => 'primary',
-                'label' => 'Immediate operational action',
-                'action' => 'Escalate and review shipment immediately',
-                'reason' => 'High operational risk combined with severe freshness or transit constraints requires immediate review before additional delay is accepted.',
+                'label' => 'Tindakan operasional segera',
+                'action' => 'Segera eskalasi dan tinjau pengiriman ini',
+                'reason' => 'Risiko operasional tinggi yang disertai keterbatasan kesegaran atau waktu tempuh memerlukan penanganan segera sebelum terjadi penundaan tambahan.',
                 'window' => $deadline,
                 'priority' => 1,
             ];
@@ -123,25 +98,25 @@ class InterventionRecommendationService
         return match ($severity) {
             'High' => [
                 'type' => 'primary',
-                'label' => 'Dispatch priority',
-                'action' => 'Prioritize dispatch within the high-urgency window',
-                'reason' => 'High operational risk makes additional dwell time undesirable.',
+                'label' => 'Prioritas keberangkatan',
+                'action' => 'Prioritaskan keberangkatan dalam rentang waktu mendesak',
+                'reason' => 'Risiko operasional yang tinggi membuat waktu tunggu tambahan sangat berisiko bagi mutu produk.',
                 'window' => $deadline,
                 'priority' => 1,
             ],
             'Moderate' => [
                 'type' => 'primary',
-                'label' => 'Priority monitoring',
-                'action' => 'Process ahead of lower-risk cargo and review within 24 hours',
-                'reason' => 'Current conditions are manageable, but the shipment should not accumulate avoidable delay.',
+                'label' => 'Pemantauan prioritas',
+                'action' => 'Utamakan pengiriman ini dibanding muatan berisiko rendah dan periksa ulang dalam 24 jam',
+                'reason' => 'Kondisi saat ini masih terkendali, namun pengiriman sebaiknya tidak mengalami penundaan yang dapat dihindari.',
                 'window' => $deadline,
                 'priority' => 1,
             ],
             default => [
                 'type' => 'primary',
-                'label' => 'Routine handling',
-                'action' => 'Maintain the planned shipment schedule',
-                'reason' => 'Current operational risk is low under the available inputs.',
+                'label' => 'Penanganan rutin',
+                'action' => 'Pertahankan jadwal pengiriman yang direncanakan',
+                'reason' => 'Tingkat risiko operasional saat ini tergolong rendah berdasarkan data yang tersedia.',
                 'window' => $deadline,
                 'priority' => 1,
             ],
@@ -155,16 +130,15 @@ class InterventionRecommendationService
         bool $expiryConstraint,
         ?CommodityProfile $profile = null
     ): array {
-        $isDryCommodity =
-            ($profile?->quality_model_type ?? null)
-                === 'storage_stability';
+        $isDryCommodity = ($profile?->quality_model_type ?? null) === 'storage_stability';
+
         if (in_array($safeStatus, ['Threshold already exceeded', 'ETA exceeds safe transit window'], true)) {
             return [
                 'type' => 'freshness',
-                'label' => 'Transit window protection',
-                'action' => 'Reduce delay or revise the transport plan before dispatch',
-                'reason' => 'The planned movement is outside the current estimated operational safe transit window.',
-                'window' => 'Before dispatch',
+                'label' => 'Perlindungan waktu tempuh',
+                'action' => 'Kurangi penundaan atau sesuaikan rencana pengangkutan sebelum berangkat',
+                'reason' => 'Rencana perjalanan saat ini berada di luar perkiraan waktu tempuh aman operasional.',
+                'window' => 'Sebelum keberangkatan',
                 'priority' => 2,
             ];
         }
@@ -172,16 +146,12 @@ class InterventionRecommendationService
         if ($remainingDays !== null && $remainingDays <= 1.0) {
             return [
                 'type' => 'freshness',
-                'label' => $isDryCommodity
-                    ? 'Operational deadline protection'
-                    : 'Shelf-life protection',
-                'action' =>
-                    'Minimize dwell time and avoid non-essential handling delays',
+                'label' => $isDryCommodity ? 'Perlindungan batas waktu operasional' : 'Perlindungan masa simpan',
+                'action' => 'Minimalkan waktu tunggu dan hindari penundaan penanganan yang tidak perlu',
                 'reason' => $isDryCommodity
-                    ? 'One day or less remains before the recorded operational deadline. AgriFlow does not claim this as biological shelf life.'
-                    : 'One day or less of operational shelf life is expected to remain at arrival.',
-                'window' =>
-                    'During the current shipment cycle',
+                    ? 'Tersisa satu hari atau kurang sebelum batas waktu operasional tercatat. Nilai ini bukan klaim masa simpan biologis.'
+                    : 'Sisa masa simpan operasional saat tiba diperkirakan satu hari atau kurang.',
+                'window' => 'Selama siklus pengiriman saat ini',
                 'priority' => 2,
             ];
         }
@@ -189,46 +159,42 @@ class InterventionRecommendationService
         if ($expiryConstraint) {
             return [
                 'type' => 'freshness',
-                'label' => $isDryCommodity
-                    ? 'Recorded deadline protection'
-                    : 'Recorded expiry protection',
+                'label' => $isDryCommodity ? 'Perlindungan batas waktu tercatat' : 'Perlindungan batas kedaluwarsa',
                 'action' => $isDryCommodity
-                    ? 'Protect the recorded operational deadline from additional delay'
-                    : 'Protect the recorded shelf-life window from additional delay',
+                    ? 'Jaga batas waktu operasional tercatat dari penundaan tambahan'
+                    : 'Jaga batas masa simpan tercatat dari penundaan tambahan',
                 'reason' => $marginHours !== null
                     ? (
-                        $isDryCommodity
-                            ? sprintf(
-                                'The recorded deadline is the current operational constraint, with approximately %.1f hour(s) of transit margin available. This is not claimed as biological shelf life.',
-                                max(0, $marginHours)
-                            )
-                            : sprintf(
-                                'Recorded expiry is the limiting constraint, with approximately %.1f hour(s) of transit margin currently available.',
-                                max(0, $marginHours)
-                            )
+$isDryCommodity
+    ? sprintf(
+        'Batas waktu tercatat menjadi kendala operasional utama dengan sisa waktu cadangan sekitar %.1f jam. Batas ini merupakan acuan operasional, bukan klaim masa simpan biologis.',
+        max(0, $marginHours)
+    )
+    : sprintf(
+        'Tanggal kedaluwarsa tercatat menjadi batas utama dengan sisa waktu cadangan perjalanan sekitar %.1f jam.',
+        max(0, $marginHours)
+    )
                     )
                     : (
                         $isDryCommodity
-                            ? 'A recorded operational deadline exists; AgriFlow does not convert it into a biological dry-commodity shelf-life claim.'
-                            : 'Recorded expiry is more conservative than the commodity reference shelf-life model.'
+                            ? 'Terdapat batas waktu operasional tercatat sebagai acuan pengiriman komoditas kering.'
+                            : 'Tanggal kedaluwarsa tercatat lebih ketat dibandingkan standar masa simpan komoditas.'
                     ),
-                'window' => 'Until arrival',
+                'window' => 'Hingga produk tiba',
                 'priority' => 2,
             ];
         }
 
         return [
             'type' => 'freshness',
-            'label' => $isDryCommodity
-                ? 'Operational window checkpoint'
-                : 'Freshness checkpoint',
+            'label' => $isDryCommodity ? 'Pemeriksaan batas operasional' : 'Pemeriksaan kesegaran',
             'action' => $isDryCommodity
-                ? 'Recheck the operational deadline and storage evidence if the dispatch plan changes materially'
-                : 'Recheck freshness if the planned dispatch time changes materially',
+                ? 'Periksa ulang batas waktu operasional dan kondisi penyimpanan jika jadwal keberangkatan berubah'
+                : 'Periksa ulang kondisi kesegaran jika jadwal keberangkatan berubah signifikan',
             'reason' => $isDryCommodity
-                ? 'Dry-commodity storage stability depends on condition evidence and the recorded operational window; it should be reassessed after meaningful schedule changes.'
-                : 'Shelf-life and transit margin should be recalculated when the actual dispatch plan changes.',
-            'window' => 'Before material schedule changes',
+                ? 'Stabilitas penyimpanan komoditas kering bergantung pada data kondisi dan batas waktu operasional.'
+                : 'Masa simpan dan waktu cadangan perjalanan perlu dihitung ulang jika jadwal keberangkatan berubah.',
+            'window' => 'Sebelum perubahan jadwal signifikan',
             'priority' => 2,
         ];
     }
@@ -239,73 +205,41 @@ class InterventionRecommendationService
         array $temperatureAssessment,
         array $qualityPrediction = []
     ): array {
-        $isDryCommodity =
-            ($profile?->quality_model_type ?? null)
-                === 'storage_stability';
+        $isDryCommodity = ($profile?->quality_model_type ?? null) === 'storage_stability';
 
         if ($isDryCommodity) {
-            $storageAssessment =
-                $qualityPrediction[
-                    'storage_stability_assessment'
-                ] ?? [];
-
-            $available =
-                (bool) (
-                    $storageAssessment[
-                        'available'
-                    ] ?? false
-                );
-
-            $status =
-                $storageAssessment[
-                    'status'
-                ] ?? 'Storage condition evidence required';
+            $storageAssessment = $qualityPrediction['storage_stability_assessment'] ?? [];
+            $available = (bool) ($storageAssessment['available'] ?? false);
+            $status = $storageAssessment['status'] ?? 'Storage condition evidence required';
 
             if (!$available) {
                 return [
                     'type' => 'condition',
-                    'label' =>
-                        'Storage condition verification',
-                    'action' =>
-                        'Verify cargo moisture and storage/transport relative humidity before dispatch where possible',
-                    'reason' =>
-                        'Validated moisture/RH reference thresholds are available for this dry commodity, but recorded cargo moisture/RH condition evidence was not provided.',
-                    'window' =>
-                        'Before dispatch',
+                    'label' => 'Verifikasi kondisi penyimpanan',
+                    'action' => 'Periksa kadar air muatan dan kelembapan ruang penyimpanan sebelum berangkat',
+                    'reason' => 'Standar kadar air dan kelembapan tersedia untuk komoditas kering ini, tetapi data pengukuran aktual belum dicatat.',
+                    'window' => 'Sebelum keberangkatan',
                     'priority' => 3,
                 ];
             }
 
-            if (
-                $status ===
-                    'Outside reference storage limits'
-            ) {
+            if ($status === 'Outside reference storage limits') {
                 return [
                     'type' => 'condition',
-                    'label' =>
-                        'Dry-condition intervention',
-                    'action' =>
-                        'Correct moisture or humidity exposure toward the validated storage reference limits before accepting additional dwell time',
-                    'reason' =>
-                        $storageAssessment[
-                            'message'
-                        ]
-                        ?? 'Recorded storage condition is outside the validated dry-commodity reference limits.',
-                    'window' =>
-                        'Before or during dispatch',
+                    'label' => 'Penyesuaian kondisi kering',
+                    'action' => 'Sesuaikan paparan kadar air atau kelembapan agar masuk batas acuan penyimpanan sebelum terjadi penundaan',
+                    'reason' => $storageAssessment['message'] ?? 'Kondisi penyimpanan tercatat berada di luar batas acuan komoditas kering.',
+                    'window' => 'Sebelum atau saat keberangkatan',
                     'priority' => 3,
                 ];
             }
 
             return [
                 'type' => 'condition',
-                'label' =>
-                    'Dry-condition preservation',
-                'action' =>
-                    'Maintain dry handling and protect the cargo from moisture ingress or re-wetting through arrival',
-                'reason' =>
-                    'Recorded storage condition does not exceed the current reference limits; preserving dry conditions reduces avoidable storage exposure.',
-                'window' => 'Through arrival',
+                'label' => 'Penjagaan kondisi kering',
+                'action' => 'Pertahankan penanganan kering dan lindungi muatan dari kelembapan hingga tiba',
+                'reason' => 'Kondisi penyimpanan tercatat masih dalam batas acuan; menjaga kondisi kering mencegah penurunan mutu.',
+                'window' => 'Hingga produk tiba',
                 'priority' => 3,
             ];
         }
@@ -313,10 +247,10 @@ class InterventionRecommendationService
         if ($temperatureStatus === 'Not provided') {
             return [
                 'type' => 'condition',
-                'label' => 'Data verification',
-                'action' => 'Verify cargo temperature before dispatch when possible',
-                'reason' => 'No recorded shipment temperature or scenario override was provided, so temperature-related uncertainty remains in the assessment.',
-                'window' => 'Before dispatch',
+                'label' => 'Verifikasi data suhu',
+                'action' => 'Periksa dan catat suhu muatan sebelum berangkat bila memungkinkan',
+                'reason' => 'Suhu pengiriman belum dicatat, sehingga masih terdapat ketidakpastian terkait kondisi suhu.',
+                'window' => 'Sebelum keberangkatan',
                 'priority' => 3,
             ];
         }
@@ -324,10 +258,10 @@ class InterventionRecommendationService
         if (in_array($temperatureStatus, ['Chilling risk', 'Above optimum', 'Below optimum'], true)) {
             return [
                 'type' => 'condition',
-                'label' => 'Temperature intervention',
-                'action' => 'Correct the cargo temperature condition toward the commodity reference range',
-                'reason' => $temperatureAssessment['message'] ?? 'The current temperature condition is outside the commodity reference range.',
-                'window' => 'Before or during dispatch',
+                'label' => 'Penyesuaian suhu',
+                'action' => 'Sesuaikan suhu muatan agar mendekati kisaran acuan komoditas',
+                'reason' => $temperatureAssessment['message'] ?? 'Suhu produk saat ini berada di luar kisaran acuan komoditas.',
+                'window' => 'Sebelum atau saat keberangkatan',
                 'priority' => 3,
             ];
         }
@@ -335,20 +269,20 @@ class InterventionRecommendationService
         if ($profile?->temperature_control_recommended) {
             return [
                 'type' => 'condition',
-                'label' => 'Condition preservation',
-                'action' => 'Maintain temperature-controlled handling through arrival where operationally available',
-                'reason' => 'The validated commodity profile recommends temperature control during post-harvest handling.',
-                'window' => 'Through arrival',
+                'label' => 'Penjagaan suhu dingin',
+                'action' => 'Pertahankan penanganan dengan kontrol suhu hingga tiba di tujuan',
+                'reason' => 'Profil komoditas menyarankan pengaturan suhu selama penanganan dan pengiriman pascapanen.',
+                'window' => 'Hingga produk tiba',
                 'priority' => 3,
             ];
         }
 
         return [
             'type' => 'condition',
-            'label' => 'Handling control',
-            'action' => 'Maintain the commodity reference storage and handling conditions',
-            'reason' => 'Keeping handling conditions aligned with the commodity profile reduces avoidable operational exposure.',
-            'window' => 'Through arrival',
+            'label' => 'Kontrol penanganan',
+            'action' => 'Pertahankan kondisi penyimpanan dan penanganan sesuai standar komoditas',
+            'reason' => 'Menjaga kondisi penanganan sesuai profil komoditas membantu mengurangi risiko kerusakan selama perjalanan.',
+            'window' => 'Hingga produk tiba',
             'priority' => 3,
         ];
     }
@@ -361,46 +295,34 @@ class InterventionRecommendationService
     ): string {
         $quality = $qualityPrediction['quality_at_arrival'] ?? null;
         $remaining = $qualityPrediction['remaining_shelf_life_at_arrival_days'] ?? null;
-        $primaryDriver = $riskAssessment['top_drivers'][0]['title'] ?? 'current operational conditions';
+        $primaryDriver = $riskAssessment['top_drivers'][0]['title'] ?? 'kondisi operasional saat ini';
 
-        $isDryCommodity =
-            ($qualityPrediction[
-                'condition_model_type'
-            ] ?? null) === 'storage_stability';
+        $isDryCommodity = ($qualityPrediction['condition_model_type'] ?? null) === 'storage_stability';
 
         $qualityText = $quality !== null
-            ? sprintf(
-                'arrival quality %.0f/100',
-                $quality
-            )
+            ? sprintf('perkiraan kondisi saat tiba %.0f/100', $quality)
             : (
                 $isDryCommodity
-                    ? 'arrival quality intentionally not estimated for the dry-commodity storage model'
-                    : 'unavailable arrival quality'
+                    ? 'kondisi saat tiba tidak diestimasi untuk model penyimpanan kering'
+                    : 'perkiraan kondisi saat tiba belum tersedia'
             );
 
         $remainingText = $remaining !== null
             ? (
                 $isDryCommodity
-                    ? sprintf(
-                        '%.2f day(s) before the recorded operational deadline',
-                        max(0, $remaining)
-                    )
-                    : sprintf(
-                        '%.2f day(s) of remaining operational life',
-                        max(0, $remaining)
-                    )
+                    ? sprintf('sisa %.2f hari sebelum batas waktu operasional tercatat', max(0, $remaining))
+                    : sprintf('sisa masa simpan operasional %.2f hari', max(0, $remaining))
             )
             : (
                 $isDryCommodity
-                    ? 'no recorded operational deadline'
-                    : 'an uncertain remaining shelf-life window'
+                    ? 'belum ada batas waktu operasional tercatat'
+                    : 'sisa masa simpan belum dapat dipastikan'
             );
 
         return sprintf(
-            '%s risk with %s urgency is driven primarily by %s, alongside %s and %s.',
-            $severity,
-            strtolower($urgency),
+            '%s dengan tingkat urgensi %s terutama dipengaruhi oleh %s, disertai %s dan %s.',
+            $this->severityLabel($severity),
+            $this->urgencyLabel($urgency),
             strtolower($primaryDriver),
             $qualityText,
             $remainingText
@@ -410,66 +332,47 @@ class InterventionRecommendationService
     private function expectedOutcome(string $severity, string $urgency): string
     {
         if ($urgency === 'Immediate') {
-            return 'The actions are intended to prevent additional avoidable delay while the shipment is immediately reassessed.';
+            return 'Tindakan ini bertujuan mencegah penundaan tambahan saat pengiriman ditinjau ulang secara segera.';
         }
 
         return match ($severity) {
-            'High' => 'The actions are intended to preserve the remaining operational freshness window and reduce avoidable handling or dispatch delay.',
-            'Moderate' => 'The actions are intended to keep the shipment within its current operational window while preventing risk from escalating.',
-            default => 'The actions are intended to maintain the current low-risk operating condition and preserve data quality for future reassessment.',
+            'High' => 'Tindakan ini bertujuan menjaga sisa masa simpan produk dan mencegah penundaan pengiriman yang tidak perlu.',
+            'Moderate' => 'Tindakan ini bertujuan menjaga pengiriman tetap dalam batas waktu aman serta mencegah risiko meningkat.',
+            default => 'Tindakan ini bertujuan mempertahankan kondisi risiko rendah dan menjaga kelengkapan data untuk pemantauan berikutnya.',
         };
     }
 
     private function recommendedVehicle(?CommodityProfile $profile): string
     {
-        if (
-            ($profile?->quality_model_type ?? null)
-                === 'storage_stability'
-        ) {
-            return
-                'Dry, weather-protected transport; prevent moisture ingress and re-wetting';
+        if (($profile?->quality_model_type ?? null) === 'storage_stability') {
+            return 'Transportasi kering dan terlindung dari cuaca; cegah masuknya air atau kelembapan';
         }
 
         return $profile?->temperature_control_recommended
-            ? 'Temperature-controlled transport recommended'
-            : 'Standard transport may be suitable; preserve commodity reference handling conditions';
+            ? 'Disarankan menggunakan transportasi berpendingin (suhu terkontrol)'
+            : 'Transportasi standar dapat digunakan; tetap jaga kondisi penanganan sesuai standar komoditas';
     }
 
     private function storageSummary(?CommodityProfile $profile): string
     {
         if (!$profile) {
-            return 'Use validated commodity-specific handling guidance when available.';
+            return 'Gunakan panduan penanganan khusus komoditas yang tervalidasi bila tersedia.';
         }
 
-        if (
-            ($profile->quality_model_type ?? null)
-                === 'storage_stability'
-        ) {
+        if (($profile->quality_model_type ?? null) === 'storage_stability') {
             $parts = [];
 
-            if (
-                $profile->safe_moisture_short_term_max_percent
-                !== null
-            ) {
-                $parts[] = sprintf(
-                    'Moisture ≤ %.1f%% short-term reference',
-                    (float) $profile->safe_moisture_short_term_max_percent
-                );
+            if ($profile->safe_moisture_short_term_max_percent !== null) {
+                $parts[] = sprintf('Kadar air ≤ %.1f%% (acuan jangka pendek)', (float) $profile->safe_moisture_short_term_max_percent);
             }
 
-            if (
-                $profile->safe_relative_humidity_max_percent
-                !== null
-            ) {
-                $parts[] = sprintf(
-                    'RH ≤ %.0f%% reference',
-                    (float) $profile->safe_relative_humidity_max_percent
-                );
+            if ($profile->safe_relative_humidity_max_percent !== null) {
+                $parts[] = sprintf('Kelembapan ≤ %.0f%% (acuan)', (float) $profile->safe_relative_humidity_max_percent);
             }
 
             return $parts !== []
                 ? implode('; ', $parts)
-                : 'Preserve dry storage conditions using the validated commodity reference.';
+                : 'Pertahankan kondisi penyimpanan kering sesuai standar komoditas.';
         }
 
         $parts = array_values(array_filter([
@@ -479,33 +382,28 @@ class InterventionRecommendationService
 
         return !empty($parts)
             ? implode('; ', $parts)
-            : 'Follow the validated commodity reference storage profile.';
+            : 'Ikuti standar penyimpanan sesuai profil komoditas.';
     }
 
     private function temperatureRange(?CommodityProfile $profile): ?string
     {
-        if (
-            !$profile
-            || $profile->optimal_temp_min === null
-            || $profile->optimal_temp_max === null
-        ) {
+        if (!$profile || $profile->optimal_temp_min === null || $profile->optimal_temp_max === null) {
             return null;
         }
 
-        return sprintf(
-            '%.1f–%.1f°C',
-            (float) $profile->optimal_temp_min,
-            (float) $profile->optimal_temp_max
-        );
+        $min = (float) $profile->optimal_temp_min;
+        $max = (float) $profile->optimal_temp_max;
+
+        if (abs($min - $max) < 0.001) {
+            return sprintf('%.1f°C (acuan)', $min);
+        }
+
+        return sprintf('%.1f–%.1f°C', $min, $max);
     }
 
     private function humidityRange(?CommodityProfile $profile): ?string
     {
-        if (
-            !$profile
-            || $profile->optimal_humidity_min === null
-            || $profile->optimal_humidity_max === null
-        ) {
+        if (!$profile || $profile->optimal_humidity_min === null || $profile->optimal_humidity_max === null) {
             return null;
         }
 
@@ -523,38 +421,47 @@ class InterventionRecommendationService
         }
 
         return sprintf(
-            'Below %.1f°C may present chilling risk under the current commodity profile',
+            'Suhu di bawah %.1f°C berisiko menyebabkan kerusakan dingin pada komoditas ini',
             (float) $profile->chilling_threshold_c
         );
     }
 
-    private function storageEvidenceStatus(
-        ?CommodityProfile $profile,
-        array $qualityPrediction
-    ): ?string {
-        if (
-            !$profile
-            || ($profile->quality_model_type ?? null)
-                !== 'storage_stability'
-        ) {
+    private function storageEvidenceStatus(?CommodityProfile $profile, array $qualityPrediction): ?string
+    {
+        if (!$profile || ($profile->quality_model_type ?? null) !== 'storage_stability') {
             return null;
         }
 
-        $assessment =
-            $qualityPrediction[
-                'storage_stability_assessment'
-            ] ?? [];
+        $assessment = $qualityPrediction['storage_stability_assessment'] ?? [];
 
-        if (
-            !($assessment['available'] ?? false)
-        ) {
-            return
-                'Recorded cargo moisture/RH condition not provided';
+        if (!($assessment['available'] ?? false)) {
+            return 'Data kadar air/kelembapan muatan belum dicatat';
         }
 
-        return
-            $assessment['status']
-            ?? 'Storage condition evidence available';
+        return match ($assessment['status'] ?? '') {
+            'Outside reference storage limits' => 'Di luar batas acuan penyimpanan',
+            'Within available reference limits' => 'Sesuai batas acuan penyimpanan',
+            default => 'Data kondisi penyimpanan tersedia',
+        };
+    }
+
+    private function severityLabel(string $severity): string
+    {
+        return match ($severity) {
+            'High' => 'Risiko tinggi',
+            'Moderate' => 'Risiko sedang',
+            default => 'Risiko rendah',
+        };
+    }
+
+    private function urgencyLabel(string $urgency): string
+    {
+        return match ($urgency) {
+            'Immediate' => 'segera',
+            'High' => 'tinggi',
+            'Elevated' => 'meningkat',
+            default => 'rutin',
+        };
     }
 
     private function deduplicate(array $actions): array

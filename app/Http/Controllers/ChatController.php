@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Harvest;
 use App\Models\Shipment;
+use App\Services\AI\DecisionEngine;
+use App\Services\EnvironmentalService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -19,457 +23,261 @@ class ChatController extends Controller
             ],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Latest Shipment Context
-        |--------------------------------------------------------------------------
-        |
-        | Only recorded shipment data is supplied to the assistant.
-        | The assistant must not invent unavailable operational values.
-        |
-        */
+        $userId = Auth::id();
+        $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
+        $model = config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-2.5-flash');
 
-        $shipments = Shipment::with('harvest')
-            ->latest()
-            ->take(5)
-            ->get();
+        if (empty($apiKey)) {
+            Log::error('GEMINI CHAT CONFIG ERROR: GEMINI_API_KEY kosong.');
 
-        $summary = "=== DATA SHIPMENT TERBARU ===\n";
-
-        if ($shipments->isEmpty()) {
-            $summary .= "Belum ada data shipment yang tersedia.\n";
-        } else {
-            foreach ($shipments as $shipment) {
-                $commodity =
-                    $shipment->harvest?->commodity
-                    ?? 'Unknown';
-
-                $distance =
-                    $shipment->distance_km !== null
-                        ? $shipment->distance_km . ' km'
-                        : 'Unavailable';
-
-                $duration =
-                    $shipment->duration_hours !== null
-                        ? $shipment->duration_hours . ' jam'
-                        : 'Unavailable';
-
-                $summary .=
-                    "- {$commodity}"
-                    . " | {$shipment->origin}"
-                    . " → {$shipment->destination}"
-                    . " | Status: {$shipment->status}"
-                    . " | Distance: {$distance}"
-                    . " | Duration: {$duration}\n";
-            }
+            return response()->json([
+                'reply' => 'Maaf, layanan asisten belum terkonfigurasi dengan benar. Pastikan GEMINI_API_KEY sudah diisi di .env.',
+            ], 503);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | AgriFlow Assistant Context
-        |--------------------------------------------------------------------------
-        */
+        // 1. Kumpulkan Konteks Data AgriFlow Khusus Milik Pengguna (Auth::id())
+        $contextSummary = $this->buildUserAgriFlowContext($userId);
 
-        $prompt = <<<PROMPT
-Kamu adalah AgriFlow Assistant, asisten percakapan untuk platform AgriFlow.
+        // 2. System Instruction 100% Bahasa Indonesia
+        $systemPrompt = <<<PROMPT
+Kamu adalah Asisten AgriFlow, asisten percakapan khusus untuk platform AgriFlow AI.
 
-AgriFlow adalah platform decision-support untuk logistik pascapanen hasil pertanian.
-
-Sistem menggunakan perhitungan deterministik dan data operasional untuk membantu pengguna menilai kondisi pengiriman, risiko operasional, kualitas saat tiba, rute, serta alternatif tindakan.
-
-Model bahasa hanya digunakan untuk membantu menjelaskan informasi kepada pengguna.
-
-JANGAN mengklaim bahwa AgriFlow menggunakan:
-- neural network
-- Monte Carlo simulation
-- statistical spoilage probability
-- model accuracy percentage
-- real-time IoT sensor data
-- live GPS tracking
-
-kecuali informasi tersebut memang tersedia secara eksplisit pada Data Sistem.
+AgriFlow AI adalah platform pendukung keputusan untuk pengelolaan hasil panen dan logistik pascapanen pertanian.
 
 ==================================================
-FITUR AGRIFLOW
+ATURAN KEAKURATAN & DATA
 ==================================================
-
-1. Dashboard
-
-Dashboard menampilkan ringkasan kondisi operasional saat ini, antara lain:
-
-- shipment dan harvest
-- operational risk
-- shipment status
-- recorded carbon
-- average sustainability score
-- current weather observations
-- short-range weather forecast
-- environmental data coverage
-- weather suitability
-- environmental condition index
-
-Dashboard tidak menampilkan prediksi penghematan atau dampak lingkungan yang belum diukur.
-
-2. Harvest Management
-
-Digunakan untuk mengelola data hasil panen seperti:
-
-- Commodity
-- Quantity / Weight
-- Harvest Date
-- Expiry Date
-- Informasi komoditas yang tersedia
-
-3. Shipment Management
-
-Digunakan untuk mengelola pengiriman hasil panen seperti:
-
-- Origin
-- Destination
-- Shipment Status
-- Distance
-- Duration
-- Vehicle
-- Route information
-- Recorded carbon value
-
-4. Commodity Intelligence
-
-AgriFlow menggunakan profil referensi komoditas untuk membantu menilai kebutuhan penyimpanan dan karakteristik pascapanen.
-
-Nilai referensi dapat berbeda tergantung varietas, tingkat kematangan, packaging, pre-cooling, atmosphere, dan kondisi awal produk.
-
-Untuk dry commodity seperti green coffee beans atau milled rice, sistem menggunakan storage-reference limits seperti moisture dan relative humidity jika datanya tersedia.
-
-5. Quality-at-Arrival Intelligence
-
-AgriFlow dapat menghitung kondisi operasional saat keberangkatan dan estimasi kondisi saat tiba menggunakan data shipment dan profil komoditas.
-
-Hasil dapat mencakup:
-
-- Quality at Arrival
-- Remaining Shelf Life
-- Estimated Safe Transit Window
-- Transit Margin
-- Temperature Assessment
-- Recorded Freshness
-
-Recorded Freshness menggambarkan posisi shipment pada recorded harvest-to-expiry operational window.
-
-Recorded Freshness bukan pengukuran biologis langsung terhadap kesegaran produk.
-
-Recorded expiry adalah operational deadline dan bukan bukti bahwa produk biologis sudah rusak.
-
-6. Operational Risk Engine
-
-AgriFlow menghasilkan Operational Risk Index pada skala 0 sampai 100.
-
-Operational Risk Index adalah deterministic operational decision-support index.
-
-Operational Risk Index BUKAN spoilage probability dan BUKAN probabilitas kegagalan shipment.
-
-Kategori operasional final:
-
-- Low (0-29)
-- Moderate (30-59)
-- High (60-100)
-
-High-risk shipment dapat memiliki urgency High atau Immediate. Urgency adalah dimensi terpisah dari risk level.
-
-Risk engine juga dapat menghasilkan:
-
-- urgency level
-- intervention requirement
-- dispatch deadline
-- risk drivers
-- recommendation
-
-7. AI Optimizer
-
-AI Optimizer menggunakan hasil deterministic Decision Engine untuk membantu menentukan tindakan operasional.
-
-Input dapat mencakup:
-
-- Commodity
-- Remaining Shelf Life
-- Operational Risk Index
-- Priority Score
-- Operational Readiness Index
-- Shipment Status
-- Distance
-- Carbon value
-- Quality-at-Arrival information
-
-Output dapat mencakup:
-
-- Recommendation
-- Decision Reason
-- Expected Outcome
-- Action Window
-- Recommended Vehicle
-- Recommended Storage
-- Data Confidence
-
-Data Confidence adalah indikator kelengkapan input yang tersedia untuk analisis.
-
-Data Confidence BUKAN model accuracy, success probability, atau statistical confidence.
-
-AI Optimizer tidak mencari rute sendiri.
-
-Optimasi rute dilakukan oleh fitur Route Optimization.
-
-8. Route Optimization
-
-Route Optimization menggunakan OpenRouteService untuk memperoleh data rute.
-
-Fitur ini dapat menggunakan:
-
-- route geometry
-- distance
-- estimated travel duration
-- freshness constraints
-
-AgriFlow dapat membandingkan kelayakan rute berdasarkan kondisi shipment.
-
-Route ranking adalah deterministic decision-support ranking dan bukan probabilitas keberhasilan rute.
-
-9. Operational Digital Twin
-
-Operational Digital Twin adalah fitur what-if scenario comparison.
-
-Pengguna dapat membandingkan Current Plan dengan beberapa skenario operasional.
-
-Contoh perubahan skenario:
-
-- vehicle
-- temperature
-- delay
-- route
-
-Sistem kemudian menghitung ulang kondisi menggunakan deterministic Decision Engine.
-
-Perbandingan mempertimbangkan:
-
-- feasibility
-- operational risk
-- quality / condition
-- transit margin
-- carbon
-
-Digital Twin AgriFlow saat ini adalah deterministic operational what-if decision layer.
-
-Ini bukan physical digital twin yang tersinkronisasi penuh secara real-time dan bukan Monte Carlo simulation.
-
-10. Sustainability
-
-Operational Readiness Index adalah decision-support indicator berdasarkan data dan aturan sistem.
-
-Jangan menyebut Operational Readiness Index sebagai dampak lingkungan, ESG, atau lifecycle assessment yang telah terukur.
-
-Estimated Road-Freight CO2e adalah estimasi aktivitas berbasis berat shipment × jarak × faktor emisi yang terdokumentasi; bukan pengukuran emisi aktual.
-
-Jangan mengklaim carbon savings kecuali data perbandingan yang valid memang tersedia.
-
-11. Environmental Monitoring
-
-Environmental Monitoring menggunakan data Open-Meteo sebagai konteks cuaca.
-
-Informasi dapat mencakup:
-
-- Temperature
-- Relative Humidity
-- Rain
-- Cloud Cover
-- Wind Speed
-- Weather Forecast
-- Weather Suitability
-- Environmental Condition Index
-- Environmental Data Coverage
-
-Environmental Data Coverage menunjukkan kelengkapan field cuaca yang tersedia.
-
-Environmental Data Coverage BUKAN AI confidence atau forecast accuracy.
-
-==================================================
-ATURAN KEAKURATAN
-==================================================
-
-Gunakan Data Sistem sebagai sumber utama untuk pertanyaan tentang shipment yang sedang tersedia.
-
-Jika nilai atau informasi tidak tersedia:
-katakan bahwa data belum tersedia.
-
-Jangan mengarang angka.
-
-Jangan membuat probabilitas sendiri.
-
-Jangan mengubah Operational Risk Index menjadi persentase kemungkinan produk rusak.
-
-Jangan mengklaim akurasi model.
-
-Jangan mengklaim bahwa rekomendasi berasal dari machine learning jika data tidak menyatakan demikian.
-
-Jika user bertanya "kenapa" suatu keputusan diberikan, jelaskan menggunakan faktor operasional yang tersedia.
-
-Jika user bertanya tentang fitur AgriFlow, jawab berdasarkan informasi fitur di atas.
+- Gunakan DATA SISTEM PENGGUNA di bawah ini sebagai sumber utama untuk menjawab pertanyaan tentang hasil panen, pengiriman, risiko, kualitas produk, rekomendasi, dan cuaca milik pengguna.
+- JANGAN mengarang angka, suhu, risiko, atau data pengiriman yang tidak ada di DATA SISTEM PENGGUNA.
+- Jika data yang ditanyakan pengguna belum tersedia, sampaikan dengan jujur bahwa data tersebut belum tersedia.
+- Untuk pertanyaan umum seputar pertanian, pascapanen, penyimpanan, atau logistik, kamu boleh menjawab menggunakan pengetahuan umum yang relevan, tanpa mencampurkannya dengan data palsu.
+- Jangan mengklaim AgriFlow menggunakan neural network, simulasi Monte Carlo, persentase akurasi model, sensor IoT real-time, atau GPS langsung.
+- Jangan mengulang sapaan "Halo!" di setiap balasan jika percakapan sudah berjalan.
 
 ==================================================
 DOMAIN YANG BOLEH DIJAWAB
 ==================================================
-
-Kamu boleh membantu pertanyaan terkait:
-
-- AgriFlow
-- Logistik
-- Pertanian
-- Pascapanen
-- Supply Chain
-- Pengiriman
-- Food Waste
-- Sustainability
-- Carbon Emission
-- Distribusi hasil panen
-- Cold Chain
-- Commodity Storage
-- Efisiensi transportasi
-- Route Planning
-- Operational Risk
-
-Jika pertanyaan benar-benar tidak berhubungan dengan domain tersebut, jawab singkat:
-
-"Sorry bro, aku fokus di bidang logistik, pertanian, sustainability, dan supply chain ya!"
+Fokus pada AgriFlow, hasil panen, logistik, pertanian, pascapanen, rantai pasok, pengiriman, kualitas & kesegaran produk, masa simpan, pengurangan food waste, emisi karbon, rute pengiriman, cuaca operasional, dan risiko operasional.
+Jika pertanyaan benar-benar di luar topik tersebut, jawab singkat:
+"Maaf ya, saya hanya fokus membantu seputar hasil panen, pengiriman, analisis risiko, dan logistik pertanian di AgriFlow."
 
 ==================================================
 GAYA JAWABAN
 ==================================================
-
-- Gunakan Bahasa Indonesia.
-- Santai tetapi tetap profesional.
-- Jawab seperti chat biasa.
-- Maksimal 2 kalimat secara default.
-- Maksimal sekitar 50 kata kecuali user meminta detail.
-- Jangan membuat artikel panjang.
-- Jangan membuat daftar panjang kecuali diminta.
-- Jangan gunakan markdown bold.
-- Gunakan bahasa yang mudah dipahami.
-- Boleh menggunakan maksimal 1 emoji jika cocok.
-- Jangan menjelaskan lebih banyak daripada yang ditanyakan.
+- WAJIB 100% Bahasa Indonesia yang ramah, natural, sederhana, dan mudah dipahami pengguna awam.
+- Jangan mencampurkan Bahasa Inggris dan Bahasa Indonesia.
+- Singkat, jelas, dan langsung ke inti (maksimal 3-4 kalimat, kecuali pengguna meminta penjelasan lebih rinci).
+- Hindari jargon teknis yang rumit dan hindari format markdown berlebihan.
 
 ==================================================
-DATA SISTEM
+DATA SISTEM PENGGUNA
 ==================================================
-
-{$summary}
-
-==================================================
-PERTANYAAN USER
-==================================================
-
-{$validated['message']}
+{$contextSummary}
 PROMPT;
 
-        /*
-        |--------------------------------------------------------------------------
-        | OpenRouter Request
-        |--------------------------------------------------------------------------
-        */
+        // 3. Riwayat Percakapan Per-Pengguna di Session (Format Gemini: user & model)
+        $sessionKey = 'agriflow_chat_history_' . $userId;
+        $history = session($sessionKey, []);
+        $recentHistory = array_slice($history, -8);
+
+        $contents = [];
+        foreach ($recentHistory as $item) {
+            if (!empty($item['role']) && !empty($item['content'])) {
+                $geminiRole = $item['role'] === 'assistant' ? 'model' : 'user';
+                $contents[] = [
+                    'role' => $geminiRole,
+                    'parts' => [['text' => $item['content']]],
+                ];
+            }
+        }
+
+        $contents[] = [
+            'role' => 'user',
+            'parts' => [['text' => $validated['message']]],
+        ];
+
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
         try {
             $response = Http::withHeaders([
-                'Authorization' =>
-                    'Bearer ' . env(
-                        'OPENROUTER_API_KEY'
-                    ),
-
-                'Content-Type' =>
-                    'application/json',
+                'Content-Type' => 'application/json',
+                'x-goog-api-key' => $apiKey,
             ])
-                ->timeout(30)
-                ->post(
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    [
-                        'model' =>
-                            'meta-llama/llama-3.1-8b-instruct',
+                ->withOptions([
+                    'force_ip_resolve' => 'v4',
+                ])
+                ->connectTimeout(15)
+                ->timeout(60)
+                ->post($endpoint, [
+                    'system_instruction' => [
+                        'parts' => [['text' => $systemPrompt]],
+                    ],
+                    'contents' => $contents,
+                    'generationConfig' => [
+                        'temperature' => 0.2,
+                    ],
+                ]);
 
-                        'temperature' =>
-                            0.2,
-
-                        'messages' => [
-                            [
-                                'role' =>
-                                    'user',
-
-                                'content' =>
-                                    $prompt,
-                            ],
-                        ],
-                    ]
-                );
-
-            Log::info(
-                'OPENROUTER CHAT RESPONSE',
-                [
-                    'status' =>
-                        $response->status(),
-                ]
-            );
+            Log::info('GEMINI CHAT RESPONSE', [
+                'status' => $response->status(),
+                'user_id' => $userId,
+            ]);
 
             if (!$response->successful()) {
-                Log::error(
-                    'OPENROUTER CHAT ERROR',
-                    [
-                        'status' =>
-                            $response->status(),
+                Log::error('GEMINI CHAT ERROR', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
 
-                        'body' =>
-                            $response->body(),
-                    ]
-                );
+                $errorMessage = match ($response->status()) {
+                    400, 401, 403 => 'Maaf, API key Gemini tidak valid atau belum memiliki akses. Silakan periksa konfigurasi.',
+                    429, 503 => 'Maaf, server AI sedang ramai saat ini. Coba kirim ulang beberapa detik lagi ya.',
+                    default => 'Maaf, layanan AI sedang mengalami gangguan. Silakan coba kembali beberapa saat lagi.',
+                };
 
-                return response()->json(
-                    [
-                        'reply' =>
-                            'AgriFlow Assistant sedang tidak tersedia. Coba lagi sebentar ya.',
-                    ],
-                    502
-                );
+                return response()->json([
+                    'reply' => $errorMessage,
+                ], 502);
             }
 
-            $answer = data_get(
-                $response->json(),
-                'choices.0.message.content'
-            );
+            $answer = data_get($response->json(), 'candidates.0.content.parts.0.text');
 
             if (!$answer) {
-                return response()->json(
-                    [
-                        'reply' =>
-                            'AgriFlow Assistant belum bisa menghasilkan jawaban untuk pertanyaan tersebut.',
-                    ],
-                    502
-                );
+                return response()->json([
+                    'reply' => 'Maaf, asisten belum dapat menyiapkan jawaban untuk pertanyaan tersebut. Coba tanyakan dengan kalimat lain ya.',
+                ], 502);
             }
 
-            return response()->json([
-                'reply' =>
-                    trim($answer),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error(
-                'OPENROUTER CHAT EXCEPTION',
-                [
-                    'message' =>
-                        $e->getMessage(),
-                ]
-            );
+            $cleanAnswer = trim($answer);
 
-            return response()->json(
-                [
-                    'reply' =>
-                        'AgriFlow Assistant sedang mengalami gangguan koneksi. Coba lagi sebentar ya.',
-                ],
-                502
-            );
+            // Simpan riwayat percakapan terbaru ke session pengguna
+            $recentHistory[] = ['role' => 'user', 'content' => $validated['message']];
+            $recentHistory[] = ['role' => 'assistant', 'content' => $cleanAnswer];
+            session([$sessionKey => array_slice($recentHistory, -8)]);
+
+            return response()->json([
+                'reply' => $cleanAnswer,
+            ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('GEMINI CHAT CONNECTION EXCEPTION', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'reply' => 'Maaf, koneksi ke layanan asisten sedang terganggu. Periksa jaringan dan coba lagi sebentar ya.',
+            ], 504);
+        } catch (\Throwable $e) {
+            Log::error('GEMINI CHAT EXCEPTION', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'reply' => 'Maaf, asisten sedang mengalami kendala. Silakan coba kembali beberapa saat lagi.',
+            ], 502);
         }
+    }
+
+    private function buildUserAgriFlowContext(int $userId): string
+    {
+        $lines = [];
+
+        // A. Data Hasil Panen Terbaru
+        $harvests = Harvest::query()
+            ->where('user_id', $userId)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $lines[] = '=== DATA HASIL PANEN ===';
+        if ($harvests->isEmpty()) {
+            $lines[] = 'Belum ada data hasil panen yang tercatat.';
+        } else {
+            foreach ($harvests as $h) {
+                $harvestDate = $h->harvest_date ? \Carbon\Carbon::parse($h->harvest_date)->format('d-m-Y') : 'Belum diatur';
+                $expiryDate = $h->expiry_date ? \Carbon\Carbon::parse($h->expiry_date)->format('d-m-Y') : 'Belum diatur';
+                $lines[] = "- {$h->commodity} | Berat: {$h->weight} kg | Lokasi: {$h->location} | Panen: {$harvestDate} | Kedaluwarsa: {$expiryDate}";
+            }
+        }
+
+        // B. Data Pengiriman & Analisis Risiko (DecisionEngine)
+        $shipments = Shipment::query()
+            ->with('harvest')
+            ->whereHas('harvest', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $lines[] = '';
+        $lines[] = '=== DATA PENGIRIMAN & ANALISIS RISIKO ===';
+
+        if ($shipments->isEmpty()) {
+            $lines[] = 'Belum ada data pengiriman yang tercatat.';
+        } else {
+            $engine = app(DecisionEngine::class);
+
+            foreach ($shipments as $shipment) {
+                $commodity = $shipment->harvest?->commodity ?? 'Tidak diketahui';
+                $statusIndo = match ($shipment->status) {
+                    'Harvested' => 'Baru Dipanen',
+                    'Packed' => 'Siap Kirim (Dikemas)',
+                    'In Transit' => 'Dalam Perjalanan',
+                    'Delivered' => 'Telah Tiba',
+                    default => $shipment->status,
+                };
+                $distance = $shipment->distance_km !== null ? round($shipment->distance_km, 1) . ' km' : 'Belum tersedia';
+                $duration = $shipment->duration_hours !== null ? round($shipment->duration_hours, 1) . ' jam' : 'Belum tersedia';
+                $temp = $shipment->recorded_temperature_c !== null ? $shipment->recorded_temperature_c . '°C' : 'Belum dicatat';
+                $rh = $shipment->recorded_relative_humidity_percent !== null ? $shipment->recorded_relative_humidity_percent . '%' : 'Belum dicatat';
+
+                $analysisText = '';
+                try {
+                    $analysis = $engine->analyze($shipment);
+                    $riskScore = $analysis['risk_score'] ?? null;
+                    $riskSeverity = match ($analysis['risk_severity'] ?? '') {
+                        'High' => 'Tinggi',
+                        'Moderate', 'Medium' => 'Sedang',
+                        'Low' => 'Rendah',
+                        default => 'Belum tersedia',
+                    };
+                    $quality = $analysis['quality_at_arrival'] ?? null;
+                    $shelfLife = $analysis['predicted_remaining_shelf_life_days'] ?? null;
+                    $recAction = $analysis['recommended_action'] ?? 'Belum tersedia';
+
+                    $analysisText = sprintf(
+                        ' | Risiko: %s (%s/100) | Kualitas Saat Tiba: %s | Sisa Masa Simpan: %s | Rekomendasi: %s',
+                        $riskSeverity,
+                        $riskScore ?? '-',
+                        $quality !== null ? $quality . '/100' : 'Belum tersedia',
+                        $shelfLife !== null ? round((float) $shelfLife, 1) . ' hari' : 'Belum tersedia',
+                        $recAction
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('CHAT CONTEXT DECISION ENGINE WARNING', ['shipment_id' => $shipment->id, 'message' => $e->getMessage()]);
+                }
+
+                $lines[] = "- #{$shipment->id} {$commodity} | {$shipment->origin} → {$shipment->destination} | Status: {$statusIndo} | Jarak: {$distance} | Estimasi: {$duration} | Suhu: {$temp} | Kelembapan: {$rh}{$analysisText}";
+            }
+        }
+
+        // C. Data Cuaca Operasional (jika tersedia)
+        $lines[] = '';
+        $lines[] = '=== DATA CUACA TERKINI ===';
+        try {
+            $envService = new EnvironmentalService();
+            $env = $envService->getEnvironment(null);
+            if (!empty($env['weather'])) {
+                $w = $env['weather'];
+                $loc = $env['location'] ?? 'Area pantauan';
+                $lines[] = "- Wilayah: {$loc} | Suhu lingkungan: " . round($w['temperature_2m'] ?? 0) . "°C | Kelembapan: " . ($w['relative_humidity_2m'] ?? '-') . "% | Curah hujan: " . ($w['rain'] ?? 0) . " mm | Angin: " . round($w['wind_speed_10m'] ?? 0) . " km/jam";
+            } else {
+                $lines[] = 'Data cuaca belum tersedia saat ini.';
+            }
+        } catch (\Throwable $e) {
+            $lines[] = 'Data cuaca belum tersedia saat ini.';
+        }
+
+        return implode("\n", $lines);
     }
 }

@@ -7,6 +7,54 @@ use Illuminate\Support\Facades\Http;
 
 class GeminiService
 {
+    private function callGeminiJson(string $prompt): ?array
+    {
+        $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
+        $model = config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-2.5-flash');
+
+        if (empty($apiKey)) {
+            return null;
+        }
+
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
+
+        $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'x-goog-api-key' => $apiKey,
+            ])
+            ->withOptions([
+                'force_ip_resolve' => 'v4',
+            ])
+            ->connectTimeout(15)
+            ->timeout(45)
+            ->post($endpoint, [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [['text' => $prompt]],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0,
+                    'responseMimeType' => 'application/json',
+                ],
+            ]);
+
+        if (!$response->successful()) {
+            return null;
+        }
+
+        $content = data_get($response->json(), 'candidates.0.content.parts.0.text');
+        if (!$content) {
+            return null;
+        }
+
+        $content = trim(str_replace(['```json', '```'], '', $content));
+        $result = json_decode($content, true);
+
+        return is_array($result) ? $result : null;
+    }
+
     /**
      * LLM explanation layer only.
      * Numerical risk/priority/readiness values MUST come from DecisionEngine.
@@ -15,11 +63,11 @@ class GeminiService
     {
         $recommendedAction =
             $data['recommended_action']
-            ?? 'Monitor shipment';
+            ?? 'Pantau kondisi pengiriman';
 
         $fallbackReason =
             $data['recommendation_reason']
-            ?? 'The recommendation is based on the current operational risk and shipment condition.';
+            ?? 'Rekomendasi disusun berdasarkan tingkat risiko operasional dan kondisi pengiriman saat ini.';
 
         $operationalReadiness =
             $data['operational_readiness_score']
@@ -27,132 +75,57 @@ class GeminiService
             ?? 0;
 
         $prompt = <<<PROMPT
-You are the explanation layer for AgriFlow, an agricultural logistics decision-support system.
+Kamu adalah lapisan penjelasan untuk AgriFlow, sistem pendukung keputusan logistik pertanian.
 
-IMPORTANT:
-- The numerical scores below were already calculated by AgriFlow's Decision Engine.
-- DO NOT recalculate, change, invent, or contradict the scores.
-- Your job is only to explain the decision in clear operational language.
+PENTING:
+- Skor numerik di bawah ini sudah dihitung oleh Decision Engine AgriFlow.
+- JANGAN menghitung ulang, mengubah, mengarang, atau membantah skor tersebut.
+- Tugasmu hanya menjelaskan keputusan dalam Bahasa Indonesia yang jelas dan praktis.
 
-Shipment:
-Commodity: {$data['commodity']}
-Origin: {$data['origin']}
-Destination: {$data['destination']}
+Data Pengiriman:
+Komoditas: {$data['commodity']}
+Asal: {$data['origin']}
+Tujuan: {$data['destination']}
 Status: {$data['status']}
-Remaining recorded shelf life: {$data['remaining_days']} days
-Distance: {$data['distance']} km
-Risk Index: {$data['risk_score']}/100
-Priority Score: {$data['priority_score']}/100
-Operational Readiness Index: {$operationalReadiness}/100
-Engine Recommendation: {$recommendedAction}
-Engine Reason: {$fallbackReason}
+Sisa masa simpan tercatat: {$data['remaining_days']} hari
+Jarak: {$data['distance']} km
+Indeks Risiko: {$data['risk_score']}/100
+Skor Prioritas: {$data['priority_score']}/100
+Indeks Kesiapan Operasional: {$operationalReadiness}/100
+Rekomendasi Mesin: {$recommendedAction}
+Alasan Mesin: {$fallbackReason}
 
-Return ONLY valid JSON in this exact structure:
+Kembalikan HANYA JSON valid dengan struktur persis berikut:
 {
-  "recommendation": "short action",
-  "decision_reason": "1-2 concise sentences explaining the existing engine decision",
-  "conclusion": "one concise sentence"
+  "recommendation": "tindakan singkat dalam Bahasa Indonesia",
+  "decision_reason": "1-2 kalimat ringkas menjelaskan keputusan mesin dalam Bahasa Indonesia",
+  "conclusion": "satu kalimat kesimpulan singkat dalam Bahasa Indonesia"
 }
 
-Rules:
-- Do not output a confidence percentage.
-- Do not call Risk Index a probability.
-- Do not claim a neural network, Monte Carlo model, or real-time sensor data.
-- Do not invent storage conditions.
-- Only mention commodity-specific storage guidance when it is explicitly supplied by the deterministic engine or commodity profile data.
-- Keep the language practical and suitable for a logistics operator.
-- No markdown and no text outside JSON.
+Aturan:
+- Gunakan 100% Bahasa Indonesia yang praktis untuk operator logistik.
+- Jangan tampilkan persentase keyakinan atau menyebut Indeks Risiko sebagai probabilitas.
+- Jangan mengklaim neural network, model Monte Carlo, atau data sensor real-time.
+- Jangan mengarang kondisi penyimpanan.
+- Tanpa markdown dan tanpa teks di luar JSON.
 PROMPT;
 
         try {
-            $response = Http::timeout(15)
-                ->retry(1, 300)
-                ->withHeaders([
-                    'Authorization' =>
-                        'Bearer ' . env('OPENROUTER_API_KEY'),
+            $result = $this->callGeminiJson($prompt);
 
-                    'Content-Type' =>
-                        'application/json',
-                ])
-                ->post(
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    [
-                        'model' =>
-                            'meta-llama/llama-3.1-8b-instruct',
-
-                        'temperature' =>
-                            0,
-
-                        'messages' => [
-                            [
-                                'role' =>
-                                    'user',
-
-                                'content' =>
-                                    $prompt,
-                            ],
-                        ],
-                    ]
-                );
-
-            if (!$response->successful()) {
-                return $this->explanationFallback(
-                    $recommendedAction,
-                    $fallbackReason
-                );
-            }
-
-            $content = $response->json(
-                'choices.0.message.content'
-            );
-
-            if (!$content) {
-                return $this->explanationFallback(
-                    $recommendedAction,
-                    $fallbackReason
-                );
-            }
-
-            $content = trim(
-                str_replace(
-                    ['```json', '```'],
-                    '',
-                    $content
-                )
-            );
-
-            $result = json_decode(
-                $content,
-                true
-            );
-
-            if (!is_array($result)) {
-                return $this->explanationFallback(
-                    $recommendedAction,
-                    $fallbackReason
-                );
+            if (!$result) {
+                return $this->explanationFallback($recommendedAction, $fallbackReason);
             }
 
             return [
-                'recommendation' =>
-                    $result['recommendation']
-                    ?? $recommendedAction,
-
-                'decision_reason' =>
-                    $result['decision_reason']
-                    ?? $fallbackReason,
-
-                'conclusion' =>
-                    $result['conclusion']
-                    ?? $fallbackReason,
+                'recommendation' => $result['recommendation'] ?? $recommendedAction,
+                'decision_reason' => $result['decision_reason'] ?? $fallbackReason,
+                'conclusion' => $result['conclusion'] ?? $fallbackReason,
             ];
         } catch (\Throwable $e) {
             report($e);
 
-            return $this->explanationFallback(
-                $recommendedAction,
-                $fallbackReason
-            );
+            return $this->explanationFallback($recommendedAction, $fallbackReason);
         }
     }
 
@@ -163,50 +136,17 @@ PROMPT;
     public function analyzeShipment(array $data): array
     {
         return $this->generateShipmentExplanation([
-            'commodity' =>
-                $data['commodity']
-                ?? 'Unknown',
-
-            'origin' =>
-                $data['origin']
-                ?? '-',
-
-            'destination' =>
-                $data['destination']
-                ?? '-',
-
-            'status' =>
-                $data['status']
-                ?? '-',
-
-            'remaining_days' =>
-                $data['remaining_days']
-                ?? 0,
-
-            'distance' =>
-                $data['distance']
-                ?? 0,
-
-            'risk_score' =>
-                $data['risk_score']
-                ?? 0,
-
-            'priority_score' =>
-                $data['priority_score']
-                ?? 0,
-
-            'operational_readiness_score' =>
-                $data['operational_readiness_score']
-                ?? $data['sustainability_score']
-                ?? 0,
-
-            'recommended_action' =>
-                $data['recommended_action']
-                ?? 'Monitor shipment',
-
-            'recommendation_reason' =>
-                $data['recommendation_reason']
-                ?? 'No additional engine context was supplied.',
+            'commodity' => $data['commodity'] ?? 'Tidak diketahui',
+            'origin' => $data['origin'] ?? '-',
+            'destination' => $data['destination'] ?? '-',
+            'status' => $data['status'] ?? '-',
+            'remaining_days' => $data['remaining_days'] ?? 0,
+            'distance' => $data['distance'] ?? 0,
+            'risk_score' => $data['risk_score'] ?? 0,
+            'priority_score' => $data['priority_score'] ?? 0,
+            'operational_readiness_score' => $data['operational_readiness_score'] ?? $data['sustainability_score'] ?? 0,
+            'recommended_action' => $data['recommended_action'] ?? 'Pantau kondisi pengiriman',
+            'recommendation_reason' => $data['recommendation_reason'] ?? 'Tidak ada konteks tambahan dari mesin.',
         ]);
     }
 
@@ -216,9 +156,7 @@ PROMPT;
             'dashboard_insight',
             3600,
             function () use ($data) {
-                return $this->generateDashboardInsight(
-                    $data
-                );
+                return $this->generateDashboardInsight($data);
             }
         );
     }
@@ -231,103 +169,39 @@ PROMPT;
             ?? 0;
 
         $prompt = <<<PROMPT
-You are the explanation layer for AgriFlow's dashboard.
+Kamu adalah lapisan penjelasan untuk dashboard AgriFlow.
+Nilai di bawah ini adalah output deterministik sistem. Jangan menghitung ulang atau mengarang metrik baru.
 
-The values below are recorded or deterministic system outputs.
-
-Do not recalculate them, invent new metrics, or imply statistical prediction.
-
-Return ONLY valid JSON:
+Kembalikan HANYA JSON valid dalam Bahasa Indonesia:
 {
-  "insight": "1-2 concise sentences describing the current operational state",
-  "recommendation": "one concise operational recommendation"
+  "insight": "1-2 kalimat ringkas tentang kondisi operasional saat ini",
+  "recommendation": "satu rekomendasi operasional singkat"
 }
 
-Current system data:
-Recorded Shipments: {$data['totalShipments']}
-Active Shipments: {$data['activeShipments']}
-Delivered Shipments: {$data['delivered']}
-Active High-Risk Shipments: {$data['activeHighRisk']}
-Active Critical Shipments: {$data['activeCritical']}
-Average Active Operational Readiness: {$averageOperationalReadiness}/100
+Data sistem saat ini:
+Total Pengiriman Tercatat: {$data['totalShipments']}
+Pengiriman Aktif: {$data['activeShipments']}
+Pengiriman Selesai: {$data['delivered']}
+Pengiriman Aktif Risiko Tinggi: {$data['activeHighRisk']}
+Pengiriman Aktif Kritis: {$data['activeCritical']}
+Rata-rata Kesiapan Operasional Aktif: {$averageOperationalReadiness}/100
 
-Rules:
-- Do not claim food-waste reduction, carbon savings, or efficiency improvement unless explicitly provided.
-- Do not call Operational Readiness an environmental, ESG, or lifecycle-impact metric.
-- Do not output confidence or probability.
-- Do not claim machine-learning accuracy.
-- Do not claim real-time sensor or GPS data.
-- Recommendations must remain operational and conservative.
-- No markdown and no text outside JSON.
+Aturan:
+- Gunakan 100% Bahasa Indonesia.
+- Jangan mengklaim persentase akurasi machine learning, sensor real-time, atau GPS langsung.
+- Tanpa markdown dan tanpa teks di luar JSON.
 PROMPT;
 
         try {
-            $response = Http::timeout(15)
-                ->withHeaders([
-                    'Authorization' =>
-                        'Bearer ' . env('OPENROUTER_API_KEY'),
+            $result = $this->callGeminiJson($prompt);
 
-                    'Content-Type' =>
-                        'application/json',
-                ])
-                ->post(
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    [
-                        'model' =>
-                            'meta-llama/llama-3.1-8b-instruct',
-
-                        'temperature' =>
-                            0,
-
-                        'messages' => [
-                            [
-                                'role' =>
-                                    'user',
-
-                                'content' =>
-                                    $prompt,
-                            ],
-                        ],
-                    ]
-                );
-
-            if (!$response->successful()) {
-                return $this->dashboardInsightFallback();
-            }
-
-            $content = $response->json(
-                'choices.0.message.content'
-            );
-
-            if (!$content) {
-                return $this->dashboardInsightFallback();
-            }
-
-            $content = trim(
-                str_replace(
-                    ['```json', '```'],
-                    '',
-                    $content
-                )
-            );
-
-            $result = json_decode(
-                $content,
-                true
-            );
-
-            if (!is_array($result)) {
+            if (!$result) {
                 return $this->dashboardInsightFallback();
             }
 
             return [
-                'insight' =>
-                    $result['insight']
-                    ?? 'Current operational metrics are available for review.',
-
-                'recommendation' =>
-                    $result['recommendation']
-                    ?? 'Review the current deterministic shipment metrics.',
+                'insight' => $result['insight'] ?? 'Metrik operasional saat ini tersedia untuk ditinjau.',
+                'recommendation' => $result['recommendation'] ?? 'Tinjau metrik pengiriman aktif saat ini.',
             ];
         } catch (\Throwable $e) {
             report($e);
@@ -336,30 +210,20 @@ PROMPT;
         }
     }
 
-    private function explanationFallback(
-        string $action,
-        string $reason
-    ): array {
+    private function explanationFallback(string $action, string $reason): array
+    {
         return [
-            'recommendation' =>
-                $action,
-
-            'decision_reason' =>
-                $reason,
-
-            'conclusion' =>
-                $reason,
+            'recommendation' => $action,
+            'decision_reason' => $reason,
+            'conclusion' => $reason,
         ];
     }
 
     private function dashboardInsightFallback(): array
     {
         return [
-            'insight' =>
-                'Dashboard insight is temporarily unavailable.',
-
-            'recommendation' =>
-                'Review the current deterministic shipment metrics.',
+            'insight' => 'Ringkasan dashboard sementara belum tersedia.',
+            'recommendation' => 'Tinjau metrik pengiriman aktif saat ini.',
         ];
     }
 }

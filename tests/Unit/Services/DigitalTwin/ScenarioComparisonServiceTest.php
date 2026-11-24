@@ -143,12 +143,12 @@ class ScenarioComparisonServiceTest extends TestCase
             ]
         );
 
-        $this->assertSame(
-            'Not Viable',
-            $result[
-                'decision_status'
-            ]
-        );
+$this->assertSame(
+    'Tidak Layak',
+    $result[
+        'decision_status'
+    ]
+);
     }
 
     public function test_delta_uses_points_and_signed_relative_change(): void

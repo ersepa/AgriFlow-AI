@@ -9,12 +9,27 @@ use App\Services\AI\DecisionEngine;
 use App\Services\GeminiService;
 use App\Services\Routing\FreshnessAwareRouteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AiAnalysisController extends Controller
 {
+    private function ensureShipmentOwnership(Shipment $shipment): void
+    {
+        abort_unless(
+            $shipment->harvest()
+                ->where('user_id', Auth::id())
+                ->exists(),
+            404
+        );
+    }
+
     public function index()
     {
-        $shipments = Shipment::with('harvest')
+        $shipments = Shipment::query()
+            ->with('harvest')
+            ->whereHas('harvest', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
             ->operationallyActive()
             ->latest()
             ->get();
@@ -27,24 +42,34 @@ class AiAnalysisController extends Controller
         $ids = json_decode($request->ids, true);
 
         if (is_array($ids) && !empty($ids)) {
-            AiAnalysis::whereIn('id', $ids)->delete();
+            AiAnalysis::query()
+                ->whereIn('id', $ids)
+                ->whereHas('shipment.harvest', function ($query) {
+                    $query->where('user_id', Auth::id());
+                })
+                ->delete();
         }
 
-        return redirect()->back()->with('success', 'Data terpilih berhasil dihapus.');
+        return redirect()->back()->with(
+            'success',
+            'Data terpilih berhasil dihapus.'
+        );
     }
 
     public function truncate()
     {
-        AiAnalysis::query()->delete();
+        AiAnalysis::query()
+            ->whereHas('shipment.harvest', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->delete();
 
-        return redirect()->back()->with('success', 'Seluruh riwayat analisis berhasil dikosongkan.');
+        return redirect()->back()->with(
+            'success',
+            'Seluruh riwayat analisis berhasil dikosongkan.'
+        );
     }
 
-    /**
-     * Active operational analysis only.
-     * Delivered shipments are historical records and cannot generate new
-     * dispatch, intervention, route, or Digital Twin recommendations.
-     */
     public function analyze(
         Shipment $shipment,
         DecisionEngine $engine,
@@ -52,12 +77,13 @@ class AiAnalysisController extends Controller
         FreshnessAwareRouteService $freshnessRoutes,
         AnalysisSnapshotService $snapshots
     ) {
+        $this->ensureShipmentOwnership($shipment);
         if ($shipment->isDelivered()) {
             return redirect()
                 ->route('completed-shipments.show', $shipment)
                 ->with(
                     'warning',
-                    'This shipment has already been delivered. Operational analysis is closed; historical assessments remain available for review.'
+                    'Pengiriman ini sudah selesai dikirim. Analisis operasional telah ditutup, namun riwayat penilaian tetap dapat ditinjau.'
                 );
         }
 
@@ -71,7 +97,7 @@ class AiAnalysisController extends Controller
 
         // LLM explanation only. Deterministic actions remain authoritative.
         $explanation = $ai->generateShipmentExplanation([
-            'commodity' => $shipment->harvest?->commodity ?? 'Unknown',
+            'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
             'origin' => $shipment->origin,
             'destination' => $shipment->destination,
             'status' => $shipment->status,
@@ -89,14 +115,14 @@ class AiAnalysisController extends Controller
             ?? $analysis['recommendation_reason'];
 
         $expectedOutcome = $analysis['expected_outcome']
-            ?? 'Continue monitoring the shipment against its current operational constraints.';
+            ?? 'Lanjutkan pemantauan pengiriman sesuai batas operasional saat ini.';
 
         $actionLines = collect($actions)
-            ->map(fn (array $action) => '- ' . ($action['action'] ?? 'Review shipment'))
+            ->map(fn (array $action) => '- ' . ($action['action'] ?? 'Tinjau kondisi pengiriman'))
             ->implode("\n");
 
         if ($actionLines === '') {
-            $actionLines = '- ' . $analysis['recommended_action'];
+            $actionLines = '- ' . ($analysis['recommended_action'] ?? 'Tinjau kondisi pengiriman');
         }
 
         $aiResult = "Recommendations:\n{$actionLines}\n\n"
@@ -119,7 +145,7 @@ class AiAnalysisController extends Controller
             ->route('ai-analysis.index')
             ->with('ai_result', $aiResult)
             ->with('shipment_data', [
-                'commodity' => $shipment->harvest?->commodity ?? 'Unknown',
+                'commodity' => $shipment->harvest?->commodity ?? 'Tidak diketahui',
                 'origin' => $shipment->origin,
                 'destination' => $shipment->destination,
                 'status' => $shipment->status,
@@ -172,41 +198,35 @@ class AiAnalysisController extends Controller
 
     public function history()
     {
-        $analyses = AiAnalysis::with('shipment.harvest')
+        $analyses = AiAnalysis::query()
+            ->with('shipment.harvest')
+            ->whereHas('shipment.harvest', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
             ->latest()
             ->get();
 
         return view('ai-analysis.history', compact('analyses'));
     }
 
-    public function destroy($id)
-    {
-        $analysis = AiAnalysis::findOrFail($id);
-        $analysis->delete();
-
-        return redirect()
-            ->route('ai-analysis.history')
-            ->with('success', 'Data berhasil dihapus!');
-    }
-
-    /**
-     * Historical analysis detail is immutable.
-     * New records use analysis_snapshot. Legacy records display only persisted
-     * fields rather than silently recomputing against today's shipment state.
-     */
     public function show($id)
     {
-        $analysis = AiAnalysis::with([
-            'shipment.harvest',
-            'shipment.aiAnalyses',
-        ])->findOrFail($id);
+        $analysis = AiAnalysis::query()
+            ->with([
+                'shipment.harvest',
+                'shipment.aiAnalyses',
+            ])
+            ->whereHas('shipment.harvest', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->findOrFail($id);
 
         $shipment = $analysis->shipment;
 
         abort_if(
             !$shipment,
             404,
-            'Shipment not found for this analysis.'
+            'Data pengiriman untuk analisis ini tidak ditemukan.'
         );
 
         $snapshot = $analysis->analysis_snapshot;

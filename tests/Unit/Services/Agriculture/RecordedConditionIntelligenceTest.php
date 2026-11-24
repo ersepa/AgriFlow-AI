@@ -56,10 +56,10 @@ class RecordedConditionIntelligenceTest extends TestCase
             'Outside reference',
             $result['condition_assessment']['overall_status']
         );
-        $this->assertSame(
-            'Recorded',
-            $result['condition_assessment']['evidence_status']
-        );
+$this->assertSame(
+    'Data tercatat',
+    $result['condition_assessment']['evidence_status']
+);
         $this->assertFalse(
             $result['condition_assessment']['is_live_sensor_data']
         );
@@ -93,10 +93,10 @@ class RecordedConditionIntelligenceTest extends TestCase
         $this->assertSame(17.0, $baseline['temperature_c']);
         $this->assertSame(12.0, $scenario['temperature_c']);
         $this->assertSame('scenario_input', $scenario['temperature_basis']);
-        $this->assertSame(
-            'Scenario override + recorded baseline',
-            $scenario['condition_assessment']['evidence_status']
-        );
+$this->assertSame(
+    'Skenario + data tercatat',
+    $scenario['condition_assessment']['evidence_status']
+);
         $this->assertSame(17.0, $shipment->recorded_temperature_c);
     }
 
@@ -123,10 +123,10 @@ class RecordedConditionIntelligenceTest extends TestCase
             'Condition evidence unavailable',
             $result['condition_assessment']['overall_status']
         );
-        $this->assertSame(
-            'Unavailable',
-            $result['condition_assessment']['evidence_status']
-        );
+$this->assertSame(
+    'Belum tersedia',
+    $result['condition_assessment']['evidence_status']
+);
     }
 
     public function test_dry_commodity_uses_recorded_moisture_and_rh_against_reference_limits(): void

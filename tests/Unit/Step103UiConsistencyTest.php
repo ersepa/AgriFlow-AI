@@ -52,38 +52,58 @@ class Step103UiConsistencyTest extends TestCase
             $this->assertStringNotContainsString($legacyText, $combined);
         }
 
-        foreach ([
-            'Average Operational Readiness',
-            'Current Snapshot',
-            'Recorded Condition Evidence',
-            'Decision Analysis Output',
-            'Shipment Data Summary',
-            'Stored Decision Score*',
-            'Operational Risk Index*',
-            'Route Feasibility',
-            'Route Candidates',
-            'Recorded Origin Context',
-        ] as $currentText) {
-            $this->assertStringContainsString($currentText, $combined);
-        }
+foreach ([
+    'Analisis AI',
+    'Sebaran Risiko Aktif',
+    'Pengiriman aktif berdasarkan tingkat risiko',
+    'Risiko Tinggi',
+    'Risiko Sedang',
+    'Risiko Rendah',
+    'Dampak Tinggi',
+    'Dampak Sedang',
+    'Dampak Rendah',
+] as $currentText) {
+    $this->assertStringContainsString($currentText, $combined);
+}
     }
 
-    public function test_risk_contribution_bars_use_valid_percent_widths_and_grounded_labels(): void
-    {
-        $analysis = file_get_contents(resource_path('views/ai-analysis/index.blade.php'));
+public function test_risk_contribution_bars_use_valid_percent_widths_and_grounded_labels(): void
+{
+    $analysis = file_get_contents(resource_path('views/ai-analysis/index.blade.php'));
 
-        $this->assertStringNotContainsString(
-            'style="width: {{ number_format($driver[\'impact\'], 1) }} pts;"',
-            $analysis
-        );
+    $this->assertStringNotContainsString(
+        'style="width: {{ number_format($driver[\'impact\'], 1) }} pts;"',
+        $analysis
+    );
 
-        $this->assertStringContainsString(
-            'style="width: {{ $impactBarWidth }}%;"',
-            $analysis
-        );
+    $this->assertStringContainsString(
+        '$barWidth = max(6, min(100, $impact * 2.5));',
+        $analysis
+    );
 
-        $this->assertStringContainsString("\$label = 'Minimal';", $analysis);
-        $this->assertStringContainsString("\$label = 'Low';", $analysis);
-        $this->assertStringContainsString("\$label = 'Moderate';", $analysis);
-    }
+    $this->assertStringContainsString(
+        'style="width: {{ $barWidth }}%;"',
+        $analysis
+    );
+
+$this->assertStringContainsString(
+    "\$severityText = 'Minimal';",
+    $analysis
+);
+
+$this->assertStringContainsString(
+    "\$severityText = 'Dampak Rendah';",
+    $analysis
+);
+
+$this->assertStringContainsString(
+    "\$severityText = 'Dampak Sedang';",
+    $analysis
+);
+
+$this->assertStringContainsString(
+    "\$severityText = 'Dampak Tinggi';",
+    $analysis
+);
+}
 }

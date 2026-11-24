@@ -1,78 +1,84 @@
 <x-app-layout>
-    {{-- Custom Styles & Animations --}}
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .animate-card { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
         .agri-card {
             background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 8px 28px -4px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
             border-radius: 1.5rem;
         }
 
-        .agri-input-group {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .agri-input-group:focus-within {
-            background: #ffffff;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(5, 150, 105, 0.08) 1px, transparent 1px);
+            background-size: 24px 24px;
         }
     </style>
 
-    <div class="py-8 px-4 sm:px-6 lg:px-8 animate-card w-full">
-        
-        {{-- Back Navigation & Page Header --}}
-        <div class="mb-6">
-            <div class="flex items-center gap-3 mb-2">
-                <a href="{{ route('shipments.index') }}" 
-                   class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors group">
-                    <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    <span>Back to Shipments</span>
-                </a>
+    <div class="min-h-screen bg-[#F8FAFC] bg-grid-pattern pb-16 animate-card">
+        <div class="max-w-7xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8 space-y-6">
 
-                <span class="text-slate-300">•</span>
+            {{-- ================= HEADER & NAVIGASI KEMBALI ================= --}}
+            <div class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="{{ route('shipments.index') }}"
+                       class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-extrabold text-slate-700 hover:text-emerald-700 hover:border-emerald-300 shadow-2xs transition-all group">
+                        <svg class="w-4 h-4 text-emerald-600 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        <span>Kembali ke Daftar Pengiriman</span>
+                    </a>
 
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100/80 border border-indigo-200 text-indigo-800 text-xs font-bold tracking-wide shadow-sm">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                    <span>LOGISTICS DISPATCH PORTAL</span>
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-2xs">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Formulir Pengiriman Baru</span>
+                    </span>
+                </div>
+
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Buat Pengiriman Baru</h1>
+                    <p class="text-slate-600 mt-1 font-medium text-sm sm:text-base">
+                        Hubungkan hasil panen Anda dengan tujuan distribusi agar AgriFlow dapat menghitung rute dan kondisi kesegaran secara otomatis.
+                    </p>
                 </div>
             </div>
-            
-            <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Add New Shipment</h1>
-            <p class="text-slate-500 mt-1 font-medium text-sm">Hubungkan hasil panen Anda dengan jaringan distribusi pasar modern.</p>
-        </div>
 
-        {{-- Grid System 2 Kolom (Form 7-col + Panel Edukasi/Logistik 5-col) --}}
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {{-- KOLOM KIRI: Form Input (lg:col-span-7) --}}
-            <div class="lg:col-span-7">
-                <div class="agri-card p-6 sm:p-8 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-500 via-indigo-600 to-indigo-700"></div>
+            {{-- ================= GRID 2 KOLOM ================= --}}
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                    <form action="{{ route('shipments.store') }}" method="POST" class="space-y-5">
-                        @csrf
+                {{-- KOLOM KIRI: FORMULIR (7 col) --}}
+                <div class="lg:col-span-7">
+                    <div class="agri-card p-6 sm:p-8 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600"></div>
 
-                        {{-- Harvest Commodity Selection --}}
-                        <div>
-                            <div class="agri-input-group p-4">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                    Harvest Commodity
-                                </label>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-slate-400 font-bold text-sm">🚚</span>
-                                    <select id="harvestSelect" 
-                                            name="harvest_id" 
+                        <form id="createShipmentForm" action="{{ route('shipments.store') }}" method="POST" class="space-y-6">
+                            @csrf
+
+                            {{-- KELOMPOK 1: INFORMASI HASIL PANEN (Soft Emerald) --}}
+                            <div class="rounded-2xl bg-emerald-50/70 border border-emerald-200/90 p-5 space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-base font-black text-slate-900">1. Informasi Hasil Panen</h2>
+                                        <p class="text-xs text-slate-600">Pilih hasil panen yang akan dikirim. Asal dan berat terisi otomatis.</p>
+                                    </div>
+                                </div>
+
+                                {{-- Pilih Komoditas Panen --}}
+                                <div>
+                                    <label for="harvestSelect" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                        Pilih Hasil Panen <span class="text-rose-600">*</span>
+                                    </label>
+                                    <select id="harvestSelect"
+                                            name="harvest_id"
                                             required
-                                            class="w-full bg-transparent border-0 focus:ring-0 text-slate-900 font-bold text-sm p-0">
-                                        @foreach($harvests as $harvest)
+                                            class="w-full rounded-xl bg-white border-emerald-300 text-sm font-bold text-slate-900 focus:border-emerald-500 focus:ring-emerald-500 py-3">
+                                        @forelse($harvests as $harvest)
                                             @php
                                                 $conditionProfile = $conditionProfiles[$harvest->id] ?? [];
                                             @endphp
@@ -88,264 +94,271 @@
                                                     data-moisture-max="{{ $conditionProfile['safe_moisture_short_term_max_percent'] ?? '' }}"
                                                     data-dry-rh-max="{{ $conditionProfile['safe_relative_humidity_max_percent'] ?? '' }}"
                                                     data-source="{{ $conditionProfile['source_name'] ?? '' }}">
-                                                {{ $harvest->commodity }}
+                                                {{ $harvest->commodity }} — {{ $harvest->location }} ({{ number_format((float) $harvest->weight, 0, ',', '.') }} kg)
                                             </option>
-                                        @endforeach
+                                        @empty
+                                            <option value="" disabled selected>Belum ada data hasil panen</option>
+                                        @endforelse
                                     </select>
+                                    @error('harvest_id')
+                                        <p class="text-xs font-bold text-rose-600 mt-1.5">{{ $message }}</p>
+                                    @enderror
                                 </div>
-                            </div>
-                            @error('harvest_id')
-                                <p class="text-xs font-bold text-rose-600 mt-1.5 ml-2">{{ $message }}</p>
-                            @enderror
-                        </div>
 
-                        {{-- Origin, Weight & Destination Grid --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            
-                            {{-- Origin Input (Auto-filled) --}}
-                            <div>
-                                <div class="agri-input-group p-4 bg-slate-100/70 border-slate-200">
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                        Origin (From Harvest Location)
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-slate-400 font-bold text-sm">📍</span>
-                                        <input type="text" 
-                                               id="originInput" 
-                                               name="origin" 
-                                               readonly 
-                                               class="w-full bg-transparent border-0 focus:ring-0 text-slate-800 font-bold text-sm p-0">
+                                {{-- Lokasi Asal & Berat Muatan (Autofill Readonly) --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="originInput" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Lokasi Asal (Otomatis)
+                                        </label>
+                                        <input type="text"
+                                               id="originInput"
+                                               name="origin"
+                                               readonly
+                                               class="w-full rounded-xl bg-white/70 border-emerald-200 text-sm font-bold text-slate-700 cursor-not-allowed py-2.5">
+                                        @error('origin')
+                                            <p class="text-xs font-bold text-rose-600 mt-1.5">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label for="weightInput" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Berat Muatan (Otomatis)
+                                        </label>
+                                        <input type="text"
+                                               id="weightInput"
+                                               name="weight"
+                                               readonly
+                                               class="w-full rounded-xl bg-white/70 border-emerald-200 text-sm font-bold text-slate-700 cursor-not-allowed py-2.5">
+                                        @error('weight')
+                                            <p class="text-xs font-bold text-rose-600 mt-1.5">{{ $message }}</p>
+                                        @enderror
                                     </div>
                                 </div>
-                                @error('origin')
-                                    <p class="text-xs font-bold text-rose-600 mt-1.5 ml-2">{{ $message }}</p>
-                                @enderror
                             </div>
 
-                            {{-- Weight Input (Auto-filled from Harvest Yield) --}}
-                            <div>
-                                <div class="agri-input-group p-4 bg-slate-100/70 border-slate-200">
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                        Total Weight Yield (KG)
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-slate-400 font-bold text-sm">⚖️</span>
-                                        <input type="text" 
-                                               id="weightInput" 
-                                               name="weight" 
-                                               readonly 
-                                               class="w-full bg-transparent border-0 focus:ring-0 text-slate-800 font-bold text-sm p-0">
+                            {{-- KELOMPOK 2: INFORMASI PERJALANAN (Soft Blue) --}}
+                            <div class="rounded-2xl bg-blue-50/70 border border-blue-200/90 p-5 space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-base font-black text-slate-900">2. Informasi Perjalanan</h2>
+                                        <p class="text-xs text-slate-600">Tentukan lokasi tujuan dan tahap awal pengiriman.</p>
                                     </div>
                                 </div>
-                                @error('weight')
-                                    <p class="text-xs font-bold text-rose-600 mt-1.5 ml-2">{{ $message }}</p>
-                                @enderror
-                            </div>
 
-                        </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {{-- Lokasi Tujuan --}}
+                                    <div>
+                                        <label for="destinationInput" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Lokasi Tujuan / Gudang <span class="text-rose-600">*</span>
+                                        </label>
+                                        <input type="text"
+                                               id="destinationInput"
+                                               name="destination"
+                                               value="{{ old('destination') }}"
+                                               placeholder="Contoh: Pasar Induk Kramat Jati, Jakarta"
+                                               required
+                                               class="w-full rounded-xl bg-white border-blue-300 text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-500 focus:ring-blue-500 py-2.5">
+                                        <p class="text-[11px] text-slate-500 mt-1">Gunakan nama kota atau pasar agar rute akurat.</p>
+                                        @error('destination')
+                                            <p class="text-xs font-bold text-rose-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
 
-                        {{-- Destination Input --}}
-                        <div>
-                            <div class="agri-input-group p-4">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                    Destination City / Warehouse
-                                </label>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-slate-400 font-bold text-sm">🏁</span>
-                                    <input type="text" 
-                                           name="destination" 
-                                           value="{{ old('destination') }}"
-                                           placeholder="e.g. Surabaya Port Terminal" 
-                                           required
-                                           class="w-full bg-transparent border-0 focus:ring-0 text-slate-900 font-bold text-sm p-0 placeholder-slate-300">
-                                </div>
-                            </div>
-                            @error('destination')
-                                <p class="text-xs font-bold text-rose-600 mt-1.5 ml-2">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- Current Status Input --}}
-                        <div>
-                            <div class="agri-input-group p-4">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                    Initial Logistics Status
-                                </label>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-slate-400 font-bold text-sm">🔄</span>
-                                    <select name="status" 
-                                            required
-                                            class="w-full bg-transparent border-0 focus:ring-0 text-slate-900 font-bold text-sm p-0">
-                                        <option value="Harvested">Harvested</option>
-                                        <option value="Packed">Packed</option>
-                                        <option value="In Transit">In Transit</option>
-                                    </select>
-                                </div>
-                            </div>
-                            @error('status')
-                                <p class="text-xs font-bold text-rose-600 mt-1.5 ml-2">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- STEP 9: Recorded Shipment Conditions --}}
-                        <div class="rounded-2xl border border-cyan-200 bg-cyan-50/50 p-5 space-y-4">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">
-                                        Recorded Shipment Conditions
-                                    </p>
-                                    <h3 class="mt-1 text-sm font-black text-slate-900">
-                                        Recorded Condition Evidence
-                                    </h3>
-                                    <p class="mt-1 text-xs leading-relaxed text-slate-600">
-                                        Optional point-in-time condition record. Leave unknown values blank—AgriFlow will report an evidence gap instead of inventing data.
-                                    </p>
-                                </div>
-                                <span id="conditionModelBadge" class="shrink-0 rounded-full border border-cyan-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cyan-700">
-                                    Fresh Produce
-                                </span>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div id="temperatureConditionField">
-                                    <label for="recorded_temperature_c" class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                                        Recorded Cargo Temperature (°C)
-                                    </label>
-                                    <input type="number"
-                                           step="0.1"
-                                           min="-50"
-                                           max="80"
-                                           id="recorded_temperature_c"
-                                           name="recorded_temperature_c"
-                                           value="{{ old('recorded_temperature_c') }}"
-                                           placeholder="e.g. 12"
-                                           class="w-full rounded-xl border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-cyan-500 focus:ring-cyan-500">
-                                    @error('recorded_temperature_c')
-                                        <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div id="moistureConditionField" class="hidden">
-                                    <label for="recorded_moisture_percent" class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                                        Recorded Cargo Moisture (%)
-                                    </label>
-                                    <input type="number"
-                                           step="0.1"
-                                           min="0"
-                                           max="100"
-                                           id="recorded_moisture_percent"
-                                           name="recorded_moisture_percent"
-                                           value="{{ old('recorded_moisture_percent') }}"
-                                           placeholder="e.g. 10.5"
-                                           class="w-full rounded-xl border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-cyan-500 focus:ring-cyan-500">
-                                    @error('recorded_moisture_percent')
-                                        <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="recorded_relative_humidity_percent" class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                                        Recorded Relative Humidity (% RH)
-                                    </label>
-                                    <input type="number"
-                                           step="0.1"
-                                           min="0"
-                                           max="100"
-                                           id="recorded_relative_humidity_percent"
-                                           name="recorded_relative_humidity_percent"
-                                           value="{{ old('recorded_relative_humidity_percent') }}"
-                                           placeholder="e.g. 85"
-                                           class="w-full rounded-xl border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-cyan-500 focus:ring-cyan-500">
-                                    @error('recorded_relative_humidity_percent')
-                                        <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
-                                    @enderror
+                                    {{-- Status Awal Pengiriman --}}
+                                    <div>
+                                        <label for="statusInput" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Status Awal Pengiriman <span class="text-rose-600">*</span>
+                                        </label>
+                                        <select id="statusInput"
+                                                name="status"
+                                                required
+                                                class="w-full rounded-xl bg-white border-blue-300 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-blue-500 py-2.5">
+                                            <option value="Harvested" @selected(old('status') === 'Harvested')>Baru Dipanen</option>
+                                            <option value="Packed" @selected(old('status') === 'Packed')>Siap Kirim (Dikemas)</option>
+                                            <option value="In Transit" @selected(old('status') === 'In Transit')>Dalam Perjalanan</option>
+                                        </select>
+                                        <p class="text-[11px] text-slate-500 mt-1">Status dapat diperbarui kapan saja nanti.</p>
+                                        @error('status')
+                                            <p class="text-xs font-bold text-rose-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
 
-                            <div id="conditionReferenceHint" class="rounded-xl border border-cyan-100 bg-white/80 px-4 py-3 text-[11px] leading-relaxed text-slate-600">
-                                Select a commodity to show its available reference condition.
+                            {{-- KELOMPOK 3: INFORMASI KONDISI PENGIRIMAN (Soft Cyan) --}}
+                            <div class="rounded-2xl bg-cyan-50/70 border border-cyan-200/90 p-5 space-y-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-cyan-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 4v10.54a4 4 0 11-4 0V4a2 2 0 014 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-base font-black text-slate-900">3. Kondisi Pengiriman <span class="text-xs font-bold text-cyan-700">(Opsional)</span></h2>
+                                            <p class="text-xs text-slate-600">Kosongkan jika belum diukur. Sistem tidak akan mengarang data yang kosong.</p>
+                                        </div>
+                                    </div>
+
+                                    <span id="conditionModelBadge" class="shrink-0 rounded-full border border-cyan-200 bg-white px-3 py-1 text-[11px] font-extrabold text-cyan-800 shadow-2xs">
+                                        Produk Segar
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div id="temperatureConditionField">
+                                        <label for="recorded_temperature_c" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Suhu Produk (°C)
+                                        </label>
+                                        <input type="number"
+                                               step="0.1"
+                                               min="-50"
+                                               max="80"
+                                               id="recorded_temperature_c"
+                                               name="recorded_temperature_c"
+                                               value="{{ old('recorded_temperature_c') }}"
+                                               placeholder="Contoh: 12"
+                                               class="w-full rounded-xl border-cyan-300 bg-white text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:border-cyan-500 focus:ring-cyan-500 py-2.5">
+                                        @error('recorded_temperature_c')
+                                            <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div id="moistureConditionField" class="hidden">
+                                        <label for="recorded_moisture_percent" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Kadar Air Produk (%)
+                                        </label>
+                                        <input type="number"
+                                               step="0.1"
+                                               min="0"
+                                               max="100"
+                                               id="recorded_moisture_percent"
+                                               name="recorded_moisture_percent"
+                                               value="{{ old('recorded_moisture_percent') }}"
+                                               placeholder="Contoh: 10.5"
+                                               class="w-full rounded-xl border-cyan-300 bg-white text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:border-cyan-500 focus:ring-cyan-500 py-2.5">
+                                        @error('recorded_moisture_percent')
+                                            <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label for="recorded_relative_humidity_percent" class="block text-xs font-extrabold text-slate-700 mb-1.5">
+                                            Kelembapan (%)
+                                        </label>
+                                        <input type="number"
+                                               step="0.1"
+                                               min="0"
+                                               max="100"
+                                               id="recorded_relative_humidity_percent"
+                                               name="recorded_relative_humidity_percent"
+                                               value="{{ old('recorded_relative_humidity_percent') }}"
+                                               placeholder="Contoh: 85"
+                                               class="w-full rounded-xl border-cyan-300 bg-white text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:border-cyan-500 focus:ring-cyan-500 py-2.5">
+                                        @error('recorded_relative_humidity_percent')
+                                            <p class="mt-1 text-xs font-bold text-rose-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div id="conditionReferenceHint" class="rounded-xl border border-cyan-200/80 bg-white/90 px-4 py-3 text-xs leading-relaxed text-slate-600 font-medium">
+                                    Pilih hasil panen untuk melihat acuan kondisi penyimpanan komoditas.
+                                </div>
                             </div>
-                        </div>
 
-                        {{-- Submit Button --}}
-                        <div class="pt-3">
-                            <button type="submit" 
-                                    class="w-full bg-gradient-to-r from-indigo-600 via-indigo-700 to-teal-600 text-white py-4 rounded-2xl font-black text-sm tracking-wide transition-all hover:from-indigo-700 hover:to-teal-700 hover:shadow-lg hover:shadow-indigo-600/20 hover:-translate-y-0.5 active:translate-y-0">
-                                Save Shipment Record
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            {{-- KOLOM KANAN: Logistics & Farmer Insights Panel (lg:col-span-5) --}}
-            <div class="lg:col-span-5 space-y-5">
-                
-                {{-- Card 1: Perspektif Logistik Expert --}}
-                <div class="agri-card p-6 border border-indigo-100 bg-indigo-50/40 relative overflow-hidden">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg border border-indigo-200">
-                            🧠
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-sm text-slate-900">Logistics AI Monitoring</h3>
-                            <p class="text-[11px] text-indigo-600 font-bold">Mitigasi Risiko Rantai Pasok</p>
-                        </div>
+                            {{-- TOMBOL AKSI --}}
+                            <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2">
+                                <a href="{{ route('shipments.index') }}"
+                                   class="w-full sm:w-auto text-center px-6 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-sm transition-colors">
+                                    Batal
+                                </a>
+                                <button type="submit"
+                                        id="submitShipmentBtn"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                                    <svg id="submitSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span id="submitBtnText">Buat Pengiriman</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-
-                    <ul class="space-y-3.5 text-xs text-slate-700 font-medium">
-                        <li class="flex items-start gap-2.5">
-                            <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Autofill Data Panen:</strong> Lokasi (Origin) dan Berat (KG) terkunci otomatis dari data panen untuk integritas *supply chain*.</span>
-                        </li>
-                        <li class="flex items-start gap-2.5">
-                            <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Estimasi Transit:</strong> Sistem AI menghitung waktu tempuh optimum agar komoditas tiba dalam kondisi segar.</span>
-                        </li>
-                        <li class="flex items-start gap-2.5">
-                            <span class="text-emerald-600 font-black mt-0.5">✓</span>
-                            <span><strong class="text-slate-900">Shipment Status:</strong> Shipment baru dimulai sebagai *Harvested*, *Packed*, atau *In Transit*. Status *Delivered* digunakan untuk menutup lifecycle setelah operasi selesai.</span>
-                        </li>
-                    </ul>
                 </div>
 
-                {{-- Card 2: Panduan Praktis untuk Petani --}}
-                <div class="agri-card p-6 border border-slate-200">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-lg border border-teal-200">
-                            🌾
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-sm text-slate-900">Tips Pengiriman Petani</h3>
-                            <p class="text-[11px] text-slate-500 font-medium">Panduan sebelum barang diberangkatkan</p>
-                        </div>
-                    </div>
+                {{-- KOLOM KANAN: PANEL PANDUAN (5 col) --}}
+                <div class="lg:col-span-5 space-y-5">
 
-                    <div class="space-y-3 text-xs text-slate-700 font-medium">
-                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-3">
-                            <span class="text-lg">📦</span>
+                    {{-- Panduan Analisis Otomatis --}}
+                    <div class="agri-card p-6 bg-indigo-50/60 border border-indigo-200/80 space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                            </div>
                             <div>
-                                <p class="font-extrabold text-slate-900 text-[11px]">Standar Pengemasan</p>
-                                <p class="text-[10px] text-slate-600">Gunakan wadah berventilasi untuk menjaga sirkulasi udara komoditas.</p>
+                                <h3 class="font-black text-base text-slate-900">Analisis Otomatis AgriFlow AI</h3>
+                                <p class="text-xs text-indigo-700 font-bold">Apa yang terjadi setelah Anda menyimpan?</p>
                             </div>
                         </div>
 
-                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-3">
-                            <span class="text-lg">🚛</span>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-emerald-600 font-black mt-0.5">✓</span>
+                                <span><strong class="text-slate-900">Data Panen Terhubung:</strong> Lokasi asal dan berat muatan diambil otomatis dari catatan panen agar data tetap akurat.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-emerald-600 font-black mt-0.5">✓</span>
+                                <span><strong class="text-slate-900">Perhitungan Rute & Waktu:</strong> Sistem menghitung jarak, estimasi waktu tempuh, dan perkiraan emisi perjalanan.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-emerald-600 font-black mt-0.5">✓</span>
+                                <span><strong class="text-slate-900">Penilaian Kesegaran:</strong> Kondisi produk saat tiba langsung dinilai sesuai standar komoditas.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {{-- Tips Praktis Pengiriman --}}
+                    <div class="agri-card p-6 bg-amber-50/60 border border-amber-200/80 space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16Z"/>
+                                </svg>
+                            </div>
                             <div>
-                                <p class="font-extrabold text-slate-900 text-[11px]">Verifikasi Tujuan</p>
-                                <p class="text-[10px] text-slate-600">Pastikan titik Destination sesuai dengan Purchase Order (PO) mitra.</p>
+                                <h3 class="font-black text-base text-slate-900">Tips Sebelum Berangkat</h3>
+                                <p class="text-xs text-amber-800 font-bold">Panduan praktis menjaga mutu hasil panen</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 text-xs text-slate-700">
+                            <div class="p-3.5 bg-white/90 rounded-xl border border-amber-200/70">
+                                <p class="font-extrabold text-slate-900">Gunakan Kemasan Berventilasi</p>
+                                <p class="text-slate-600 mt-0.5">Sirkulasi udara yang baik membantu mencegah panas berlebih pada buah dan sayuran.</p>
+                            </div>
+
+                            <div class="p-3.5 bg-white/90 rounded-xl border border-amber-200/70">
+                                <p class="font-extrabold text-slate-900">Catat Suhu Awal Bila Tersedia</p>
+                                <p class="text-slate-600 mt-0.5">Memasukkan suhu atau kelembapan awal membuat rekomendasi AI menjadi jauh lebih tepat.</p>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
             </div>
-
         </div>
     </div>
 
-    {{-- Script Autofill Location Origin & Weight --}}
+    {{-- Script Autofill, Referensi Komoditas & Loading State --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const harvestSelect = document.getElementById('harvestSelect');
@@ -358,73 +371,90 @@
             const conditionModelBadge = document.getElementById('conditionModelBadge');
             const conditionReferenceHint = document.getElementById('conditionReferenceHint');
 
+            const form = document.getElementById('createShipmentForm');
+            const submitBtn = document.getElementById('submitShipmentBtn');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const submitBtnText = document.getElementById('submitBtnText');
+
             function updateHarvestDetails() {
-                if (harvestSelect && harvestSelect.options.length > 0) {
+                if (harvestSelect && harvestSelect.options.length > 0 && harvestSelect.selectedIndex >= 0) {
                     const selectedOption = harvestSelect.options[harvestSelect.selectedIndex];
+                    if (!selectedOption || !selectedOption.value) return;
 
                     originInput.value = selectedOption.dataset.origin || '';
 
                     const weightVal = selectedOption.dataset.weight;
-                    weightInput.value = weightVal ? `${parseFloat(weightVal).toLocaleString('id-ID')} KG` : '';
+                    weightInput.value = weightVal ? `${parseFloat(weightVal).toLocaleString('id-ID')} kg` : '';
 
                     const isDry = selectedOption.dataset.conditionModel === 'storage_stability';
                     temperatureField?.classList.toggle('hidden', isDry);
                     moistureField?.classList.toggle('hidden', !isDry);
 
-                    if (temperatureInput) {
-                        temperatureInput.disabled = isDry;
-                    }
-
-                    if (moistureInput) {
-                        moistureInput.disabled = !isDry;
-                    }
+                    if (temperatureInput) temperatureInput.disabled = isDry;
+                    if (moistureInput) moistureInput.disabled = !isDry;
 
                     if (conditionModelBadge) {
-                        conditionModelBadge.textContent = isDry
-                            ? 'Dry Commodity'
-                            : 'Fresh Produce';
+                        conditionModelBadge.textContent = isDry ? 'Komoditas Kering' : 'Produk Segar';
                     }
 
                     if (conditionReferenceHint) {
                         const source = selectedOption.dataset.source
-                            ? ` Source: ${selectedOption.dataset.source}.`
+                            ? ` Sumber acuan: ${selectedOption.dataset.source}.`
                             : '';
 
                         if (isDry) {
                             const moisture = selectedOption.dataset.moistureMax;
                             const rh = selectedOption.dataset.dryRhMax;
                             const details = [
-                                moisture ? `Moisture ≤ ${moisture}%` : null,
-                                rh ? `RH ≤ ${rh}%` : null,
+                                moisture ? `Kadar air ≤ ${moisture}%` : null,
+                                rh ? `Kelembapan ≤ ${rh}%` : null,
                             ].filter(Boolean);
 
                             conditionReferenceHint.textContent = details.length
-                                ? `Available storage reference: ${details.join(' · ')}.${source}`
-                                : `Dry-commodity reference exists, but exact moisture/RH limits are not available for this selected profile.${source}`;
+                                ? `Acuan penyimpanan komoditas kering: ${details.join(' · ')}.${source}`
+                                : `Komoditas kering terpilih, namun batas kadar air/kelembapan spesifik belum tersedia.${source}`;
                         } else {
                             const tempMin = selectedOption.dataset.tempMin;
                             const tempMax = selectedOption.dataset.tempMax;
                             const rhMin = selectedOption.dataset.rhMin;
                             const rhMax = selectedOption.dataset.rhMax;
-                            const details = [
-                                tempMin !== '' && tempMax !== '' ? `${tempMin}–${tempMax}°C` : null,
-                                rhMin !== '' && rhMax !== '' ? `${rhMin}–${rhMax}% RH` : null,
-                            ].filter(Boolean);
+
+                            let tempText = null;
+                            if (tempMin !== '' && tempMax !== '') {
+                                tempText = parseFloat(tempMin) === parseFloat(tempMax)
+                                    ? `Suhu acuan ${tempMin}°C`
+                                    : `Suhu ${tempMin}–${tempMax}°C`;
+                            }
+
+                            let rhText = null;
+                            if (rhMin !== '' && rhMax !== '') {
+                                rhText = parseFloat(rhMin) === parseFloat(rhMax)
+                                    ? `Kelembapan ${rhMin}%`
+                                    : `Kelembapan ${rhMin}–${rhMax}%`;
+                            }
+
+                            const details = [tempText, rhText].filter(Boolean);
 
                             conditionReferenceHint.textContent = details.length
-                                ? `Available commodity reference: ${details.join(' · ')}.${source}`
-                                : `No exact temperature/RH reference is available for this selected profile.${source}`;
+                                ? `Acuan kondisi komoditas: ${details.join(' · ')}.${source}`
+                                : `Acuan suhu/kelembapan spesifik belum tersedia untuk komoditas ini.${source}`;
                         }
                     }
                 }
             }
 
-            // Jalankan saat pertama kali halaman dibuka
             updateHarvestDetails();
 
-            // Event listener saat komoditas diubah
             if (harvestSelect) {
                 harvestSelect.addEventListener('change', updateHarvestDetails);
+            }
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function () {
+                    submitBtn.disabled = true;
+                    submitSpinner?.classList.remove('hidden');
+                    if (submitBtnText) submitBtnText.textContent = 'Menyimpan & Menganalisis...';
+                });
             }
         });
     </script>
