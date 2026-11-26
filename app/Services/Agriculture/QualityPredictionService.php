@@ -234,15 +234,27 @@ class QualityPredictionService
             'shelf_life_reconciliation_message' => $reconciliation['message'],
             'shelf_life_discrepancy_days' => $reconciliation['discrepancy_days'],
 
-            'prediction_available' => $baselineShelfLife !== null && $hasHarvestDate,
-            'prediction_unavailable_reason' => !$hasHarvestDate
-                ? 'Tanggal panen belum diisi sehingga perkiraan kondisi produk belum dapat dihitung.'
-                : ($baselineShelfLife === null ? 'Profil masa simpan komoditas yang tervalidasi belum tersedia.' : null),
+            // A recorded harvest-to-expiry window is sufficient for a
+            // transparent operational freshness index when no validated
+            // commodity shelf-life profile is available.
+            'prediction_available' => (
+                $baselineShelfLife !== null && $hasHarvestDate
+            ) || $recordedFreshnessAtArrival !== null,
+            'prediction_unavailable_reason' => (
+                ($baselineShelfLife !== null && $hasHarvestDate)
+                || $recordedFreshnessAtArrival !== null
+            ) ? null : (
+                !$hasHarvestDate
+                    ? 'Tanggal panen belum diisi sehingga indeks kesegaran belum dapat dihitung.'
+                    : 'Profil masa simpan komoditas dan data kedaluwarsa yang diperlukan belum tersedia.'
+            ),
             'condition_model_type' => 'shelf_life_quality',
             'operational_window_available' => $safeTransitWindowHours !== null,
-            'prediction_basis' => $profile
+            'prediction_basis' => $baselineShelfLife !== null && $hasHarvestDate
                 ? 'Profil masa simpan komoditas + usia panen + durasi perjalanan + kondisi pengiriman tercatat atau skenario'
-                : 'Profil masa simpan komoditas belum tersedia; kualitas biologis tidak diestimasi',
+                : ($recordedFreshnessAtArrival !== null
+                    ? 'Indeks kesegaran operasional berdasarkan tanggal panen dan kedaluwarsa tercatat; tanpa kurva acuan komoditas'
+                    : 'Data acuan masa simpan atau tanggal panen belum lengkap; kualitas belum dapat diestimasi'),
 
             'source_name' => $profile?->source_name,
             'source_url' => $profile?->source_url,
@@ -833,8 +845,10 @@ class QualityPredictionService
 
     private function conservativeQualityIndex(?int $referenceQuality, ?int $recordedFreshnessIndex): ?int
     {
+        // If a validated commodity reference curve is unavailable, use the
+        // recorded harvest-to-expiry index rather than discarding valid data.
         if ($referenceQuality === null) {
-            return null;
+            return $recordedFreshnessIndex;
         }
 
         if ($recordedFreshnessIndex === null) {
