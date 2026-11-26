@@ -66,52 +66,100 @@ class FreshnessAwareRouteService
         $alternativeSource = 'not_requested';
         $alternativeNote = null;
 
-        $hasCoordinates =
-            $shipment->origin_lat !== null
-            && $shipment->origin_lng !== null
-            && $shipment->destination_lat !== null
-            && $shipment->destination_lng !== null;
+        $hasCoordinates = $this->hasValidShipmentCoordinates($shipment);
+        $start = [
+            'lat' => (float) $shipment->origin_lat,
+            'lon' => (float) $shipment->origin_lng,
+        ];
+        $end = [
+            'lat' => (float) $shipment->destination_lat,
+            'lon' => (float) $shipment->destination_lng,
+        ];
 
-        $distance = is_numeric($shipment->distance_km) ? (float) $shipment->distance_km : null;
+        // If no usable route is stored, request a real driving route first.
+        // This is also the single-route fallback when ORS alternatives are unavailable.
+        if ($hasCoordinates && !$this->hasUsableGeometry($current['geometry'] ?? [])) {
+            $routeCollection = $this->routes->getRoute($start, $end);
+            $routeFeature = $routeCollection['features'][0] ?? null;
+            $summary = is_array($routeFeature)
+                ? ($routeFeature['properties']['summary'] ?? [])
+                : [];
+            $geometry = is_array($routeFeature)
+                ? ($routeFeature['geometry']['coordinates'] ?? [])
+                : [];
 
-        if ($hasCoordinates && $distance !== null && $distance > 0 && $distance <= 100) {
-            $features = $this->routes->getAlternativeRoutes(
-                [
-                    'lat' => (float) $shipment->origin_lat,
-                    'lon' => (float) $shipment->origin_lng,
-                ],
-                [
-                    'lat' => (float) $shipment->destination_lat,
-                    'lon' => (float) $shipment->destination_lng,
-                ],
-                3
-            );
+            if (
+                $this->hasUsableGeometry($geometry)
+                && is_numeric($summary['distance'] ?? null)
+                && is_numeric($summary['duration'] ?? null)
+                && (float) $summary['distance'] > 0
+                && (float) $summary['duration'] > 0
+            ) {
+                $distanceKm = round((float) $summary['distance'] / 1000, 2);
+                $durationHours = round((float) $summary['duration'] / 3600, 2);
+                $scenarioShipment = $this->scenarioShipment($shipment, $distanceKm, $durationHours);
+                $routeAnalysis = $this->engine->analyze($scenarioShipment);
+
+                $current = array_merge($current, [
+                    'distance_km' => $distanceKm,
+                    'duration_hours' => $durationHours,
+                    'carbon_kg' => is_numeric($routeAnalysis['carbon_kg'] ?? null)
+                        ? round((float) $routeAnalysis['carbon_kg'], 2)
+                        : null,
+                    'geometry' => $geometry,
+                    'analysis' => $routeAnalysis,
+                    'source' => 'openrouteservice',
+                ]);
+                $candidateInputs = [$current];
+            }
+        }
+
+        if ($hasCoordinates) {
+            // Do not gate route requests using the shipment's manually entered distance.
+            // That value may be absent, stale, or a straight-line estimate.
+            $features = $this->routes->getAlternativeRoutes($start, $end, 3);
 
             if (!empty($features)) {
                 $alternativeSource = 'openrouteservice';
                 $candidateInputs = $this->mergeAlternativeCandidates($shipment, $current, $features);
             } else {
                 $alternativeSource = 'provider_unavailable';
-                $alternativeNote =
-                    'Penyedia rute alternatif tidak mengembalikan kandidat rute yang dapat digunakan. '
-                    . 'Rute saat ini dinilai apa adanya tanpa membuat alternatif buatan.';
+                $alternativeNote = $this->hasUsableGeometry($current['geometry'] ?? [])
+                    ? 'Rute jalan utama berhasil dimuat, tetapi ORS tidak menyediakan rute alternatif. Rute utama tetap dapat ditinjau.'
+                    : 'ORS belum mengembalikan geometri rute yang valid. Periksa konfigurasi API, koordinat, dan Laravel log.';
             }
-        } elseif (!$hasCoordinates) {
-            $alternativeSource = 'coordinates_unavailable';
-            $alternativeNote =
-                'Koordinat asal atau tujuan belum lengkap, sehingga hanya rute yang tersimpan yang dapat dinilai.';
-        } elseif ($distance !== null && $distance > 100) {
-            $alternativeSource = 'public_api_distance_limit';
-            $alternativeNote =
-                'Penyedia layanan rute membatasi pencarian rute alternatif hingga jarak 100 km. '
-                . 'Pengiriman ini dinilai menggunakan rute saat ini saja tanpa membuat alternatif buatan.';
         } else {
-            $alternativeSource = 'insufficient_route_data';
-            $alternativeNote =
-                'Data jarak pada rute tersimpan belum cukup untuk mencari rute alternatif.';
+            $alternativeSource = 'coordinates_unavailable';
+            $alternativeNote = 'Koordinat asal atau tujuan belum lengkap. Lengkapi koordinat sebelum meminta optimasi rute.';
         }
 
+        // Never rank a candidate that cannot actually be drawn on the map.
+        $candidateInputs = array_values(array_filter(
+            $candidateInputs,
+            fn (array $candidate) => $this->hasUsableGeometry($candidate['geometry'] ?? [])
+        ));
+
         $ranked = $this->scoreCandidates($candidateInputs);
+
+        if ($ranked === []) {
+            return [
+                'model_name' => 'Pemeringkatan Rute Berbasis Kesegaran',
+                'model_version' => '5.2',
+                'deterministic' => true,
+                'weights' => self::WEIGHTS,
+                'alternative_source' => $alternativeSource,
+                'alternative_note' => $alternativeNote ?? 'Belum ada geometri rute jalan yang valid untuk dievaluasi.',
+                'candidate_count' => 0,
+                'decision_status' => 'Rute Belum Dapat Dianalisis',
+                'decision_type' => 'unavailable',
+                'routing_alone_sufficient' => false,
+                'recommended_route' => null,
+                'best_available_route' => null,
+                'candidates' => [],
+                'recommendation_reason' => 'Optimasi belum dapat dilakukan karena layanan rute belum mengembalikan geometri jalan yang valid.',
+                'required_action' => 'Periksa koordinat asal/tujuan dan konfigurasi OpenRouteService, lalu coba lagi.',
+            ];
+        }
 
         foreach ($ranked as $index => &$candidate) {
             $candidate['rank'] = $index + 1;
@@ -490,6 +538,56 @@ class FreshnessAwareRouteService
             $qualityPhrase,
             $route['projected_risk_score']
         );
+    }
+
+    private function hasValidShipmentCoordinates(Shipment $shipment): bool
+    {
+        foreach (['origin_lat', 'origin_lng', 'destination_lat', 'destination_lng'] as $field) {
+            if (!is_numeric($shipment->{$field})) {
+                return false;
+            }
+        }
+
+        $originLat = (float) $shipment->origin_lat;
+        $originLng = (float) $shipment->origin_lng;
+        $destinationLat = (float) $shipment->destination_lat;
+        $destinationLng = (float) $shipment->destination_lng;
+
+        return is_finite($originLat) && is_finite($originLng)
+            && is_finite($destinationLat) && is_finite($destinationLng)
+            && $originLat >= -90 && $originLat <= 90
+            && $destinationLat >= -90 && $destinationLat <= 90
+            && $originLng >= -180 && $originLng <= 180
+            && $destinationLng >= -180 && $destinationLng <= 180
+            && !($originLat === $destinationLat && $originLng === $destinationLng);
+    }
+
+    private function hasUsableGeometry(mixed $geometry): bool
+    {
+        if (!is_array($geometry) || count($geometry) < 2) {
+            return false;
+        }
+
+        foreach ($geometry as $position) {
+            if (
+                !is_array($position)
+                || !isset($position[0], $position[1])
+                || !is_numeric($position[0])
+                || !is_numeric($position[1])
+            ) {
+                return false;
+            }
+
+            $lon = (float) $position[0];
+            $lat = (float) $position[1];
+            if (!is_finite($lon) || !is_finite($lat)
+                || $lon < -180 || $lon > 180
+                || $lat < -90 || $lat > 90) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function normalizeStoredGeometry(mixed $geometry): array

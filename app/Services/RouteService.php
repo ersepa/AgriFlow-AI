@@ -13,13 +13,21 @@ class RouteService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(
-            (string) config(
-                'services.ors.base_url',
-                'https://api.heigit.org/openrouteservice'
-            ),
-            '/'
-        );
+        $configuredBaseUrl = trim((string) config(
+            'services.ors.base_url',
+            'https://api.openrouteservice.org'
+        ));
+
+        // Normalize the legacy public endpoint previously used by this project.
+        // Keep custom ORS-compatible endpoints intact.
+        if (
+            $configuredBaseUrl === ''
+            || str_contains($configuredBaseUrl, 'api.heigit.org/openrouteservice')
+        ) {
+            $configuredBaseUrl = 'https://api.openrouteservice.org';
+        }
+
+        $this->baseUrl = rtrim($configuredBaseUrl, '/');
     }
 
     public function getRoute(
@@ -348,6 +356,9 @@ class RouteService
                 [
                     'url' => $url,
                     'status' => $response->status(),
+                    // ORS error bodies explain invalid keys, limits and bad requests.
+                    // Do not log request headers or API keys.
+                    'body' => mb_substr((string) $response->body(), 0, 2000),
                 ]
             );
 
