@@ -151,14 +151,36 @@ class AIOptimizerController extends Controller
         }
 
         if (
-            $shipment->origin_lat === null
-            || $shipment->origin_lng === null
-            || $shipment->destination_lat === null
-            || $shipment->destination_lng === null
+            !is_numeric($shipment->origin_lat)
+            || !is_numeric($shipment->origin_lng)
+            || !is_numeric($shipment->destination_lat)
+            || !is_numeric($shipment->destination_lng)
         ) {
             return response()->json(
                 [
-                    'message' => 'Koordinat rute pengiriman belum lengkap.',
+                    'message' => 'Koordinat rute pengiriman belum lengkap atau tidak valid.',
+                    'error_code' => 'invalid_coordinates',
+                ],
+                422
+            );
+        }
+
+        $originLat = (float) $shipment->origin_lat;
+        $originLng = (float) $shipment->origin_lng;
+        $destLat = (float) $shipment->destination_lat;
+        $destLng = (float) $shipment->destination_lng;
+
+        if (
+            $originLat < -90 || $originLat > 90
+            || $destLat < -90 || $destLat > 90
+            || $originLng < -180 || $originLng > 180
+            || $destLng < -180 || $destLng > 180
+            || ($originLat === $destLat && $originLng === $destLng)
+        ) {
+            return response()->json(
+                [
+                    'message' => 'Koordinat asal dan tujuan berada di luar jangkauan atau identik.',
+                    'error_code' => 'out_of_range_coordinates',
                 ],
                 422
             );
@@ -166,29 +188,42 @@ class AIOptimizerController extends Controller
 
         $route = $routes->getRoute(
             [
-                'lat' => (float) $shipment->origin_lat,
-                'lon' => (float) $shipment->origin_lng,
+                'lat' => $originLat,
+                'lon' => $originLng,
             ],
             [
-                'lat' => (float) $shipment->destination_lat,
-                'lon' => (float) $shipment->destination_lng,
+                'lat' => $destLat,
+                'lon' => $destLng,
             ]
         );
 
         $feature = $route['features'][0] ?? null;
 
         if (!$feature) {
+            $lastError = $routes->getLastError();
+
             return response()->json(
                 [
-                    'message' => 'Penyedia layanan rute belum dapat mengembalikan rute yang dapat digunakan.',
+                    'message' => $lastError['message']
+                        ?? 'Penyedia layanan rute belum dapat mengembalikan rute yang dapat digunakan.',
+                    'error_code' => $lastError['code'] ?? 'provider_unavailable',
+                    'provider_status' => $lastError['status'] ?? null,
                 ],
                 502
             );
         }
 
+        $geometryType = $feature['geometry']['type'] ?? null;
+        $rawCoordinates = $feature['geometry']['coordinates'] ?? [];
+
+        $coordinates = $geometryType === 'MultiLineString'
+            ? array_merge(...array_filter($rawCoordinates, 'is_array'))
+            : $rawCoordinates;
+
         return response()->json([
-            'geometry' => $feature['geometry']['coordinates'] ?? [],
+            'geometry' => $coordinates,
             'summary' => $feature['properties']['summary'] ?? [],
+            'source' => 'openrouteservice',
         ]);
     }
 

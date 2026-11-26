@@ -303,7 +303,7 @@
                 <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
                     <div id="map" class="h-[460px] sm:h-[500px] w-full"></div>
 
-                    {{-- Selected Shipment Info Overlay (Top-Left) --}}
+{{-- Selected Shipment Info Overlay (Top-Left) --}}
                     <div id="mapSelectedInfo"
                          class="hidden absolute top-3 left-3 z-[400] max-w-xs sm:max-w-sm bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl shadow-lg px-3.5 py-3 pointer-events-auto">
                         <div class="flex items-center justify-between gap-2 mb-1">
@@ -317,6 +317,10 @@
                             <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400 shrink-0"></i>
                             <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
                             <span id="mapSelectedDest" class="truncate">—</span>
+                        </div>
+                        <div id="mapSelectedMetrics" class="hidden mt-2 pt-2 border-t border-slate-100 flex items-center gap-3 text-[11px] font-semibold text-slate-700">
+                            <span id="mapSelectedDistance" class="inline-flex items-center gap-1 text-indigo-700"></span>
+                            <span id="mapSelectedDuration" class="inline-flex items-center gap-1 text-teal-700"></span>
                         </div>
                     </div>
 
@@ -902,6 +906,154 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+    // Tambahkan di deretan variabel global paling atas di <script>:
+let activeRouteAbortController = null;
+let routeRequestSeq = 0;
+
+function formatRouteDuration(seconds) {
+    const totalMinutes = Math.round(Number(seconds) / 60);
+    if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return null;
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours === 0) return `${mins} mnt`;
+    return mins > 0 ? `${hours} jam ${mins} mnt` : `${hours} jam`;
+}
+
+function updateSelectedRouteMetrics(summary) {
+    const wrap = document.getElementById('mapSelectedMetrics');
+    const distEl = document.getElementById('mapSelectedDistance');
+    const durEl = document.getElementById('mapSelectedDuration');
+    if (!wrap || !distEl || !durEl) return;
+
+    const distanceM = Number(summary?.distance);
+    const durationS = Number(summary?.duration);
+    const hasDist = Number.isFinite(distanceM) && distanceM > 0;
+    const hasDur = Number.isFinite(durationS) && durationS > 0;
+
+    if (!hasDist && !hasDur) {
+        wrap.classList.add('hidden');
+        distEl.innerText = '';
+        durEl.innerText = '';
+        return;
+    }
+
+    distEl.innerText = hasDist ? `${(distanceM / 1000).toFixed(1)} km` : '';
+    const formattedDur = hasDur ? formatRouteDuration(durationS) : null;
+    durEl.innerText = formattedDur ? `Est. ${formattedDur}` : '';
+    wrap.classList.remove('hidden');
+}
+
+async function getRoadRoute(shipmentId, signal = undefined) {
+    const response = await fetch(`/ai-optimizer/route/${shipmentId}`, {
+        headers: { 'Accept': 'application/json' },
+        signal
+    });
+
+    if (!response.ok) {
+        let serverMsg = 'Layanan penyedia rute sedang tidak tersedia.';
+        try {
+            const errJson = await response.json();
+            if (errJson?.message) serverMsg = errJson.message;
+        } catch (_) {}
+        throw new Error(serverMsg);
+    }
+
+    const data = await response.json();
+    const rawCoords = Array.isArray(data?.geometry) ? data.geometry : [];
+
+    const latlngs = rawCoords
+        .filter(c => Array.isArray(c) && c.length >= 2)
+        .map(c => [Number(c[1]), Number(c[0])])
+        .filter(([lat, lng]) => isValidLatLng(lat, lng));
+
+    if (latlngs.length < 2) {
+        throw new Error('Tidak ada geometri rute jalan yang valid dari layanan rute.');
+    }
+
+    return {
+        latlngs,
+        summary: data?.summary ?? null
+    };
+}
+
+async function updateMap(element, button = null) {
+    if (!element || !map) return;
+
+    if (activeRouteAbortController) {
+        activeRouteAbortController.abort();
+    }
+    activeRouteAbortController = new AbortController();
+    const currentSeq = ++routeRequestSeq;
+
+    activeShipmentCard = element;
+    highlightShipmentCard(element);
+    updateSelectedInfoPanel(element);
+    updateSelectedRouteMetrics(null);
+    hideMapError();
+
+    const loadingOverlay = document.getElementById('mapLoadingOverlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    if (button) setRouteLoading(button, true);
+    setMapStatus('loading', 'Memuat Rute...');
+
+    const oLat = parseFloat(element.getAttribute('data-origin-lat'));
+    const oLng = parseFloat(element.getAttribute('data-origin-lng'));
+    const dLat = parseFloat(element.getAttribute('data-dest-lat'));
+    const dLng = parseFloat(element.getAttribute('data-dest-lng'));
+    const originName = element.getAttribute('data-origin') || 'Asal';
+    const destName = element.getAttribute('data-destination') || 'Tujuan';
+    const shipmentId = element.getAttribute('data-shipment-id');
+
+    const hasValidEndpoints = isValidLatLng(oLat, oLng) && isValidLatLng(dLat, dLng);
+
+    if (hasValidEndpoints) {
+        markerOrigin.setLatLng([oLat, oLng]).bindPopup(`<div class="text-xs font-semibold text-slate-800"><span class="text-emerald-600 font-bold">Asal:</span> ${escapeHtml(originName)}</div>`);
+        markerDestination.setLatLng([dLat, dLng]).bindPopup(`<div class="text-xs font-semibold text-slate-800"><span class="text-rose-600 font-bold">Tujuan:</span> ${escapeHtml(destName)}</div>`);
+        if (!map.hasLayer(markerOrigin)) markerOrigin.addTo(map);
+        if (!map.hasLayer(markerDestination)) markerDestination.addTo(map);
+    }
+
+    try {
+        const { latlngs: newRoute, summary } = await getRoadRoute(
+            shipmentId,
+            activeRouteAbortController.signal
+        );
+
+        if (currentSeq !== routeRequestSeq) return;
+
+        routeLine.setLatLngs(newRoute);
+        routeFlowLine.setLatLngs(newRoute);
+
+        const bounds = routeLine.getBounds();
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [55, 55], maxZoom: 15 });
+        }
+
+        updateSelectedRouteMetrics(summary);
+        resetTruck(newRoute);
+        setMapStatus('ready', 'Rute Terhubung');
+
+        if (button) {
+            document.getElementById('routeMapSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    } catch (error) {
+        if (error?.name === 'AbortError' || currentSeq !== routeRequestSeq) {
+            return;
+        }
+        console.error('Map route error:', error);
+        clearRouteVisuals();
+        updateSelectedRouteMetrics(null);
+        if (hasValidEndpoints) {
+            map.fitBounds(L.latLngBounds([[oLat, oLng], [dLat, dLng]]), { padding: [70, 70], maxZoom: 13 });
+        }
+        showMapError(error.message || 'Gagal memuat rute jalan dari layanan penyedia rute.');
+    } finally {
+        if (currentSeq === routeRequestSeq && loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+        }
+        if (button) setRouteLoading(button, false);
+    }
+}
 let map = null;
 let markerOrigin = null;
 let markerDestination = null;

@@ -11,34 +11,51 @@ class RouteService
 {
     private string $baseUrl;
 
-    public function __construct()
+    private ?array $lastError = null;
+
+public function __construct()
     {
         $configuredBaseUrl = trim((string) config(
             'services.ors.base_url',
-            'https://api.openrouteservice.org'
+            'https://api.heigit.org/openrouteservice'
         ));
 
-        // Normalize the legacy public endpoint previously used by this project.
-        // Keep custom ORS-compatible endpoints intact.
+        // Redirect deprecated api.openrouteservice.org (HTTP 410 Gone)
+        // to the active HeiGIT endpoint.
         if (
             $configuredBaseUrl === ''
-            || str_contains($configuredBaseUrl, 'api.heigit.org/openrouteservice')
+            || str_contains($configuredBaseUrl, 'api.openrouteservice.org')
         ) {
-            $configuredBaseUrl = 'https://api.openrouteservice.org';
+            $configuredBaseUrl = 'https://api.heigit.org/openrouteservice';
         }
 
         $this->baseUrl = rtrim($configuredBaseUrl, '/');
+    }
+
+    public function getLastError(): ?array
+    {
+        return $this->lastError;
     }
 
     public function getRoute(
         array $start,
         array $end
     ): array {
+        $this->lastError = null;
+
         if (
             !$this->hasValidCoordinates($start) ||
             !$this->hasValidCoordinates($end)
         ) {
-            Log::warning('ORS received invalid route coordinates.');
+            $this->setLastError(
+                'invalid_coordinates',
+                422,
+                'Koordinat asal atau tujuan tidak valid.'
+            );
+            Log::warning('ORS received invalid route coordinates.', [
+                'start' => $start,
+                'end' => $end,
+            ]);
 
             return [];
         }
@@ -49,7 +66,7 @@ class RouteService
         $endLon = (float) $end['lon'];
 
         $cacheKey = sprintf(
-            'ors-route:%.8F:%.8F:%.8F:%.8F',
+            'ors-route:v2:%.8F:%.8F:%.8F:%.8F',
             $startLat,
             $startLon,
             $endLat,
@@ -76,6 +93,8 @@ class RouteService
                 [$startLon, $startLat],
                 [$endLon, $endLat],
             ],
+            // Allow snapping up to 5 km for rural/agricultural farm coordinates.
+            'radiuses' => [5000, 5000],
         ]);
 
         if (!$response) {
@@ -87,9 +106,20 @@ class RouteService
         );
 
         if ($data === []) {
+            $this->setLastError(
+                'invalid_geometry',
+                $response->status(),
+                'OpenRouteService mengembalikan struktur geometri rute yang kosong atau tidak valid.'
+            );
             Log::warning(
                 'ORS returned an invalid or empty route FeatureCollection.',
-                ['status' => $response->status()]
+                [
+                    'status' => $response->status(),
+                    'coordinates' => [
+                        [$startLon, $startLat],
+                        [$endLon, $endLat],
+                    ],
+                ]
             );
 
             return [];
@@ -109,10 +139,17 @@ class RouteService
         array $end,
         int $targetCount = 3
     ): array {
+        $this->lastError = null;
+
         if (
             !$this->hasValidCoordinates($start) ||
             !$this->hasValidCoordinates($end)
         ) {
+            $this->setLastError(
+                'invalid_coordinates',
+                422,
+                'Koordinat rute alternatif tidak valid.'
+            );
             Log::warning(
                 'ORS received invalid alternative route coordinates.'
             );
@@ -128,7 +165,7 @@ class RouteService
         $endLon = (float) $end['lon'];
 
         $cacheKey = sprintf(
-            'ors-alt:%.8F:%.8F:%.8F:%.8F:%d',
+            'ors-alt:v2:%.8F:%.8F:%.8F:%.8F:%d',
             $startLat,
             $startLon,
             $endLat,
@@ -153,6 +190,7 @@ class RouteService
                 [$startLon, $startLat],
                 [$endLon, $endLat],
             ],
+            'radiuses' => [5000, 5000],
             'alternative_routes' => [
                 'target_count' => $targetCount,
                 'weight_factor' => 1.4,
@@ -167,6 +205,11 @@ class RouteService
         $features = $response->json('features', []);
 
         if (!is_array($features)) {
+            $this->setLastError(
+                'invalid_alternatives_structure',
+                $response->status(),
+                'Struktur rute alternatif dari OpenRouteService tidak valid.'
+            );
             Log::warning(
                 'ORS returned an invalid alternative routes structure.',
                 ['status' => $response->status()]
@@ -323,6 +366,11 @@ class RouteService
         );
 
         if ($apiKey === '') {
+            $this->setLastError(
+                'missing_api_key',
+                500,
+                'Konfigurasi ORS_API_KEY belum tersedia di server.'
+            );
             Log::error('ORS API key is missing.');
 
             return null;
@@ -334,15 +382,21 @@ class RouteService
             $response = Http::withHeaders([
                 'Authorization' => $apiKey,
                 'Content-Type' => 'application/json',
-                'Accept' => 'application/geo+json',
+                'Accept' => 'application/json, application/geo+json',
             ])
                 ->timeout(20)
                 ->post($url, $payload);
         } catch (\Throwable $e) {
+            $this->setLastError(
+                'connection_exception',
+                504,
+                'Gagal terhubung ke OpenRouteService (timeout atau kendala jaringan/SSL).'
+            );
             Log::error(
                 'ORS route request encountered an exception.',
                 [
                     'url' => $url,
+                    'coordinates' => $payload['coordinates'] ?? null,
                     'message' => $e->getMessage(),
                 ]
             );
@@ -351,11 +405,24 @@ class RouteService
         }
 
         if (!$response->successful()) {
+            $status = $response->status();
+            $errorBody = $response->json();
+            $orsCode = $errorBody['error']['code'] ?? null;
+            $orsMessage = $errorBody['error']['message'] ?? null;
+
+            $this->setLastError(
+                $this->mapHttpErrorCode($status, $orsCode),
+                $status,
+                $this->mapHttpErrorMessage($status, $orsCode, $orsMessage)
+            );
+
             Log::error(
                 'ORS route request failed.',
                 [
                     'url' => $url,
-                    'status' => $response->status(),
+                    'status' => $status,
+                    'ors_code' => $orsCode,
+                    'coordinates' => $payload['coordinates'] ?? null,
                     // ORS error bodies explain invalid keys, limits and bad requests.
                     // Do not log request headers or API keys.
                     'body' => mb_substr((string) $response->body(), 0, 2000),
@@ -366,5 +433,50 @@ class RouteService
         }
 
         return $response;
+    }
+
+    private function setLastError(string $code, int $status, string $message): void
+    {
+        $this->lastError = [
+            'code' => $code,
+            'status' => $status,
+            'message' => $message,
+        ];
+    }
+
+    private function mapHttpErrorCode(int $status, mixed $orsCode): string
+    {
+        if (in_array($status, [401, 403], true)) {
+            return 'ors_auth_failed';
+        }
+        if ($status === 429) {
+            return 'ors_rate_limited';
+        }
+        if ($status === 404 || (int) $orsCode === 2010) {
+            return 'ors_point_not_routable';
+        }
+        if ($status === 400) {
+            return 'ors_bad_request';
+        }
+
+        return 'ors_http_error';
+    }
+
+    private function mapHttpErrorMessage(int $status, mixed $orsCode, ?string $orsMessage): string
+    {
+        if (in_array($status, [401, 403], true)) {
+            return 'Autentikasi OpenRouteService ditolak (HTTP ' . $status . '). Periksa ORS_API_KEY di environment.';
+        }
+        if ($status === 429) {
+            return 'Batas kuota permintaan OpenRouteService tercapai (HTTP 429). Coba lagi beberapa saat lagi.';
+        }
+        if ($status === 404 || (int) $orsCode === 2010) {
+            return 'Titik koordinat asal atau tujuan tidak ditemukan di jaringan jalan yang dapat dilalui kendaraan.';
+        }
+        if ($status === 400) {
+            return 'Permintaan rute ditolak oleh OpenRouteService (HTTP 400)' . ($orsMessage ? ': ' . $orsMessage : '.');
+        }
+
+        return 'OpenRouteService gagal mengembalikan rute (HTTP ' . $status . ').';
     }
 }

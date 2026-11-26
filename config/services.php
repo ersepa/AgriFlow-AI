@@ -35,12 +35,14 @@ return [
         ],
     ],
 
-    'ors' => [
+
+'ors' => [
     'base_url' => env(
         'ORS_BASE_URL',
         'https://api.heigit.org/openrouteservice'
     ),
     'api_key' => env('ORS_API_KEY'),
 ],
+
 
 ];
