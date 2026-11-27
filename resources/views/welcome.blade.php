@@ -58,9 +58,13 @@
         {{-- ================= NAVBAR ================= --}}
         <header class="py-6 px-6 lg:px-12 flex justify-between items-center animate-fade-in-up">
             <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-br from-emerald-400 to-emerald-600 p-2.5 rounded-xl shadow-lg shadow-emerald-200/50">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                </div>
+<div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-emerald-200/50">
+    <img
+        src="{{ asset('newlogo.jpeg') }}"
+        alt="AgriFlow AI Logo"
+        class="w-full h-full object-contain"
+    >
+</div>
                 <span class="text-2xl font-black tracking-tight text-slate-800">
                     AgriFlow<span class="text-emerald-600">AI</span>
                 </span>
