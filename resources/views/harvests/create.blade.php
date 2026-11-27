@@ -160,14 +160,17 @@
 
                                     {{-- Tanggal Kedaluwarsa --}}
                                     <div>
-                                        <label for="expiryDateInput" class="block text-xs font-extrabold text-slate-700 mb-1.5">
-                                            Perkiraan Tanggal Kedaluwarsa <span class="text-xs font-semibold text-blue-700">(Opsional)</span>
-                                        </label>
+<label for="expiryDateInput"
+       class="block text-xs font-extrabold text-slate-700 mb-1.5">
+    Perkiraan Tanggal Kedaluwarsa
+    <span class="text-rose-600">*</span>
+</label>
                                         <input type="date"
-                                               id="expiryDateInput"
-                                               name="expiry_date"
-                                               value="{{ old('expiry_date') }}"
-                                               class="w-full rounded-xl bg-white border-blue-300 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-blue-500 py-2.5">
+       id="expiryDateInput"
+       name="expiry_date"
+       value="{{ old('expiry_date') }}"
+       required
+       class="w-full rounded-xl bg-white border-blue-300 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-blue-500 py-2.5">
                                         <p class="text-[11px] text-slate-500 mt-1">Batas waktu operasional sebelum produk dikirim.</p>
                                         @error('expiry_date')
                                             <p class="text-xs font-bold text-rose-600 mt-1">{{ $message }}</p>
