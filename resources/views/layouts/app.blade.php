@@ -69,7 +69,7 @@
                     {{-- Overview --}}
     <div class="px-4 pt-2 pb-1">
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
-            Overview
+            Ringkasan
         </span>
     </div>
                 
@@ -89,7 +89,7 @@
                     {{-- Operations --}}
     <div class="px-4 pt-5 pb-1">
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
-            Operations
+            Operasional
         </span>
     </div>
 
@@ -102,7 +102,7 @@
                         {{ request()->routeIs('harvests*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}"></div>
                     
                     <svg class="w-5 h-5 {{ request()->routeIs('harvests*') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
-                    <span>Harvests</span>
+                    <span>Hasil Panen</span>
                 </a>
 
                 {{-- Shipments --}}
@@ -113,7 +113,7 @@
                         {{ request()->routeIs('shipments*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}"></div>
                     
                     <svg class="w-5 h-5 {{ request()->routeIs('shipments*') ? 'text-teal-600' : 'text-slate-400 group-hover:text-teal-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                    <span>Shipments</span>
+                    <span>Pengiriman</span>
                 </a>
 
 
@@ -125,13 +125,13 @@
                     <svg class="w-5 h-5 {{ request()->routeIs('completed-shipments.*') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>Completed Shipments</span>
+                    <span>Pengiriman Selesai</span>
                 </a>
 
                     {{-- Decision Intelligence --}}
     <div class="px-4 pt-5 pb-1">
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
-            Decision Intelligence
+            Intelijen & Analisis AI
         </span>
     </div>
 
@@ -143,7 +143,7 @@
                         {{ request()->routeIs('ai-analysis*') ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0' }}"></div>
                     
                     <svg class="w-5 h-5 {{ request()->routeIs('ai-analysis*') ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                    <span>AI Analysis</span>
+                    <span>Analisis AI</span>
                 </a>
 
                 {{-- AI Optimizer --}}
@@ -156,7 +156,7 @@
                     <svg class="w-5 h-5 {{ request()->routeIs('ai-optimizer*') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3a3 3 0 013 3v1.5h1.5a3 3 0 013 3v6a3 3 0 01-3 3h-6a3 3 0 01-3-3v-6a3 3 0 013-3h1.5V6a3 3 0 013-3zM9 14h6M12 11v6"></path>
                     </svg>
-                    <span>AI Optimizer</span>
+                    <span>Optimasi AI</span>
                 </a>
 
                 {{-- Digital Twin --}}
@@ -170,7 +170,7 @@
                     <svg class="w-5 h-5 {{ request()->routeIs('digital-twin.*') ? 'text-cyan-600' : 'text-slate-400 group-hover:text-cyan-600' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M3 9h2m14 0h2M9 19v2m6-2v2M3 15h2m14 0h2M7 7h10v10H7V7z"/>
                     </svg>
-                    <span>Operational Digital Twin</span>
+                    <span>Digital Twin Operasional</span>
                 </a>
 
                 <div class="pt-4 pb-1">
@@ -180,7 +180,7 @@
                     {{-- Account --}}
     <div class="px-4 pt-2 pb-1">
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
-            Account
+            Akun
         </span>
     </div>
 
@@ -194,7 +194,7 @@
                     <svg class="w-5 h-5 {{ request()->routeIs('profile*') ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-700' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
-                    <span>Profile Settings</span>
+                    <span>Pengaturan Profil</span>
                 </a>
 
             </nav>
