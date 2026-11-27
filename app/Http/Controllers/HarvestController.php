@@ -32,10 +32,10 @@ class HarvestController extends Controller
             'location' => ['required', 'string', 'max:255'],
             'harvest_date' => ['required', 'date'],
             'expiry_date' => [
-                'nullable',
-                'date',
-                'after_or_equal:harvest_date',
-            ],
+    'required',
+    'date',
+    'after_or_equal:harvest_date',
+],
         ]);
 
         Harvest::create([
