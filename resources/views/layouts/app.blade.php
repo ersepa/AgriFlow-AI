@@ -47,7 +47,7 @@
             <div class="flex items-center justify-between h-20 px-6 border-b border-slate-100">
                 <a href="{{ url('/') }}" class="flex items-center gap-3 group">
                     <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 flex items-center justify-center p-1.5 shadow-sm group-hover:scale-105 transition-transform">
-                        <img src="{{ asset('logo.png') }}" alt="AgriFlow AI Logo" class="w-full h-full object-contain" style="mix-blend-mode: multiply;">
+                        <img src="{{ asset('newlogo.jpeg') }}" alt="AgriFlow AI Logo" class="w-full h-full object-contain" style="mix-blend-mode: multiply;">
                     </div>
                     
                     <div class="flex flex-col">
